@@ -1,6 +1,6 @@
 [Setup]
 AppName=Llama-dita
-AppVersion=1.8.1A
+AppVersion=1.10.1A
 AppPublisher=Llama-dita
 AppPublisherURL=https://github.com/LivaNess/llama-dita
 DefaultDirName={localappdata}\Llama-dita
