@@ -30,6 +30,21 @@ Los datos viven en Supabase y cada usuario solo ve lo suyo (políticas RLS en la
 
 Pendiente: configurar un proveedor de mail propio (SMTP) en Supabase. Con el mail por defecto del plan gratis hay un límite de 2 mails por hora en total, que sirve para probar pero no para uso real.
 
+## Actualizaciones
+
+La app instalada se actualiza sola, sin volver a bajar el instalador:
+
+- Al abrir, busca si hay una versión nueva. Si hay, muestra un aviso con **Actualizar ahora** o **Después**.
+- Click en el tag de versión del header (`v1.1.0`) abre el panel de actualizaciones: **Buscar actualizaciones** y la opción **Actualizar sola al abrir la app**.
+- La actualización baja `resources.neu` (la app web empaquetada) desde este repo y reinicia. El ejecutable de Neutralino no cambia, solo hace falta el instalador la primera vez.
+
+### Publicar una versión nueva
+
+1. Subí la versión en `package.json` (es la única fuente: el script la copia a `neutralino.config.json` e `installer.iss`).
+2. `npm run build:desktop` → deja `desktop/dist/Llama-dita/resources.neu` y `desktop/update-manifest.json`.
+3. Commit y push a `main` de esos dos archivos. Las apps instaladas ven la versión nueva en la próxima apertura (GitHub raw puede tardar unos minutos en refrescar).
+4. Opcional, solo si cambió el ejecutable o para instalaciones nuevas: `crear-instalador.bat` (necesita Inno Setup 6).
+
 ## Estructura del Proyecto
 
 ```

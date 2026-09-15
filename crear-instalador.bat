@@ -1,11 +1,6 @@
 @echo off
 echo Compilando aplicacion web...
-call npm run build
-echo.
-echo Empaquetando cliente de escritorio...
-cd desktop
-call npx @neutralinojs/neu build
-cd ..
+call npm run build:desktop
 echo.
 echo Generando instalador Llama-dita-Setup.exe...
 "%LOCALAPPDATA%\Programs\Inno Setup 6\ISCC.exe" installer.iss

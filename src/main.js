@@ -2,6 +2,7 @@ import { audioManager } from './audio/audioManager.js';
 import { PeerManager } from './network/peerManager.js';
 import { AudioVisualizer } from './components/visualizer.js';
 import { initSocial } from './social/panel.js';
+import { initUpdater } from './updater.js';
 
 // DOM Elements
 const audioPermissionBanner = document.getElementById('audioPermissionBanner');
@@ -471,6 +472,8 @@ window.addEventListener('DOMContentLoaded', () => {
     },
     toast: showToast
   });
+  // Buscar actualizaciones al abrir (opcional) + popover en el tag de versión del header.
+  initUpdater({ toast: showToast });
 });
 // Room Join Controls
 const inputJoinRoom = document.getElementById('inputJoinRoom');
