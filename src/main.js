@@ -115,7 +115,7 @@ async function startMicrophone(deviceId = null) {
     
     const track = localStream.getAudioTracks()[0];
     const trackLabel = track && track.label ? track.label : 'Dispositivo activo';
-    hostStatusPill.innerHTML = `<span>ðŸŽ¤ ${trackLabel.substring(0, 24)}</span>`;
+    hostStatusPill.innerHTML = `<span>🎤 ${trackLabel.substring(0, 24)}</span>`;
     
     peerManager.updateLocalStream(localStream);
     await loadAudioDevices();
@@ -124,12 +124,12 @@ async function startMicrophone(deviceId = null) {
     }
     return true;
   } catch (err) {
-    console.error('Error de acceso a micrÃ³fono:', err);
-    hostStatusPill.innerHTML = '<span style="color:#ef4444">Permiso de micrÃ³fono requerido</span>';
+    console.error('Error de acceso a micrófono:', err);
+    hostStatusPill.innerHTML = '<span style="color:#ef4444">Permiso de micrófono requerido</span>';
     if (audioPermissionBanner) {
       audioPermissionBanner.style.display = 'flex';
     }
-    showToast('Permiso de micrÃ³fono no concedido', 4000);
+    showToast('Permiso de micrófono no concedido', 4000);
     return false;
   }
 }
@@ -228,12 +228,12 @@ function setupNetworking() {
       isConnected = false;
       onAirBadge.classList.remove('live');
       onAirText.textContent = 'ESPERANDO';
-      guestStatusPill.innerHTML = '<span>Esperando participante...</span>';
+      guestStatusPill.innerHTML = `<span>${msg || 'Esperando participante...'}</span>`;
     } else if (status === 'connecting') {
       isConnected = false;
       onAirBadge.classList.remove('live');
       onAirText.textContent = 'CONECTANDO';
-      guestStatusPill.innerHTML = '<span>Conectando...</span>';
+      guestStatusPill.innerHTML = `<span>${msg || 'Conectando...'}</span>`;
     } else if (status === 'disconnected') {
       isConnected = false;
       onAirBadge.classList.remove('live');
@@ -278,7 +278,7 @@ function setupNetworking() {
   };
 
   peerManager.onError = (err) => {
-    console.error('Error de conexiÃ³n:', err);
+    console.error('Error de conexión:', err);
   };
 
   peerManager.initPeer(localStream);
@@ -386,7 +386,7 @@ function renderAudioMetrics() {
   } else {
     guestVuFill.style.width = '0%';
     guestVuPeak.style.left = '0%';
-    guestMeterReadout.textContent = '-âˆž dB Â· 0%';
+    guestMeterReadout.textContent = '-∞ dB · 0%';
     guestVisualizer.draw(null, false);
     guestAvatarDisc.classList.remove('active');
     guestVocalAura.style.transform = 'scale(1)';
@@ -402,11 +402,11 @@ btnToggleMic.addEventListener('click', () => {
   if (isMuted) {
     btnToggleMic.className = 'btn-control muted';
     btnToggleMicText.textContent = 'Activar Mic';
-    showToast('MicrÃ³fono silenciado');
+    showToast('Micrófono silenciado');
   } else {
     btnToggleMic.className = 'btn-control active';
     btnToggleMicText.textContent = 'Silenciar';
-    showToast('MicrÃ³fono activo');
+    showToast('Micrófono activo');
   }
 
   peerManager.sendData({

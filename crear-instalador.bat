@@ -2,6 +2,9 @@
 echo Compilando aplicacion web...
 call npm run build
 echo.
+echo Sincronizando recursos con cliente de escritorio...
+xcopy /E /Y /I dist\* desktop\resources\
+echo.
 echo Empaquetando cliente de escritorio...
 cd desktop
 call npx @neutralinojs/neu build
