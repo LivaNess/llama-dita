@@ -1,8 +1,8 @@
 {
   "applicationId": "com.llamadita.app",
-  "version": "1.4.1A",
-  "resourcesURL": "https://raw.githubusercontent.com/LivaNess/llama-dita/main/desktop/dist/Llama-dita/resources.neu",
+  "version": "1.5.1A",
+  "resourcesURL": "https://raw.githubusercontent.com/LivaNess/llama-dita/main/desktop/dist/Llama-dita/resources.neu?v=1.5.1A",
   "data": {
-    "releasedAt": "2026-09-15T21:22:00.932Z"
+    "releasedAt": "2026-09-15T21:27:56.011Z"
   }
 }

@@ -36,7 +36,8 @@ export async function checkForUpdates() {
   const nl = await neutralino();
   let manifest;
   if (nl) {
-    manifest = await nl.updater.checkForUpdates(MANIFEST_URL);
+    // fetch() del WebView cachea el manifiesto (max-age 5 min): romper la caché con un parámetro.
+    manifest = await nl.updater.checkForUpdates(MANIFEST_URL + '?t=' + Date.now());
   } else {
     const r = await fetch(MANIFEST_URL + '?t=' + Date.now(), { cache: 'no-store' });
     if (!r.ok) throw new Error('No pude consultar las actualizaciones');

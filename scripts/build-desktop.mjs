@@ -50,7 +50,8 @@ if (!html.includes('__neutralino_globals.js')) {
 const manifest = {
   applicationId: cfg.applicationId,
   version,
-  resourcesURL: `${REPO_RAW}/desktop/dist/${cfg.cli.binaryName}/resources.neu`,
+  // ?v= evita que el WebView o el CDN sirvan un resources.neu viejo
+  resourcesURL: `${REPO_RAW}/desktop/dist/${cfg.cli.binaryName}/resources.neu?v=${encodeURIComponent(version)}`,
   data: { releasedAt: new Date().toISOString() }
 };
 writeFileSync(join(desktop, 'update-manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
