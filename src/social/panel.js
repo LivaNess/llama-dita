@@ -5,14 +5,16 @@
 //   hooks.setLocalName(name)  -> nombre visible en la cabina local
 //   hooks.toast(msg)          -> aviso corto
 import './social.css';
+import { supabase } from '../supabase/client.js';
 import { getSession, onAuthChange, sendCode, verifyCode, signOut } from './auth.js';
 import * as api from './api.js';
 
 const RING_TIMEOUT_MS = 45000;
-const ONLINE_WINDOW_MS = 3 * 60 * 1000;
 
 const state = {
   session: null,
+  online: new Map(), // user_id -> estado, desde Realtime Presence (sin escribir en la base)
+  presence: null,
   me: null,
   friendships: [],
   channels: [],
@@ -34,15 +36,13 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 const randomRoom = () => 'llamadita-' + Math.random().toString(36).substring(2, 8);
 
 function isOnline(p) {
-  if (!p || p.status === 'offline') return false;
-  const seen = p.last_seen_at ? Date.parse(p.last_seen_at) : 0;
-  return Date.now() - seen < ONLINE_WINDOW_MS;
+  return !!p && state.online.has(p.id);
 }
 
 function statusDot(p) {
-  const on = isOnline(p);
-  const cls = on ? (p.status === 'dnd' ? 'dnd' : p.status === 'idle' ? 'idle' : 'online') : 'offline';
-  const label = on ? ({ online: 'Conectado', idle: 'Ausente', dnd: 'No molestar' }[p.status] || 'Conectado') : 'Desconectado';
+  const st = p ? state.online.get(p.id) : null;
+  const cls = st ? (st === 'dnd' ? 'dnd' : st === 'idle' ? 'idle' : 'online') : 'offline';
+  const label = st ? ({ online: 'Conectado', idle: 'Ausente', dnd: 'No molestar' }[st] || 'Conectado') : 'Desconectado';
   return `<span class="sc-dot ${cls}" title="${label}"></span>`;
 }
 
@@ -89,6 +89,9 @@ function mount() {
   drawer.className = 'sc-drawer';
   drawer.hidden = true;
   root.appendChild(drawer);
+  drawer.addEventListener('focusout', () => setTimeout(() => {
+    if (state.pendingRender && !drawer.contains(document.activeElement)) { state.pendingRender = false; render(); }
+  }, 0));
 
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !drawer.hidden) toggleDrawer(false); });
 }
@@ -105,20 +108,51 @@ function toggleDrawer(force) {
 // ------------------------------------------------------------------
 async function onLogin() {
   const uid = state.session.user.id;
-  try {
-    state.me = await api.getMyProfile(uid);
-  } catch (e) {
-    // El perfil lo crea un trigger al registrarse; si tardó un instante, reintentamos.
-    await new Promise((r) => setTimeout(r, 800));
-    state.me = await api.getMyProfile(uid);
+  // El perfil lo crea un trigger al registrarse: reintentar un par de veces por si tardó.
+  for (let i = 0; i < 3 && !state.me; i++) {
+    try { state.me = await api.getMyProfile(uid); }
+    catch (_) { await new Promise((r) => setTimeout(r, 700)); }
+  }
+  if (!state.me) {
+    // Sesión guardada de una cuenta que ya no existe (o token vencido): cerrar y pedir entrar de nuevo.
+    await signOut();
+    return;
   }
   hooks.setLocalName?.(state.me.display_name || state.me.username);
-  await api.setStatus(uid, 'online');
-  state.heartbeat = setInterval(() => api.setStatus(uid, state.me?.status === 'offline' ? 'online' : state.me.status), 60000);
-  window.addEventListener('beforeunload', () => api.setStatus(uid, 'offline'));
+  startPresence(uid);
   await Promise.all([refreshFriends(), refreshChannels()]);
   subscribeAll(uid);
   headerBtn.querySelector('span').textContent = state.me.display_name || state.me.username;
+}
+
+// Presencia: un canal compartido. Cada cliente "anuncia" que está conectado y Supabase
+// avisa solo altas y bajas. No escribe en la base ni manda nada mientras nadie cambia.
+function myStatus() {
+  return state.me?.status && state.me.status !== 'offline' ? state.me.status : 'online';
+}
+
+function startPresence(uid) {
+  const ch = supabase.channel('presencia', { config: { presence: { key: uid } } });
+  ch.on('presence', { event: 'sync' }, () => {
+    const s = ch.presenceState();
+    state.online = new Map(Object.entries(s).map(([id, metas]) => [id, metas[metas.length - 1]?.status || 'online']));
+    safeRender();
+  });
+  ch.subscribe(async (status) => {
+    if (status === 'SUBSCRIBED') await ch.track({ status: myStatus() });
+  });
+  state.presence = ch;
+  state.unsub.push(() => { supabase.removeChannel(ch); state.presence = null; state.online = new Map(); });
+}
+
+// No re-dibujar el panel mientras alguien está escribiendo en él (perdería lo tipeado).
+function safeRender() {
+  const a = document.activeElement;
+  if (drawer && !drawer.hidden && a && drawer.contains(a) && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) {
+    state.pendingRender = true;
+    return;
+  }
+  render();
 }
 
 function onLogout() {
@@ -133,7 +167,6 @@ function onLogout() {
 function subscribeAll(uid) {
   state.unsub.push(api.subscribe('social-' + uid, [
     { table: 'friendships', cb: () => refreshFriends().then(render) },
-    { table: 'profiles', event: 'UPDATE', cb: (p) => onProfileChange(p.new) },
     { table: 'channel_members', cb: () => refreshChannels().then(render) },
     { table: 'call_invites', event: 'INSERT', filter: `callee_id=eq.${uid}`, cb: (p) => onIncomingCall(p.new) },
     { table: 'call_invites', event: 'UPDATE', filter: `caller_id=eq.${uid}`, cb: (p) => onOutgoingCallUpdate(p.new) },
@@ -265,17 +298,18 @@ function loginView() {
       <button type="button" class="${signup ? '' : 'active'}" data-mode="login">Ya tengo cuenta</button>
     </div>
     <p class="sc-muted">${signup
-      ? 'Solo con tu mail, sin contraseña. Te mandamos un mail con un enlace para entrar.'
-      : 'Escribí el mail con el que creaste la cuenta. Te mandamos un enlace para entrar.'}</p>
+      ? 'Solo con tu mail, sin contraseña. Te mandamos un código para entrar.'
+      : 'Escribí el mail con el que creaste la cuenta. Te mandamos un código para entrar.'}</p>
     ${step === 1 ? `
       <form id="scEmailForm">
         <label>Tu mail</label>
         <input type="email" id="scEmail" placeholder="vos@ejemplo.com" autocomplete="email" required />
-        <button class="sc-primary" type="submit">${signup ? 'Crear cuenta' : 'Mandarme el enlace'}</button>
+        <button class="sc-primary" type="submit">${signup ? 'Crear cuenta' : 'Mandarme el código'}</button>
+        <button class="sc-link" type="button" id="scHaveCode">Ya tengo un código</button>
       </form>` : `
       <form id="scCodeForm">
-        <p class="sc-ok">Listo, revisá <b>${esc(state.loginEmail)}</b> (mirá también en spam).</p>
-        <label>Copiá el enlace del mail y pegalo acá (o el código, si el mail trae uno)</label>
+        <p class="sc-ok">${state.codeOnly ? `Escribí el código para <b>${esc(state.loginEmail)}</b>.` : `Listo, revisá <b>${esc(state.loginEmail)}</b> (mirá también en spam).`}</p>
+        <label>Código de 6 dígitos, o el enlace completo del mail</label>
         <input type="text" id="scCode" placeholder="https://... o 123456" autocomplete="one-time-code" required />
         <button class="sc-primary" type="submit">Entrar</button>
         <button class="sc-link" type="button" id="scBack">Usar otro mail</button>
@@ -288,8 +322,8 @@ function bindLogin() {
   drawer.querySelector('#scEmailForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = e.target.querySelector('button'); btn.disabled = true;
-    try { state.loginEmail = await sendCode(drawer.querySelector('#scEmail').value, { createUser: state.loginMode !== 'login' }); render(); }
-    catch (err) { showLoginError(err.message); btn.disabled = false; }
+    try { state.loginEmail = await sendCode(drawer.querySelector('#scEmail').value, { createUser: state.loginMode !== 'login' }); state.codeOnly = false; render(); }
+    catch (err) { showLoginError(err.message + (/Demasiados/.test(err.message) ? ' Si ya tenés un código, tocá "Ya tengo un código".' : '')); btn.disabled = false; }
   });
   drawer.querySelector('#scCodeForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -297,7 +331,12 @@ function bindLogin() {
     try { await verifyCode(state.loginEmail, drawer.querySelector('#scCode').value); state.loginEmail = null; }
     catch (err) { showLoginError(err.message); btn.disabled = false; }
   });
-  drawer.querySelector('#scBack')?.addEventListener('click', () => { state.loginEmail = null; render(); });
+  drawer.querySelector('#scBack')?.addEventListener('click', () => { state.loginEmail = null; state.codeOnly = false; render(); });
+  drawer.querySelector('#scHaveCode')?.addEventListener('click', () => {
+    const v = (drawer.querySelector('#scEmail').value || '').trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return showLoginError('Primero escribí tu mail.');
+    state.loginEmail = v; state.codeOnly = true; render();
+  });
   drawer.querySelector('#scCloseLogin')?.addEventListener('click', () => toggleDrawer(false));
   drawer.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => { state.loginMode = b.dataset.mode; state.loginEmail = null; render(); }));
   drawer.querySelector('#scEmail')?.focus();
@@ -428,7 +467,7 @@ function bindMain() {
   const q = (s) => drawer.querySelector(s);
   q('#scClose')?.addEventListener('click', () => toggleDrawer(false));
   drawer.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => { state.tab = b.dataset.tab; render(); }));
-  q('#scStatus')?.addEventListener('change', async (e) => { state.me.status = e.target.value; await api.setStatus(state.me.id, e.target.value); });
+  q('#scStatus')?.addEventListener('change', async (e) => { state.me.status = e.target.value; state.presence?.track({ status: myStatus() }); await api.setStatus(state.me.id, e.target.value); });
 
   // amigos
   q('#scSearchForm')?.addEventListener('submit', async (e) => {
@@ -482,7 +521,7 @@ function bindMain() {
       headerBtn.querySelector('span').textContent = display_name || username;
     }, 'Perfil guardado');
   });
-  q('#scLogout')?.addEventListener('click', async () => { await api.setStatus(state.me.id, 'offline'); await signOut(); });
+  q('#scLogout')?.addEventListener('click', async () => { await signOut(); });
 }
 
 async function act(fn, okMsg) {

@@ -13,5 +13,8 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     // Implicit: el enlace del mail funciona aunque se abra en otra pestaña,
     // y el mismo enlace se puede pegar dentro de la app de escritorio.
     flowType: 'implicit'
+  },
+  realtime: {
+    params: { eventsPerSecond: 20 } // señalización WebRTC (ICE) necesita ráfagas cortas
   }
 });

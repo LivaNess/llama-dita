@@ -33,6 +33,7 @@ Cronológico. Acá se lee qué significa cada área y foco (el número no es un 
 | `1.5.2C` | Claude | Escritorio / fuente del updater | Fix: el aviso de actualización quedaba debajo de la capa del panel de cuenta (no se podía clickear). Click afuera y botón ✕ cierran el panel de login. |
 | `1.5.2D` | Claude | Escritorio / fuente del updater | Versión publicada para que Martín pruebe la actualización desde 1.5.2C. |
 | `1.6.1A` | Claude | Acceso / crear cuenta vs iniciar sesión | Pestañas "Crear cuenta" / "Ya tengo cuenta" (esta última no crea usuarios: avisa si el mail no existe). Copy claro: el mail trae un enlace, hay que pegarlo en la app. |
+| `1.7.1A` | Claude | Escalabilidad (50-100 usuarios) | Presencia por Realtime Presence en vez de latidos en `profiles` (con 100 usuarios eran ~10.000 mensajes/min); `profiles` fuera de la publicación Realtime (migración 002). Acceso: "Ya tengo un código" para entrar aunque el mail no salga. Sesión guardada de una cuenta borrada ya no rompe el panel. |
 
 ---
 
@@ -46,7 +47,7 @@ Cronológico. Acá se lee qué significa cada área y foco (el número no es un 
 ---
 
 ## 📌 Pendientes conocidos
-- SMTP propio en Supabase (con el mail por defecto del plan gratis: 2 mails/hora y plantilla no editable, así que hoy el mail trae solo el enlace).
+- **Una conexión en vivo por usuario (pendiente de prueba real)**: `src/network/peerManager.js` crea su propio cliente Supabase, así que cada usuario abre 2 conexiones Realtime (tope del plan gratis: 200 simultáneas → ~100 usuarios). El cambio es usar `import { supabase } from '../supabase/client.js'`. Probado que la señalización se suscribe con el cliente compartido; falta una llamada completa entre dos personas antes de subirlo. Área de red: coordinar con Antigravity.
+- **SMTP propio en Supabase (bloqueante para uso real)**: sin SMTP, Supabase manda como máximo 2 mails por hora para todo el proyecto. liczeta usa Resend con dominio propio (150/hora). Límite de conexiones Realtime del plan gratis: 200 simultáneas (1 por usuario desde 1.7.1A).
 - Regenerar `installer/Llama-dita-Setup.exe` con `crear-instalador.bat` (Inno Setup) para instalaciones nuevas en `1.3.1A`.
-- La señalización (`src/network/peerManager.js`) crea su propio cliente Supabase; conviene que use `src/supabase/client.js` para no duplicar sesiones.
 - Al conectar por llamada directa, la cabina remota a veces muestra "Participante" en vez del nombre (el mensaje `profile` por DataChannel puede llegar antes de que el otro esté listo).
