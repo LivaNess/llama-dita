@@ -16,6 +16,20 @@ AplicaciÃ³n de comunicaciÃ³n de voz punto a punto (P2P) de baja latencia con
 - **MediciÃ³n visual**: Visualizador en tiempo real a 60 FPS con VU meter calibrado en decibelios (dB) y anÃ¡lisis de espectro de frecuencias por FFT.
 - **Bajo consumo de recursos**: Arquitectura basada en WebView2 nativo de Windows, con una huella de memoria promedio inferior a 40 MB de RAM y consumo de CPU nulo en estado de reposo.
 
+## Cuentas, amigos y canales
+
+Además de la sala de voz P2P, la app tiene cuentas de usuario con backend en Supabase (Postgres + Auth + Realtime):
+
+- **Entrar sin contraseña**: escribís tu mail, te llega un código (o un enlace) y con eso entrás. Botón **Amigos** arriba a la derecha.
+- **Perfil propio**: nombre visible, usuario (`@juan`), estado (conectado / ausente / no molestar).
+- **Amigos**: buscás a alguien por su usuario, le mandás solicitud, la acepta y listo. Ves quién está conectado.
+- **Llamada directa**: al lado de cada amigo conectado hay un botón de llamar. Al otro le suena un aviso; si atiende, los dos entran a la misma sala de voz P2P automáticamente.
+- **Canales**: cada usuario crea los suyos, de texto (chat en vivo) o de voz (una sala P2P fija). Se entra con un código de invitación o porque el dueño suma a un amigo.
+
+Los datos viven en Supabase y cada usuario solo ve lo suyo (políticas RLS en la base). El esquema completo está en `supabase/migrations/`. Las claves que hay en `src/supabase/client.js` son públicas por diseño; lo que protege los datos es RLS.
+
+Pendiente: configurar un proveedor de mail propio (SMTP) en Supabase. Con el mail por defecto del plan gratis hay un límite de 2 mails por hora en total, que sirve para probar pero no para uso real.
+
 ## Estructura del Proyecto
 
 ```
