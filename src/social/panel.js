@@ -75,9 +75,15 @@ function mount() {
   headerBtn.className = 'btn-invite sc-header-btn';
   headerBtn.id = 'btnSocialToggle';
   headerBtn.title = 'Cuenta, amigos y canales';
+  headerBtn.style.display = 'none';
   headerBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Crear cuenta</span>`;
   headerBtn.addEventListener('click', () => toggleDrawer());
   (document.querySelector('.room-actions') || document.querySelector('.app-header') || document.body).appendChild(headerBtn);
+
+  const sidebarUserBtn = document.getElementById('btnSidebarUser');
+  if (sidebarUserBtn) {
+    sidebarUserBtn.addEventListener('click', () => toggleDrawer());
+  }
 
   overlay = document.createElement('div');
   overlay.className = 'sc-overlay';
@@ -94,6 +100,7 @@ function mount() {
   }, 0));
 
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !drawer.hidden) toggleDrawer(false); });
+  bindSidebarForms();
 }
 
 function toggleDrawer(force) {
@@ -101,6 +108,8 @@ function toggleDrawer(force) {
   drawer.hidden = !open;
   overlay.hidden = !open;
   headerBtn.classList.toggle('active', open);
+  const userBtn = document.getElementById('btnSidebarUser');
+  if (userBtn) userBtn.classList.toggle('active', open);
 }
 
 // ------------------------------------------------------------------
@@ -263,6 +272,9 @@ async function cancelOutgoing() {
 // ------------------------------------------------------------------
 function render() {
   renderCallBanner();
+  renderSidebar();
+  renderChat();
+  hooks.onChannelChange?.(state.currentChannel);
   if (!state.session) { drawer.innerHTML = loginView(); bindLogin(); return; }
   if (!state.me) { drawer.innerHTML = `<div class="sc-empty">Cargando tu cuenta…</div>`; return; }
   drawer.innerHTML = `
@@ -428,6 +440,7 @@ async function openChannel(id) {
   const c = state.channels.find((x) => x.id === id);
   if (!c) return;
   state.currentChannel = c;
+  toggleDrawer(false);
   state.members = [];
   state.messages = [];
   render();
@@ -551,4 +564,290 @@ function renderCallBanner() {
       <button class="sc-danger sc-small" id="scCancel">Cancelar</button>`;
     el.querySelector('#scCancel').onclick = cancelOutgoing;
   }
+}
+
+// ------------------------------------------------------------------
+// Renderizado de Barra Lateral (Canales, Amigos y Pie de Usuario)
+// ------------------------------------------------------------------
+function renderSidebar() {
+  const channelsList = document.getElementById('sidebarChannelsList');
+  const friendsList = document.getElementById('sidebarFriendsList');
+  const requestsList = document.getElementById('sidebarRequestsList');
+  const userAvatar = document.getElementById('sidebarUserAvatar');
+  const userName = document.getElementById('sidebarUserName');
+  const userHandle = document.getElementById('sidebarUserHandle');
+
+  // 1. Pie de Usuario
+  if (state.session && state.me) {
+    const name = state.me.display_name || state.me.username;
+    const initials = name.slice(0, 2).toUpperCase();
+    if (userAvatar) userAvatar.textContent = initials;
+    if (userName) userName.textContent = name;
+    if (userHandle) userHandle.textContent = `@${state.me.username}`;
+  } else {
+    if (userAvatar) userAvatar.textContent = 'YO';
+    if (userName) userName.textContent = 'Crear cuenta';
+    if (userHandle) userHandle.textContent = 'Clic para entrar';
+  }
+
+  // 2. Lista de Canales
+  if (channelsList) {
+    if (!state.session) {
+      channelsList.innerHTML = `<p class="sc-muted sc-tiny" style="padding: 0.5rem 0.6rem;">Iniciá sesión para ver canales.</p>`;
+    } else if (!state.channels.length) {
+      channelsList.innerHTML = `<p class="sc-muted sc-tiny" style="padding: 0.5rem 0.6rem;">Sin canales. Creá uno con +.</p>`;
+    } else {
+      channelsList.innerHTML = state.channels.map((c) => {
+        const isActive = state.currentChannel?.id === c.id;
+        const icon = c.kind === 'voice' ? '🔊' : '#';
+        return `
+          <button class="sidebar-channel-item ${isActive ? 'active' : ''}" data-sidebar-channel="${c.id}" title="${esc(c.name)} (${c.kind === 'voice' ? 'Voz' : 'Texto'})">
+            <span class="channel-kind">${icon}</span>
+            <span class="channel-name">${esc(c.name)}</span>
+          </button>
+        `;
+      }).join('');
+
+      channelsList.querySelectorAll('[data-sidebar-channel]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.sidebarChannel;
+          if (state.currentChannel?.id === id) {
+            closeChannel();
+          } else {
+            openChannel(id);
+          }
+        });
+      });
+    }
+  }
+
+  // 3. Solicitudes de amistad recibidas
+  if (requestsList) {
+    if (state.session && state.me) {
+      const received = state.friendships.filter((f) => f.status === 'pending' && f.addressee_id === state.me.id);
+      if (received.length) {
+        requestsList.innerHTML = received.map((f) => `
+          <div class="sidebar-request-item" style="padding: 0.45rem 0.6rem; background: rgba(168,85,247,0.12); border: 1px solid rgba(168,85,247,0.25); border-radius: 7px; margin-bottom: 0.4rem; font-size: 0.78rem;">
+            <div style="margin-bottom: 0.35rem; color: #fff;"><strong>${esc(f.requester?.display_name || f.requester?.username)}</strong> te agregó</div>
+            <div style="display: flex; gap: 0.3rem;">
+              <button class="sc-primary sc-small" data-sidebar-accept="${f.id}" style="padding: 0.2rem 0.5rem; font-size: 0.72rem;">Aceptar</button>
+              <button class="sc-ghost sc-small" data-sidebar-reject="${f.id}" style="padding: 0.2rem 0.5rem; font-size: 0.72rem;">No</button>
+            </div>
+          </div>
+        `).join('');
+
+        requestsList.querySelectorAll('[data-sidebar-accept]').forEach((b) => {
+          b.addEventListener('click', () => act(() => api.acceptFriendRequest(b.dataset.sidebarAccept), 'Ahora son amigos'));
+        });
+        requestsList.querySelectorAll('[data-sidebar-reject]').forEach((b) => {
+          b.addEventListener('click', () => act(() => api.removeFriendship(b.dataset.sidebarReject)));
+        });
+      } else {
+        requestsList.innerHTML = '';
+      }
+    } else {
+      requestsList.innerHTML = '';
+    }
+  }
+
+  // 4. Lista de Amigos
+  if (friendsList) {
+    if (!state.session) {
+      friendsList.innerHTML = `<p class="sc-muted sc-tiny" style="padding: 0.5rem 0.6rem;">Iniciá sesión para ver amigos.</p>`;
+    } else {
+      const friends = state.friendships.filter((f) => f.status === 'accepted')
+        .map((f) => ({ f, p: otherSide(f) }))
+        .sort((a, b) => (isOnline(b.p) - isOnline(a.p)) || (a.p.display_name || a.p.username).localeCompare(b.p.display_name || b.p.username));
+
+      if (!friends.length) {
+        friendsList.innerHTML = `<p class="sc-muted sc-tiny" style="padding: 0.5rem 0.6rem;">Sin amigos. Agregá con +.</p>`;
+      } else {
+        friendsList.innerHTML = friends.map(({ f, p }) => `
+          <div class="sidebar-friend-item">
+            ${statusDot(p)}
+            <div class="friend-info">
+              <span class="friend-name">${esc(p.display_name || p.username)}</span>
+              <span class="friend-handle">@${esc(p.username)}</span>
+            </div>
+            <button class="btn-friend-call" data-sidebar-call="${p.id}" title="Llamar" ${isOnline(p) ? '' : 'disabled'}>📞</button>
+          </div>
+        `).join('');
+
+        friendsList.querySelectorAll('[data-sidebar-call]').forEach((b) => {
+          b.addEventListener('click', () => {
+            const friend = friends.find((x) => x.p.id === b.dataset.sidebarCall)?.p;
+            if (friend) callFriend(friend);
+          });
+        });
+      }
+    }
+  }
+}
+
+// ------------------------------------------------------------------
+// Renderizado de Chat en el Área Principal
+// ------------------------------------------------------------------
+function renderChat() {
+  const chatView = document.getElementById('channelChatView');
+  if (!chatView) return;
+  if (!state.currentChannel) return;
+
+  const c = state.currentChannel;
+  const icon = document.getElementById('chatChannelIcon');
+  const title = document.getElementById('chatChannelTitle');
+  const type = document.getElementById('chatChannelType');
+  const voiceBtn = document.getElementById('btnChatVoice');
+  const copyBtn = document.getElementById('btnChatCopyInvite');
+  const closeBtn = document.getElementById('btnChatClose');
+  const messagesBox = document.getElementById('chatMessages');
+
+  if (icon) icon.textContent = c.kind === 'voice' ? '🔊' : '#';
+  if (title) title.textContent = c.name;
+  if (type) type.textContent = c.kind === 'voice' ? 'Canal de voz' : 'Canal de texto';
+
+  if (voiceBtn) {
+    voiceBtn.style.display = c.kind === 'voice' ? 'inline-block' : 'none';
+    voiceBtn.onclick = () => {
+      hooks.joinRoom?.(c.room_code);
+      hooks.toast?.(`Entrando a la sala de voz de ${c.name}`);
+    };
+  }
+
+  if (copyBtn) {
+    copyBtn.onclick = () => {
+      navigator.clipboard.writeText(c.invite_code).then(() => {
+        hooks.toast?.('Código de invitación copiado');
+      });
+    };
+  }
+
+  if (closeBtn) {
+    closeBtn.onclick = () => closeChannel();
+  }
+
+  if (messagesBox) {
+    if (!state.messages.length) {
+      messagesBox.innerHTML = `<p class="sc-empty">Sin mensajes todavía. ¡Sé el primero en escribir!</p>`;
+    } else {
+      messagesBox.innerHTML = state.messages.map(msgItem).join('');
+      messagesBox.scrollTop = messagesBox.scrollHeight;
+    }
+  }
+}
+
+// ------------------------------------------------------------------
+// Bindings para formularios de la Barra Lateral y Chat
+// ------------------------------------------------------------------
+function bindSidebarForms() {
+  const btnToggleCreate = document.getElementById('btnToggleCreateChannel');
+  const channelForms = document.getElementById('sidebarChannelForms');
+  if (btnToggleCreate && channelForms && !btnToggleCreate._bound) {
+    btnToggleCreate._bound = true;
+    btnToggleCreate.addEventListener('click', () => {
+      channelForms.style.display = channelForms.style.display === 'none' ? 'flex' : 'none';
+    });
+  }
+
+  const createForm = document.getElementById('sidebarCreateChannelForm');
+  if (createForm && !createForm._bound) {
+    createForm._bound = true;
+    createForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!state.session) { toggleDrawer(true); return; }
+      const name = document.getElementById('sidebarChannelName').value.trim();
+      const kind = document.getElementById('sidebarChannelKind').value;
+      if (!name) return;
+      act(async () => {
+        const created = await api.createChannel(state.me.id, name, kind);
+        createForm.reset();
+        channelForms.style.display = 'none';
+        if (created?.id) openChannel(created.id);
+      }, 'Canal creado');
+    });
+  }
+
+  const joinForm = document.getElementById('sidebarJoinChannelForm');
+  if (joinForm && !joinForm._bound) {
+    joinForm._bound = true;
+    joinForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!state.session) { toggleDrawer(true); return; }
+      const code = document.getElementById('sidebarJoinCode').value.trim();
+      if (!code) return;
+      act(async () => {
+        const res = await api.joinChannelByCode(code);
+        joinForm.reset();
+        channelForms.style.display = 'none';
+        if (res?.id) openChannel(res.id);
+      }, 'Entraste al canal');
+    });
+  }
+
+  const btnToggleAdd = document.getElementById('btnToggleAddFriend');
+  const friendSearch = document.getElementById('sidebarFriendSearch');
+  if (btnToggleAdd && friendSearch && !btnToggleAdd._bound) {
+    btnToggleAdd._bound = true;
+    btnToggleAdd.addEventListener('click', () => {
+      friendSearch.style.display = friendSearch.style.display === 'none' ? 'flex' : 'none';
+    });
+  }
+
+  const searchForm = document.getElementById('sidebarSearchFriendForm');
+  const resultsBox = document.getElementById('sidebarSearchResults');
+  if (searchForm && !searchForm._bound) {
+    searchForm._bound = true;
+    searchForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!state.session) { toggleDrawer(true); return; }
+      const q = document.getElementById('sidebarSearchUser').value.trim();
+      if (!q) return;
+      if (resultsBox) resultsBox.innerHTML = `<p class="sc-muted sc-tiny" style="padding: 0.3rem;">Buscando...</p>`;
+      try {
+        const res = await api.searchUsers(q, state.me.id);
+        if (!res.length) {
+          if (resultsBox) resultsBox.innerHTML = `<p class="sc-muted sc-tiny" style="padding: 0.3rem;">No se encontraron usuarios.</p>`;
+          return;
+        }
+        if (resultsBox) {
+          resultsBox.innerHTML = res.map((p) => {
+            const rel = state.friendships.find((f) => f.requester_id === p.id || f.addressee_id === p.id);
+            return `
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.35rem 0.5rem; background: rgba(255,255,255,0.03); border-radius: 6px; margin-top: 0.3rem;">
+                <div style="font-size: 0.78rem;"><strong>${esc(p.display_name || p.username)}</strong> <span style="color: #64748b;">@${esc(p.username)}</span></div>
+                ${rel ? `<small class="sc-muted">${rel.status === 'accepted' ? 'amigo' : 'pendiente'}</small>` : `<button class="sc-primary sc-small" data-search-add="${p.id}" style="padding: 0.2rem 0.5rem; font-size: 0.72rem;">Sumar</button>`}
+              </div>
+            `;
+          }).join('');
+
+          resultsBox.querySelectorAll('[data-search-add]').forEach((b) => {
+            b.addEventListener('click', () => act(() => api.sendFriendRequest(state.me.id, b.dataset.searchAdd), 'Solicitud enviada'));
+          });
+        }
+      } catch (err) {
+        if (resultsBox) resultsBox.innerHTML = `<p class="sc-error sc-tiny" style="padding: 0.3rem;">${esc(err.message)}</p>`;
+      }
+    });
+  }
+
+  const chatMsgForm = document.getElementById('chatMessageForm');
+  const chatMsgInput = document.getElementById('chatMessageInput');
+  if (chatMsgForm && !chatMsgForm._bound) {
+    chatMsgForm._bound = true;
+    chatMsgForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!state.currentChannel || !state.me) return;
+      const text = chatMsgInput.value.trim();
+      if (!text) return;
+      chatMsgInput.value = '';
+      try {
+        await api.sendMessage(state.currentChannel.id, state.me.id, text);
+      } catch (err) {
+        hooks.toast?.(err.message);
+      }
+    });
+  }
+}
+
+export function getSocialState() {
+  return state;
 }

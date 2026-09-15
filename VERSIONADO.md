@@ -60,4 +60,5 @@ Cuatro piezas: tres números y una letra → `H.A.F` + `letra`.
 | `1.5.2C` | Fix: aviso de actualización tapado por el panel de cuenta. |
 | `1.5.2D` | Prueba de actualización desde 1.5.2C. |
 | `1.6.1A` | Acceso: "Crear cuenta" / "Ya tengo cuenta". |
-| `1.7.1A` | Escalabilidad: presencia sin escrituras, entrar con código. **← actual** |
+| `1.7.1A` | Escalabilidad: presencia sin escrituras, entrar con código. |
+| `1.8.1A` | Interfaz: barra lateral persistente (canales, amigos, pie de usuario con muteo) y vistas condicionales (chat de canal / cabinas en llamada activa / standby limpio). **← actual** |

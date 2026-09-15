@@ -53,6 +53,29 @@ const btnToggleRemoteAudioText = document.getElementById('btnToggleRemoteAudioTe
 const remoteAudioElement = document.getElementById('remoteAudioElement');
 const toastContainer = document.getElementById('toastContainer');
 
+// Layout Views & Sidebar Mic
+const channelChatView = document.getElementById('channelChatView');
+const studioBoothsView = document.getElementById('studioBoothsView');
+const standbyView = document.getElementById('standbyView');
+const btnSidebarMic = document.getElementById('btnSidebarMic');
+let currentActiveChannel = null;
+
+function updateMainViews() {
+  if (currentActiveChannel) {
+    if (channelChatView) channelChatView.style.display = 'flex';
+    if (studioBoothsView) studioBoothsView.style.display = 'none';
+    if (standbyView) standbyView.style.display = 'none';
+  } else if (isConnected) {
+    if (channelChatView) channelChatView.style.display = 'none';
+    if (studioBoothsView) studioBoothsView.style.display = 'grid';
+    if (standbyView) standbyView.style.display = 'none';
+  } else {
+    if (channelChatView) channelChatView.style.display = 'none';
+    if (studioBoothsView) studioBoothsView.style.display = 'none';
+    if (standbyView) standbyView.style.display = 'flex';
+  }
+}
+
 // Visualizer Instances
 const hostVisualizer = new AudioVisualizer(hostCanvas, { theme: 'host' });
 const guestVisualizer = new AudioVisualizer(guestCanvas, { theme: 'guest' });
@@ -148,6 +171,7 @@ async function init() {
 
   await startMicrophone();
   setupNetworking();
+  updateMainViews();
   requestAnimationFrame(renderAudioMetrics);
 }
 
@@ -247,6 +271,7 @@ function setupNetworking() {
     } else if (status === 'error') {
       guestStatusPill.innerHTML = `<span style="color:#f87171">${msg}</span>`;
     }
+    updateMainViews();
   };
 
   peerManager.onRemoteStream = (stream) => {
@@ -398,23 +423,39 @@ function renderAudioMetrics() {
   requestAnimationFrame(renderAudioMetrics);
 }
 
-// Mute Local Microphone Toggle
-btnToggleMic.addEventListener('click', () => {
-  const isMuted = audioManager.toggleMute();
+// Mute UI synchronization
+function syncMicUi(isMuted) {
   if (isMuted) {
     btnToggleMic.className = 'btn-control muted';
     btnToggleMicText.textContent = 'Activar Mic';
-    showToast('Micrófono silenciado');
+    if (btnSidebarMic) {
+      btnSidebarMic.className = 'sidebar-mic-btn muted';
+      btnSidebarMic.title = 'Activar Micrófono';
+    }
   } else {
     btnToggleMic.className = 'btn-control active';
     btnToggleMicText.textContent = 'Silenciar';
-    showToast('Micrófono activo');
+    if (btnSidebarMic) {
+      btnSidebarMic.className = 'sidebar-mic-btn active';
+      btnSidebarMic.title = 'Silenciar Micrófono';
+    }
   }
+}
+
+// Mute Local Microphone Toggle
+btnToggleMic.addEventListener('click', () => {
+  const isMuted = audioManager.toggleMute();
+  syncMicUi(isMuted);
+  showToast(isMuted ? 'Micrófono silenciado' : 'Micrófono activo');
 
   peerManager.sendData({
     type: 'mute',
     muted: isMuted
   });
+});
+
+btnSidebarMic?.addEventListener('click', () => {
+  btnToggleMic.click();
 });
 
 // Mute Remote Toggle
@@ -470,7 +511,11 @@ window.addEventListener('DOMContentLoaded', () => {
       hostNameInput.value = name;
       peerManager.sendData({ type: 'profile', name });
     },
-    toast: showToast
+    toast: showToast,
+    onChannelChange: (channel) => {
+      currentActiveChannel = channel;
+      updateMainViews();
+    }
   });
   // Buscar actualizaciones al abrir (opcional) + popover en el tag de versión del header.
   initUpdater({ toast: showToast });
