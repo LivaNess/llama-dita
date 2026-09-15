@@ -153,7 +153,7 @@ class AudioManager {
 
       return this.localStream;
     } catch (err) {
-      console.error('Error al inicializar micrÃ³fono:', err);
+      console.error('Error al inicializar micrófono:', err);
       throw err;
     }
   }

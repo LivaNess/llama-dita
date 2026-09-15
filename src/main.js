@@ -1,6 +1,7 @@
 import { audioManager } from './audio/audioManager.js';
 import { PeerManager } from './network/peerManager.js';
 import { AudioVisualizer } from './components/visualizer.js';
+import { initSocial } from './social/panel.js';
 
 // DOM Elements
 const audioPermissionBanner = document.getElementById('audioPermissionBanner');
@@ -115,7 +116,7 @@ async function startMicrophone(deviceId = null) {
     
     const track = localStream.getAudioTracks()[0];
     const trackLabel = track && track.label ? track.label : 'Dispositivo activo';
-    hostStatusPill.innerHTML = `<span>ðŸŽ¤ ${trackLabel.substring(0, 24)}</span>`;
+    hostStatusPill.innerHTML = `<span>🎤 ${trackLabel.substring(0, 24)}</span>`;
     
     peerManager.updateLocalStream(localStream);
     await loadAudioDevices();
@@ -124,12 +125,12 @@ async function startMicrophone(deviceId = null) {
     }
     return true;
   } catch (err) {
-    console.error('Error de acceso a micrÃ³fono:', err);
-    hostStatusPill.innerHTML = '<span style="color:#ef4444">Permiso de micrÃ³fono requerido</span>';
+    console.error('Error de acceso a micrófono:', err);
+    hostStatusPill.innerHTML = '<span style="color:#ef4444">Permiso de micrófono requerido</span>';
     if (audioPermissionBanner) {
       audioPermissionBanner.style.display = 'flex';
     }
-    showToast('Permiso de micrÃ³fono no concedido', 4000);
+    showToast('Permiso de micrófono no concedido', 4000);
     return false;
   }
 }
@@ -278,7 +279,7 @@ function setupNetworking() {
   };
 
   peerManager.onError = (err) => {
-    console.error('Error de conexiÃ³n:', err);
+    console.error('Error de conexión:', err);
   };
 
   peerManager.initPeer(localStream);
@@ -295,7 +296,7 @@ function renderAudioMetrics() {
   } else if (audioManager.isMuted) {
     hostVuFill.style.width = '0%';
     hostVuPeak.style.left = '0%';
-    hostMeterReadout.textContent = 'SILENCIADO Â· 0%';
+    hostMeterReadout.textContent = 'SILENCIADO · 0%';
     hostSpeakingIndicator.className = 'speaking-indicator muted';
     hostSpeakingText.textContent = 'Silenciado';
     hostAvatarDisc.classList.remove('active');
@@ -317,7 +318,7 @@ function renderAudioMetrics() {
     }
     hostVuPeak.style.left = `${hostPeakHold}%`;
 
-    hostMeterReadout.textContent = `${db} dB Â· ${volume}%`;
+    hostMeterReadout.textContent = `${db} dB · ${volume}%`;
 
     if (isSpeaking) {
       hostSpeakingIndicator.className = 'speaking-indicator active';
@@ -344,7 +345,7 @@ function renderAudioMetrics() {
     if (isRemoteMuted) {
       guestVuFill.style.width = '0%';
       guestVuPeak.style.left = '0%';
-      guestMeterReadout.textContent = 'MUTED Â· 0%';
+      guestMeterReadout.textContent = 'MUTED · 0%';
       guestSpeakingIndicator.className = 'speaking-indicator muted';
       guestSpeakingText.textContent = 'Silenciado';
       guestVisualizer.draw(null, false);
@@ -362,7 +363,7 @@ function renderAudioMetrics() {
       }
       guestVuPeak.style.left = `${guestPeakHold}%`;
 
-      guestMeterReadout.textContent = `${db} dB Â· ${volume}%`;
+      guestMeterReadout.textContent = `${db} dB · ${volume}%`;
 
       if (isSpeaking) {
         guestSpeakingIndicator.className = 'speaking-indicator active';
@@ -386,7 +387,7 @@ function renderAudioMetrics() {
   } else {
     guestVuFill.style.width = '0%';
     guestVuPeak.style.left = '0%';
-    guestMeterReadout.textContent = '-âˆž dB Â· 0%';
+    guestMeterReadout.textContent = '-∞ dB · 0%';
     guestVisualizer.draw(null, false);
     guestAvatarDisc.classList.remove('active');
     guestVocalAura.style.transform = 'scale(1)';
@@ -402,11 +403,11 @@ btnToggleMic.addEventListener('click', () => {
   if (isMuted) {
     btnToggleMic.className = 'btn-control muted';
     btnToggleMicText.textContent = 'Activar Mic';
-    showToast('MicrÃ³fono silenciado');
+    showToast('Micrófono silenciado');
   } else {
     btnToggleMic.className = 'btn-control active';
     btnToggleMicText.textContent = 'Silenciar';
-    showToast('MicrÃ³fono activo');
+    showToast('Micrófono activo');
   }
 
   peerManager.sendData({
@@ -455,6 +456,21 @@ hostNameInput.addEventListener('change', () => {
 // Start the app on load
 window.addEventListener('DOMContentLoaded', () => {
   init();
+  // Cuenta, amigos, canales y llamadas directas (Supabase). Aditivo a la sala P2P.
+  // No espera al micrófono: la cuenta tiene que estar disponible aunque el permiso demore o falle.
+  initSocial({
+    joinRoom: (code) => {
+      if (peerManager.setRoom(code)) {
+        roomPill.textContent = `Sala: ${peerManager.roomId}`;
+      }
+    },
+    getRoom: () => peerManager.roomId,
+    setLocalName: (name) => {
+      hostNameInput.value = name;
+      peerManager.sendData({ type: 'profile', name });
+    },
+    toast: showToast
+  });
 });
 // Room Join Controls
 const inputJoinRoom = document.getElementById('inputJoinRoom');
