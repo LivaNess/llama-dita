@@ -8,24 +8,20 @@ Para evitar conflictos de git, pérdidas de código y solapamientos, **ambos age
 
 ---
 
-## 1. Esquema Obligatorio de Control de Versiones: `X.Y.Z.L`
+## 1. Esquema Obligatorio de Control de Versiones: Semantic Versioning (SemVer 2.0.0)
 
-Toda versión y commit debe respetar estrictamente la estructura:
-- **X** (Versión Mayor): Cambios masivos o reestructuraciones completas del núcleo.
-- **Y** (Área de Trabajo Activa):
-  - `1`: Audio & Procesamiento DSP (`src/audio/`)
-  - `2`: Red, Señalización Supabase & WebRTC (`src/network/`)
-  - `3`: Interfaz de Usuario, Canvas Visualizers & Estilos (`src/components/`, `src/style.css`, `index.html`, `src/main.js`)
-  - `4`: Empaquetado Desktop, Instalador Windows & Scripts (`desktop/`, `installer.iss`, `*.bat`)
-- **Z** (Punto Específico): Identificador numérico de la función o subtarea dentro del área.
-- **L** (Letra de Iteración / Fix): Contador alfabético del intento de corrección (`A` = primer intento, `B` = segundo intento, etc.).
+Se adopta formalmente el estándar **SemVer 2.0.0 (`MAJOR.MINOR.PATCH`)**:
+- **MAJOR** (ej. `1.0.0` ➔ `2.0.0`): Cambios incompatibles de gran escala o reestructuraciones completas.
+- **MINOR** (ej. `1.0.0` ➔ `1.1.0`): Nuevas funcionalidades retrocompatibles (ej. cuentas, amigos, canales, updater).
+- **PATCH** (ej. `1.0.0` ➔ `1.0.1`): Correcciones de errores, fixes de red o parches sin alterar la API.
 
-Al publicar o commitear una versión, debe quedar actualizada en:
-1. `package.json` (`version`)
-2. `desktop/neutralino.config.json` (`version`)
-3. `installer.iss` (`AppVersion`)
-4. `index.html` y `desktop/resources/index.html` (`.logo-tag`)
-5. `SYNC.md` (registro histórico)
+La versión vive en `package.json` como **fuente única de verdad** y se propaga automáticamente a `desktop/neutralino.config.json` e `installer.iss`.
+
+Al realizar un commit, utilizar **Conventional Commits**:
+- `feat:` Nuevas funcionalidades
+- `fix:` Correcciones de bugs
+- `refactor:` Refactorización sin cambios de comportamiento
+- `chore:` Tareas de mantenimiento, dependencias o configuración
 
 ---
 
@@ -52,7 +48,7 @@ Antes de realizar CUALQUIER edición en el código:
    - Liberar el lock activo (*Libre para tomar tareas*).
    - Agregar la nueva entrada en la tabla **"Historial de Cambios y Versiones"**.
 7. **Commit y Push**:
-   - Mensaje de commit estándar: `[X.Y.Z.L] Tipo: Descripción concisa y profesional`
+   - Mensaje de commit estándar: `tipo(alcance): descripción concisa` (ej. `feat: auto-updater`, `fix: stun/turn relay`)
    - Ejecutar `git push origin main`.
 
 ---

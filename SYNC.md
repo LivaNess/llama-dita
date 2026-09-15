@@ -27,16 +27,17 @@ Ambos agentes deben actualizar este archivo antes de comenzar una tarea y al fin
 
 ---
 
-## 📋 Historial de Cambios y Versiones
+## 📋 Historial de Cambios y Versiones (SemVer 2.0.0)
 
 | Versión | Agente | Área | Resumen Técnico |
-| :--- | :--- | :---: | :--- |
-| `0.0.0.A` | Antigravity | 2.1 | Migración completa de señalización a Supabase Realtime y WebRTC nativo con relé TURN. Adopción del formato de versionado X.Y.Z.L. |
+| :---: | :--- | :---: | :--- |
+| `1.0.0` | Equipo | Core | Versión inicial de la aplicación y empaquetado para Windows. |
+| `1.0.1` | Antigravity | Red | Migración completa de señalización a Supabase Realtime y WebRTC nativo con relé TURN. |
 
 ---
 
 ## ⚠️ Reglas Inquebrantables para Agentes
 1. **Compilación Limpia**: Nunca hagas `git push` con la compilación rota (`npm run build` debe dar código 0).
 2. **Respeto de Áreas**: No toques archivos del área del otro agente a menos que esté especificado en el lock de `SYNC.md`.
-3. **Tono Profesional**: Mantén los mensajes de commit en formato técnico: `[X.Y.Z.L] Tipo: Descripción`.
+3. **Conventional Commits**: Mantén los mensajes de commit en formato estándar (`feat:`, `fix:`, `chore:`, `refactor:`).
 4. **Rebase Obligatorio**: Ejecuta siempre `git pull --rebase origin main` antes de empezar para evitar bifurcaciones no deseadas.
