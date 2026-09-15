@@ -50,4 +50,5 @@ Cuatro piezas: tres números y una letra → `H.A.F` + `letra`.
 |---|---|
 | `1.1.1A` | Base de Juan: llamada de voz P2P, señalización por Supabase Realtime + TURN, cliente Windows. (Asignado retroactivamente; los esquemas anteriores `X.Y.Z.L` y SemVer `1.0.1` quedan obsoletos.) |
 | `1.2.1A` | Cuentas, amigos, canales y llamadas directas (Supabase Auth + tablas con RLS). |
-| `1.3.1A` | Actualizaciones automáticas opcionales + botón de buscar actualizaciones. **← actual** |
+| `1.3.1A` | Actualizaciones automáticas opcionales + botón de buscar actualizaciones. |
+| `1.3.1B` | El aviso muestra la versión instalada; primera actualización publicada para probar el updater. **← actual** |

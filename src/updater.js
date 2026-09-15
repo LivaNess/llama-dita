@@ -144,7 +144,7 @@ function showBanner(version) {
   const el = document.createElement('div');
   el.id = 'updBanner';
   el.className = 'upd-banner';
-  el.innerHTML = `<span class="upd-banner-text">Hay una versión nueva de Llama-dita (v${version}).</span>
+  el.innerHTML = `<span class="upd-banner-text">Hay una versión nueva de Llama-dita: v${version} (tenés la v${APP_VERSION}).</span>
     <button class="btn-invite" id="updBannerGo">${isDesktop() ? 'Actualizar ahora' : 'Recargar'}</button>
     <button class="upd-later" id="updBannerLater">Después</button>`;
   document.body.appendChild(el);
