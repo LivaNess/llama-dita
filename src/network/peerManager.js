@@ -17,6 +17,31 @@ export class PeerManager {
     this.onError = null;
   }
 
+  // Parse raw input (clean room code, partial code, or full URL)
+  static normalizeRoomId(rawInput) {
+    if (!rawInput) return null;
+    let input = rawInput.trim();
+
+    // Check if it's a URL
+    try {
+      if (input.includes('?') || input.includes('#')) {
+        const urlObj = new URL(input.startsWith('http') ? input : `http://dummy.com/${input}`);
+        const param = urlObj.searchParams.get('room') || new URLSearchParams(urlObj.hash.substring(1)).get('room');
+        if (param) input = param;
+      }
+    } catch (e) {}
+
+    // Clean characters
+    let cleaned = input.toLowerCase().replace(/[^a-z0-9_-]/g, '');
+    if (!cleaned) return null;
+
+    // Ensure llamadita- prefix
+    if (!cleaned.startsWith('llamadita-')) {
+      cleaned = `llamadita-${cleaned}`;
+    }
+    return cleaned;
+  }
+
   detectRoom() {
     const urlParams = new URLSearchParams(window.location.search);
     let room = urlParams.get('room');
@@ -26,13 +51,10 @@ export class PeerManager {
     }
 
     if (room) {
-      this.roomId = room.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+      this.roomId = PeerManager.normalizeRoomId(room);
     } else {
       const randomSuffix = Math.random().toString(36).substring(2, 8);
       this.roomId = `llamadita-${randomSuffix}`;
-      const newUrl = new URL(window.location.href);
-      newUrl.searchParams.set('room', this.roomId);
-      window.history.replaceState({}, '', newUrl);
     }
 
     return { roomId: this.roomId };
@@ -61,6 +83,25 @@ export class PeerManager {
 
     this.onConnectionStatusChange?.('connecting', 'Estableciendo conexión P2P...');
     this.tryConnectSlot('a');
+  }
+
+  // Join a different room manually
+  setRoom(targetRoomId) {
+    const normalized = PeerManager.normalizeRoomId(targetRoomId);
+    if (!normalized) return false;
+
+    this.destroy();
+    this.roomId = normalized;
+
+    // Update browser URL if in browser mode
+    try {
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.set('room', this.roomId);
+      window.history.replaceState({}, '', newUrl);
+    } catch (e) {}
+
+    this.initPeer(this.localStream, this.onConnectionStatusChange);
+    return true;
   }
 
   tryConnectSlot(targetSlot) {
@@ -125,7 +166,7 @@ export class PeerManager {
           this.onConnectionStatusChange?.('error', 'Sala completa (máximo 2 participantes).');
         }
       } else if (err.type === 'peer-unavailable') {
-        this.onConnectionStatusChange?.('waiting', 'Esperando conexión remota...');
+        this.onConnectionStatusChange?.('waiting', 'Esperando que el participante se conecte...');
       } else {
         this.onError?.(err);
       }
@@ -219,8 +260,17 @@ export class PeerManager {
 
   destroy() {
     if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
-    if (this.currentCall) this.currentCall.close();
-    if (this.dataConnection) this.dataConnection.close();
-    if (this.peer) this.peer.destroy();
+    if (this.currentCall) {
+      try { this.currentCall.close(); } catch (e) {}
+      this.currentCall = null;
+    }
+    if (this.dataConnection) {
+      try { this.dataConnection.close(); } catch (e) {}
+      this.dataConnection = null;
+    }
+    if (this.peer) {
+      try { this.peer.destroy(); } catch (e) {}
+      this.peer = null;
+    }
   }
 }

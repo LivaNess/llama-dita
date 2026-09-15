@@ -115,7 +115,7 @@ async function startMicrophone(deviceId = null) {
     
     const track = localStream.getAudioTracks()[0];
     const trackLabel = track && track.label ? track.label : 'Dispositivo activo';
-    hostStatusPill.innerHTML = `<span>🎤 ${trackLabel.substring(0, 24)}</span>`;
+    hostStatusPill.innerHTML = `<span>ðŸŽ¤ ${trackLabel.substring(0, 24)}</span>`;
     
     peerManager.updateLocalStream(localStream);
     await loadAudioDevices();
@@ -124,12 +124,12 @@ async function startMicrophone(deviceId = null) {
     }
     return true;
   } catch (err) {
-    console.error('Error de acceso a micrófono:', err);
-    hostStatusPill.innerHTML = '<span style="color:#ef4444">Permiso de micrófono requerido</span>';
+    console.error('Error de acceso a micrÃ³fono:', err);
+    hostStatusPill.innerHTML = '<span style="color:#ef4444">Permiso de micrÃ³fono requerido</span>';
     if (audioPermissionBanner) {
       audioPermissionBanner.style.display = 'flex';
     }
-    showToast('Permiso de micrófono no concedido', 4000);
+    showToast('Permiso de micrÃ³fono no concedido', 4000);
     return false;
   }
 }
@@ -278,7 +278,7 @@ function setupNetworking() {
   };
 
   peerManager.onError = (err) => {
-    console.error('Error de conexión:', err);
+    console.error('Error de conexiÃ³n:', err);
   };
 
   peerManager.initPeer(localStream);
@@ -295,7 +295,7 @@ function renderAudioMetrics() {
   } else if (audioManager.isMuted) {
     hostVuFill.style.width = '0%';
     hostVuPeak.style.left = '0%';
-    hostMeterReadout.textContent = 'SILENCIADO · 0%';
+    hostMeterReadout.textContent = 'SILENCIADO Â· 0%';
     hostSpeakingIndicator.className = 'speaking-indicator muted';
     hostSpeakingText.textContent = 'Silenciado';
     hostAvatarDisc.classList.remove('active');
@@ -317,7 +317,7 @@ function renderAudioMetrics() {
     }
     hostVuPeak.style.left = `${hostPeakHold}%`;
 
-    hostMeterReadout.textContent = `${db} dB · ${volume}%`;
+    hostMeterReadout.textContent = `${db} dB Â· ${volume}%`;
 
     if (isSpeaking) {
       hostSpeakingIndicator.className = 'speaking-indicator active';
@@ -344,7 +344,7 @@ function renderAudioMetrics() {
     if (isRemoteMuted) {
       guestVuFill.style.width = '0%';
       guestVuPeak.style.left = '0%';
-      guestMeterReadout.textContent = 'MUTED · 0%';
+      guestMeterReadout.textContent = 'MUTED Â· 0%';
       guestSpeakingIndicator.className = 'speaking-indicator muted';
       guestSpeakingText.textContent = 'Silenciado';
       guestVisualizer.draw(null, false);
@@ -362,7 +362,7 @@ function renderAudioMetrics() {
       }
       guestVuPeak.style.left = `${guestPeakHold}%`;
 
-      guestMeterReadout.textContent = `${db} dB · ${volume}%`;
+      guestMeterReadout.textContent = `${db} dB Â· ${volume}%`;
 
       if (isSpeaking) {
         guestSpeakingIndicator.className = 'speaking-indicator active';
@@ -386,7 +386,7 @@ function renderAudioMetrics() {
   } else {
     guestVuFill.style.width = '0%';
     guestVuPeak.style.left = '0%';
-    guestMeterReadout.textContent = '-∞ dB · 0%';
+    guestMeterReadout.textContent = '-âˆž dB Â· 0%';
     guestVisualizer.draw(null, false);
     guestAvatarDisc.classList.remove('active');
     guestVocalAura.style.transform = 'scale(1)';
@@ -402,11 +402,11 @@ btnToggleMic.addEventListener('click', () => {
   if (isMuted) {
     btnToggleMic.className = 'btn-control muted';
     btnToggleMicText.textContent = 'Activar Mic';
-    showToast('Micrófono silenciado');
+    showToast('MicrÃ³fono silenciado');
   } else {
     btnToggleMic.className = 'btn-control active';
     btnToggleMicText.textContent = 'Silenciar';
-    showToast('Micrófono activo');
+    showToast('MicrÃ³fono activo');
   }
 
   peerManager.sendData({
@@ -433,16 +433,16 @@ btnToggleRemoteAudio.addEventListener('click', () => {
 
 // Copy Invite Link to Clipboard
 function copyInviteLink() {
-  const inviteUrl = peerManager.getInviteUrl();
-  navigator.clipboard.writeText(inviteUrl).then(() => {
-    showToast('Enlace de invitación copiado');
+  const code = peerManager.roomId;
+  navigator.clipboard.writeText(code).then(() => {
+    showToast(`Código copiado: ${code}`);
   }).catch(() => {
-    window.prompt('Enlace de invitación:', inviteUrl);
+    window.prompt('Copia este código de sala:', code);
   });
 }
 
-btnCopyInvite.addEventListener('click', copyInviteLink);
-btnShareInviteSecondary.addEventListener('click', copyInviteLink);
+btnCopyInvite?.addEventListener('click', copyInviteLink);
+btnShareInviteSecondary?.addEventListener('click', copyInviteLink);
 
 // Sync editable name changes
 hostNameInput.addEventListener('change', () => {
@@ -455,4 +455,31 @@ hostNameInput.addEventListener('change', () => {
 // Start the app on load
 window.addEventListener('DOMContentLoaded', () => {
   init();
+});
+// Room Join Controls
+const inputJoinRoom = document.getElementById('inputJoinRoom');
+const btnJoinRoom = document.getElementById('btnJoinRoom');
+
+function handleJoinRoom() {
+  const code = inputJoinRoom.value.trim();
+  if (!code) {
+    showToast('Ingresa un código de sala válido');
+    return;
+  }
+
+  const success = peerManager.setRoom(code);
+  if (success) {
+    roomPill.textContent = `Sala: ${peerManager.roomId}`;
+    showToast(`Conectando a la sala ${peerManager.roomId}...`);
+    inputJoinRoom.value = '';
+  } else {
+    showToast('Código de sala no válido');
+  }
+}
+
+btnJoinRoom?.addEventListener('click', handleJoinRoom);
+inputJoinRoom?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    handleJoinRoom();
+  }
 });

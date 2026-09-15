@@ -658,3 +658,54 @@ body {
   from { transform: translateY(20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
+/* Join Room Input Controls */
+.join-room-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-card);
+  padding: 3px 5px;
+  border-radius: 8px;
+  transition: border-color 0.2s;
+}
+
+.join-room-wrapper:focus-within {
+  border-color: rgba(59, 130, 246, 0.6);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.input-join-room {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  padding: 0.35rem 0.6rem;
+  width: 175px;
+  outline: none;
+}
+
+.input-join-room::placeholder {
+  color: var(--text-muted);
+}
+
+.btn-join {
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  padding: 0.4rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.btn-join:hover {
+  background: #1d4ed8;
+}
+
+.btn-join:active {
+  transform: scale(0.97);
+}
