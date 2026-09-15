@@ -5,7 +5,13 @@
 // El manifiesto y el resources.neu los publica `npm run build:desktop` en el repo.
 
 export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0';
-const MANIFEST_URL = 'https://raw.githubusercontent.com/LivaNess/llama-dita/main/desktop/update-manifest.json';
+// Se lee desde la API de GitHub (sin el caché de 5 min de raw.githubusercontent, que llegó a
+// ofrecer versiones viejas) con Accept raw: devuelve el archivo tal cual, con CORS y caché de 60 s.
+const REPO = 'LivaNess/llama-dita';
+const API = `https://api.github.com/repos/${REPO}/contents`;
+const MANIFEST_URL = `${API}/desktop/update-manifest.json?ref=main`;
+const RESOURCES_URL = `${API}/desktop/dist/Llama-dita/resources.neu?ref=main`;
+const RAW_HEADERS = { Accept: 'application/vnd.github.raw' };
 const PREF_KEY = 'llamadita.autoUpdate'; // '1' = actualizar sola al abrir
 const CHECK_DELAY_MS = 4000;
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -33,28 +39,25 @@ export function setAutoUpdate(on) { try { localStorage.setItem(PREF_KEY, on ? '1
 
 // Devuelve { available, version, manifest }
 export async function checkForUpdates() {
-  const nl = await neutralino();
-  let manifest;
-  if (nl) {
-    // fetch() del WebView cachea el manifiesto (max-age 5 min): romper la caché con un parámetro.
-    manifest = await nl.updater.checkForUpdates(MANIFEST_URL + '?t=' + Date.now());
-  } else {
-    const r = await fetch(MANIFEST_URL + '?t=' + Date.now(), { cache: 'no-store' });
-    if (!r.ok) throw new Error('No pude consultar las actualizaciones');
-    manifest = await r.json();
-  }
-  const version = String(manifest.version || '').replace(/[^0-9A-Za-z.]/g, '');
+  const r = await fetch(MANIFEST_URL + '&t=' + Date.now(), { headers: RAW_HEADERS, cache: 'no-store' });
+  if (!r.ok) throw new Error('No pude consultar las actualizaciones');
+  const manifest = await r.json();
+  if (!manifest || !manifest.version) throw new Error('Manifiesto de actualización inválido');
+  const version = String(manifest.version).replace(/[^0-9A-Za-z.]/g, '');
   return { available: newer(version, APP_VERSION), version, manifest };
 }
 
 export async function installUpdate() {
   const nl = await neutralino();
-  if (nl) {
-    await nl.updater.install();
-    await nl.app.restartProcess();
-  } else {
-    window.location.reload();
-  }
+  if (!nl) { window.location.reload(); return; }
+  // Escritorio: bajar resources.neu nuevo, pisar el instalado y reiniciar.
+  // (Mismo mecanismo que Neutralino.updater.install, pero con una fuente sin caché.)
+  const r = await fetch(RESOURCES_URL + '&t=' + Date.now(), { headers: RAW_HEADERS, cache: 'no-store' });
+  if (!r.ok) throw new Error('No pude bajar la actualización');
+  const data = await r.arrayBuffer();
+  if (data.byteLength < 10000) throw new Error('La descarga vino incompleta');
+  await nl.filesystem.writeBinaryFile(window.NL_PATH + '/resources.neu', data);
+  await nl.app.restartProcess();
 }
 
 // ------------------------------------------------------------------

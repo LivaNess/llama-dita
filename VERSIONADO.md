@@ -54,4 +54,5 @@ Cuatro piezas: tres números y una letra → `H.A.F` + `letra`.
 | `1.3.1B` | El aviso muestra la versión instalada; primera actualización publicada para probar el updater. |
 | `1.4.1A` | Onboarding: al abrir sin sesión se abre solo "Creá tu cuenta". |
 | `1.5.1A` | Fix updater (caché + permiso de escritura) y micrófono sin volver a pedir permiso. |
-| `1.5.1B` | "Estás al día" muestra la versión; prueba del updater arreglado. **← actual** |
+| `1.5.1B` | "Estás al día" muestra la versión; prueba del updater arreglado. |
+| `1.5.2A` | Updater lee de la API de GitHub (sin caché) en vez de raw. **← actual** |
