@@ -12,13 +12,13 @@ export function onAuthChange(cb) {
 }
 
 // Paso 1: mandar el mail con enlace + código (sin contraseñas)
-export async function sendCode(email) {
+export async function sendCode(email, { createUser = true } = {}) {
   const clean = email.trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) throw new Error('Escribí un mail válido');
   const { error } = await supabase.auth.signInWithOtp({
     email: clean,
     options: {
-      shouldCreateUser: true,
+      shouldCreateUser: createUser,
       emailRedirectTo: window.location.origin + window.location.pathname
     }
   });
@@ -60,6 +60,7 @@ export async function signOut() {
 
 function translate(error) {
   const m = (error?.message || '').toLowerCase();
+  if (m.includes('signups not allowed') || m.includes('user not found')) return new Error('No hay ninguna cuenta con ese mail. Creá una.');
   if (m.includes('rate limit') || m.includes('too many')) return new Error('Demasiados intentos. Esperá unos minutos y volvé a probar.');
   if (m.includes('expired')) return new Error('El código venció. Pedí uno nuevo.');
   if (m.includes('invalid') || m.includes('token')) return new Error('Código o enlace incorrecto.');

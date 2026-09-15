@@ -257,19 +257,26 @@ function profileHeader() {
 // ---- Login ----
 function loginView() {
   const step = state.loginEmail ? 2 : 1;
+  const signup = state.loginMode !== 'login';
   return `<div class="sc-login">
-    <div class="sc-row"><h2>Creá tu cuenta</h2><button class="sc-icon-btn" id="scCloseLogin" title="Cerrar">✕</button></div>
-    <p class="sc-muted">Solo con tu mail, sin contraseña. Te mandamos un código y un enlace: con cualquiera de los dos entrás. Si ya tenés cuenta, es el mismo paso con el mismo mail.</p>
+    <div class="sc-row"><h2>${signup ? 'Creá tu cuenta' : 'Iniciá sesión'}</h2><button class="sc-icon-btn" id="scCloseLogin" title="Cerrar">✕</button></div>
+    <div class="sc-mode">
+      <button type="button" class="${signup ? 'active' : ''}" data-mode="signup">Crear cuenta</button>
+      <button type="button" class="${signup ? '' : 'active'}" data-mode="login">Ya tengo cuenta</button>
+    </div>
+    <p class="sc-muted">${signup
+      ? 'Solo con tu mail, sin contraseña. Te mandamos un mail con un enlace para entrar.'
+      : 'Escribí el mail con el que creaste la cuenta. Te mandamos un enlace para entrar.'}</p>
     ${step === 1 ? `
       <form id="scEmailForm">
         <label>Tu mail</label>
         <input type="email" id="scEmail" placeholder="vos@ejemplo.com" autocomplete="email" required />
-        <button class="sc-primary" type="submit">Crear cuenta / Entrar</button>
+        <button class="sc-primary" type="submit">${signup ? 'Crear cuenta' : 'Mandarme el enlace'}</button>
       </form>` : `
       <form id="scCodeForm">
-        <p class="sc-ok">Listo, revisá <b>${esc(state.loginEmail)}</b> (también spam).</p>
-        <label>Código del mail, o pegá el enlace completo</label>
-        <input type="text" id="scCode" placeholder="123456" autocomplete="one-time-code" required />
+        <p class="sc-ok">Listo, revisá <b>${esc(state.loginEmail)}</b> (mirá también en spam).</p>
+        <label>Copiá el enlace del mail y pegalo acá (o el código, si el mail trae uno)</label>
+        <input type="text" id="scCode" placeholder="https://... o 123456" autocomplete="one-time-code" required />
         <button class="sc-primary" type="submit">Entrar</button>
         <button class="sc-link" type="button" id="scBack">Usar otro mail</button>
       </form>`}
@@ -281,7 +288,7 @@ function bindLogin() {
   drawer.querySelector('#scEmailForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = e.target.querySelector('button'); btn.disabled = true;
-    try { state.loginEmail = await sendCode(drawer.querySelector('#scEmail').value); render(); }
+    try { state.loginEmail = await sendCode(drawer.querySelector('#scEmail').value, { createUser: state.loginMode !== 'login' }); render(); }
     catch (err) { showLoginError(err.message); btn.disabled = false; }
   });
   drawer.querySelector('#scCodeForm')?.addEventListener('submit', async (e) => {
@@ -292,6 +299,7 @@ function bindLogin() {
   });
   drawer.querySelector('#scBack')?.addEventListener('click', () => { state.loginEmail = null; render(); });
   drawer.querySelector('#scCloseLogin')?.addEventListener('click', () => toggleDrawer(false));
+  drawer.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => { state.loginMode = b.dataset.mode; state.loginEmail = null; render(); }));
   drawer.querySelector('#scEmail')?.focus();
   drawer.querySelector('#scCode')?.focus();
 }

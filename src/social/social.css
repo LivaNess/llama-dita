@@ -81,3 +81,7 @@
 @keyframes sc-ring { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-15deg); } 75% { transform: rotate(15deg); } }
 
 .sc-drawer[hidden], .sc-overlay[hidden] { display: none !important; }
+
+.sc-mode { display: flex; background: rgba(255,255,255,.05); border-radius: 8px; padding: 3px; gap: 3px; }
+.sc-mode button { flex: 1; background: none; border: none; color: var(--text-secondary, #94a3b8); padding: .45rem; border-radius: 6px; font-weight: 600; font-size: .8rem; cursor: pointer; font-family: inherit; }
+.sc-mode button.active { background: rgba(124, 58, 237, .45); color: #fff; }
