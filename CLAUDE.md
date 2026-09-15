@@ -48,6 +48,8 @@ Reglas:
 - **Backend**: Supabase, proyecto `LLAMA DITA` (`mwzkrahindnheuheoycv`). Auth sin contraseña (código o enlace por mail). Tablas con RLS: `profiles`, `friendships`, `channels`, `channel_members`, `messages`, `call_invites`. Esquema en `supabase/migrations/`. Las claves de `src/supabase/client.js` son públicas por diseño; lo que protege es RLS.
 - **Panel social** (`src/social/`): perfil, amigos, canales de texto (chat en vivo) y de voz, llamada directa con timbre. Aditivo a la sala P2P.
 - **Actualizaciones** (`src/updater.js`): al abrir consulta `desktop/update-manifest.json` en este repo; en escritorio usa el updater nativo de Neutralino (baja `desktop/dist/Llama-dita/resources.neu` y reinicia). Publicar versión = subir `package.json` + `npm run build:desktop` + push a `main`.
+- **Web oficial** (`web/`): sitio estático en `llamadita.com.ar` (Cloudflare Pages, proyecto `llamadita`). Presenta la app, ofrece el instalador en `/descargas/` y permite crear cuenta con el mismo Supabase. Se arma con `npm run build:web` (sale en `site-dist/`, que no se versiona) y se publica con `npm run deploy:web`.
+- **Identidad visual**: logo en `public/brand/` (`logo-mark-light.svg` para fondo oscuro, `logo-mark-navy.svg` para fondo claro) y `public/favicon.svg`. Los colores y la tipografía de marca viven en `src/brand.css`, que se carga **después** de `style.css` y solo pisa colores y detalles: el layout se sigue tocando en `style.css`.
 - **Cliente Windows**: Neutralino v6 + WebView2. **Instalador**: Inno Setup 6 → `installer/Llama-dita-Setup.exe` (solo hace falta para instalaciones nuevas).
 
 ---

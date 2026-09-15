@@ -1,0 +1,126 @@
+/* ==========================================================================
+   Llama-dita · capa de marca
+   Se carga DESPUÉS de style.css y social.css: solo cambia colores, tipografía
+   y detalles. No toca la estructura (grillas, tamaños, posiciones), así que
+   convive con los cambios de layout sin pisarlos.
+   Paleta tomada del logo: azul marino + crema.
+   ========================================================================== */
+:root {
+  --brand-navy: #1C2B5A;
+  --brand-navy-2: #243776;
+  --brand-blue: #5B7CFA;
+  --brand-blue-soft: #8FA6FF;
+  --brand-cream: #F4ECDC;
+  --brand-cream-dim: #CFC4AC;
+
+  --bg-main: #0A0F22;
+  --bg-card: rgba(20, 29, 58, 0.78);
+  --border-card: rgba(143, 166, 255, 0.14);
+  --border-card-hover: rgba(143, 166, 255, 0.3);
+  --text-primary: #F2F5FF;
+  --text-secondary: #A6B1D6;
+  --text-muted: #6C77A0;
+
+  --host-color: var(--brand-blue);
+  --host-glow: rgba(91, 124, 250, 0.38);
+  --guest-color: var(--brand-cream);
+  --guest-glow: rgba(244, 236, 220, 0.28);
+
+  --font-display: 'Outfit', 'Segoe UI', system-ui, sans-serif;
+}
+
+body {
+  background-image:
+    radial-gradient(circle at 18% 12%, rgba(91, 124, 250, 0.1) 0%, transparent 42%),
+    radial-gradient(circle at 82% 88%, rgba(244, 236, 220, 0.06) 0%, transparent 42%),
+    linear-gradient(to right, rgba(143, 166, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(143, 166, 255, 0.025) 1px, transparent 1px);
+}
+
+/* ---------- Identidad en la barra lateral ---------- */
+.app-sidebar { background: #0D1430; border-right: 1px solid rgba(143, 166, 255, 0.12); }
+.sidebar-header { border-bottom: 1px solid rgba(143, 166, 255, 0.12); }
+.sidebar-header .logo-icon,
+.logo-icon {
+  background: transparent;
+  box-shadow: none;
+  display: grid;
+  place-items: center;
+}
+.logo-icon img { width: 30px; height: 30px; display: block; }
+.logo-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--brand-cream);
+  background: none;
+  -webkit-text-fill-color: currentColor;
+}
+.logo-tag {
+  font-family: var(--font-mono);
+  color: var(--brand-blue-soft);
+  background: rgba(91, 124, 250, 0.12);
+  border: 1px solid rgba(143, 166, 255, 0.28);
+  border-radius: 999px;
+}
+.logo-tag:hover { background: rgba(91, 124, 250, 0.22); color: #fff; }
+
+.sidebar-section-title { color: var(--brand-cream-dim); font-family: var(--font-display); letter-spacing: 0.12em; }
+.sidebar-icon-btn { color: var(--brand-blue-soft); border-radius: 8px; }
+.sidebar-icon-btn:hover { background: rgba(91, 124, 250, 0.18); color: #fff; }
+.sidebar-channel-item.active { background: rgba(91, 124, 250, 0.16); border-left: 3px solid var(--brand-blue); }
+.sidebar-channel-item:hover { background: rgba(143, 166, 255, 0.08); }
+.sidebar-friend-item:hover { background: rgba(143, 166, 255, 0.08); }
+.sidebar-user-footer { border-top: 1px solid rgba(143, 166, 255, 0.12); background: rgba(10, 15, 34, 0.6); }
+.sidebar-user-avatar { background: linear-gradient(140deg, var(--brand-navy-2), var(--brand-blue)); color: #fff; font-family: var(--font-display); font-weight: 700; }
+.sidebar-mic-btn.active { background: rgba(91, 124, 250, 0.18); color: var(--brand-blue-soft); }
+
+/* ---------- Cabecera y controles ---------- */
+.app-header { border-bottom: 1px solid rgba(143, 166, 255, 0.12); background: rgba(13, 20, 48, 0.55); }
+.room-id-pill { border-color: rgba(143, 166, 255, 0.22); color: var(--text-secondary); }
+.btn-invite, .btn-join {
+  background: linear-gradient(135deg, var(--brand-navy-2), var(--brand-blue));
+  box-shadow: 0 6px 18px rgba(36, 55, 118, 0.45);
+  font-family: var(--font-display);
+  letter-spacing: 0.01em;
+}
+.btn-invite:hover, .btn-join:hover { box-shadow: 0 8px 22px rgba(91, 124, 250, 0.45); }
+.input-join-room:focus, .join-room-wrapper:focus-within { border-color: var(--brand-blue); }
+.on-air-badge.live { border-color: rgba(91, 124, 250, 0.5); }
+
+/* ---------- Vista de espera ---------- */
+.standby-icon { color: var(--brand-cream); opacity: 0.9; }
+.standby-icon img { width: 88px; height: 88px; }
+.standby-title { font-family: var(--font-display); font-weight: 700; color: var(--brand-cream); }
+.standby-desc { color: var(--text-secondary); }
+
+/* ---------- Cabinas de audio ---------- */
+.booth-host { border-color: rgba(91, 124, 250, 0.35); }
+.booth-guest { border-color: rgba(244, 236, 220, 0.28); }
+.role-badge { font-family: var(--font-display); letter-spacing: 0.08em; }
+
+/* ---------- Panel de cuenta (social) ---------- */
+.sc-drawer { background: #0D1430; }
+.sc-avatar, .done-avatar { background: linear-gradient(140deg, var(--brand-navy-2), var(--brand-blue)); }
+.sc-tabs button.active { color: #fff; border-bottom-color: var(--brand-blue); }
+.sc-primary, .sc-header-btn { background: linear-gradient(135deg, var(--brand-navy-2), var(--brand-blue)); font-family: var(--font-display); }
+.sc-mode button.active { background: rgba(91, 124, 250, 0.35); }
+.sc-link, .sc-login h2, .sc-body h4 { color: var(--brand-blue-soft); }
+.sc-login h2 { color: var(--brand-cream); font-family: var(--font-display); }
+.sc-row input:focus, .sc-form input:focus, .sc-login input:focus { border-color: var(--brand-blue); }
+.sc-msg.mine { background: rgba(91, 124, 250, 0.3); }
+.sc-call-banner { border-color: rgba(91, 124, 250, 0.5); background: #121A3A; }
+
+/* ---------- Actualizaciones ---------- */
+.upd-pop, .upd-banner { background: #121A3A; border-color: rgba(143, 166, 255, 0.35); }
+
+/* ---------- Detalles compartidos ---------- */
+.toast { border-left: 3px solid var(--brand-blue); }
+h1, h2, h3, .standby-title, .logo-title { font-family: var(--font-display); }
+:focus-visible { outline: 2px solid var(--brand-blue-soft); outline-offset: 2px; }
+::selection { background: rgba(91, 124, 250, 0.35); color: #fff; }
+
+/* El nombre no se parte en dos líneas en la barra lateral */
+.sidebar-header .logo-area { flex-wrap: nowrap; gap: 0.5rem; }
+.sidebar-header .logo-title { white-space: nowrap; font-size: 0.98rem; letter-spacing: 0.04em; }
+.sidebar-header .logo-tag { flex-shrink: 0; font-size: 0.62rem; padding: 0.15rem 0.45rem; }
