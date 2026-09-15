@@ -1,0 +1,7 @@
+node_modules/
+.DS_Store
+*.log
+.wrangler/
+dist/
+!desktop/dist/TokiPodcast/TokiPodcast-win_x64.exe
+!desktop/dist/TokiPodcast/resources.neu
