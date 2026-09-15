@@ -35,7 +35,7 @@ Pendiente: configurar un proveedor de mail propio (SMTP) en Supabase. Con el mai
 La app instalada se actualiza sola, sin volver a bajar el instalador:
 
 - Al abrir, busca si hay una versión nueva. Si hay, muestra un aviso con **Actualizar ahora** o **Después**.
-- Click en el tag de versión del header (`v1.5.1A`) abre el panel de actualizaciones: **Buscar actualizaciones** y la opción **Actualizar sola al abrir la app**.
+- Click en el tag de versión del header (`v1.5.1B`) abre el panel de actualizaciones: **Buscar actualizaciones** y la opción **Actualizar sola al abrir la app**.
 - La actualización baja `resources.neu` (la app web empaquetada) desde este repo y reinicia. El ejecutable de Neutralino no cambia, solo hace falta el instalador la primera vez.
 
 ### Publicar una versión nueva

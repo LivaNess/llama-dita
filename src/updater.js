@@ -93,7 +93,7 @@ function renderPopover() {
   const status = busy ? 'Buscando…'
     : lastResult?.error ? `<span class="upd-err">${esc(lastResult.error)}</span>`
     : lastResult?.available ? `Hay una versión nueva: <b>v${lastResult.version}</b>`
-    : lastResult ? 'Estás al día.'
+    : lastResult ? `Estás al día (v${APP_VERSION}).`
     : '';
   pop.innerHTML = `
     <div class="upd-row"><strong>Llama-dita v${APP_VERSION}</strong><span class="upd-mode">${isDesktop() ? 'escritorio' : 'navegador'}</span></div>
