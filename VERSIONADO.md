@@ -56,4 +56,5 @@ Cuatro piezas: tres números y una letra → `H.A.F` + `letra`.
 | `1.5.1A` | Fix updater (caché + permiso de escritura) y micrófono sin volver a pedir permiso. |
 | `1.5.1B` | "Estás al día" muestra la versión; prueba del updater arreglado. |
 | `1.5.2A` | Updater lee de la API de GitHub (sin caché) en vez de raw. |
-| `1.5.2B` | Prueba de actualización completa desde 1.5.2A. **← actual** |
+| `1.5.2B` | Prueba de actualización completa desde 1.5.2A. |
+| `1.5.2C` | Fix: aviso de actualización tapado por el panel de cuenta. **← actual** |

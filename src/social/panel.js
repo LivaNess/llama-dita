@@ -82,6 +82,7 @@ function mount() {
   overlay = document.createElement('div');
   overlay.className = 'sc-overlay';
   overlay.hidden = true;
+  overlay.addEventListener('click', () => toggleDrawer(false));
   root.appendChild(overlay);
 
   drawer = document.createElement('aside');
@@ -257,7 +258,7 @@ function profileHeader() {
 function loginView() {
   const step = state.loginEmail ? 2 : 1;
   return `<div class="sc-login">
-    <h2>Creá tu cuenta</h2>
+    <div class="sc-row"><h2>Creá tu cuenta</h2><button class="sc-icon-btn" id="scCloseLogin" title="Cerrar">✕</button></div>
     <p class="sc-muted">Solo con tu mail, sin contraseña. Te mandamos un código y un enlace: con cualquiera de los dos entrás. Si ya tenés cuenta, es el mismo paso con el mismo mail.</p>
     ${step === 1 ? `
       <form id="scEmailForm">
@@ -290,6 +291,7 @@ function bindLogin() {
     catch (err) { showLoginError(err.message); btn.disabled = false; }
   });
   drawer.querySelector('#scBack')?.addEventListener('click', () => { state.loginEmail = null; render(); });
+  drawer.querySelector('#scCloseLogin')?.addEventListener('click', () => toggleDrawer(false));
   drawer.querySelector('#scEmail')?.focus();
   drawer.querySelector('#scCode')?.focus();
 }

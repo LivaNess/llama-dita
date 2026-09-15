@@ -60,7 +60,7 @@
 .sc-ok { color: #34d399; font-size: .82rem; }
 
 .sc-login { display: flex; flex-direction: column; gap: .7rem; padding: 1.2rem 1rem; }
-.sc-login h2 { font-size: 1.15rem; }
+.sc-login h2 { font-size: 1.15rem; flex: 1; }
 .sc-login form, .sc-form { display: flex; flex-direction: column; gap: .5rem; }
 .sc-login label, .sc-form label { font-size: .75rem; color: var(--text-secondary, #94a3b8); }
 

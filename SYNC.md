@@ -30,6 +30,7 @@ Cronológico. Acá se lee qué significa cada área y foco (el número no es un 
 | `1.5.1B` | Claude | Escritorio / updater | "Estás al día" muestra la versión. Versión publicada para probar el updater arreglado desde 1.5.1A. |
 | `1.5.2A` | Claude | Escritorio / fuente del updater | raw.githubusercontent tiene varios cachés y llegó a ofrecer una versión vieja. El updater ahora lee manifiesto y resources.neu desde la API de GitHub (Accept raw, sin caché) e instala con filesystem.writeBinaryFile + restartProcess. |
 | `1.5.2B` | Claude | Escritorio / fuente del updater | Versión publicada para probar la actualización completa desde 1.5.2A (descarga + reinicio). |
+| `1.5.2C` | Claude | Escritorio / fuente del updater | Fix: el aviso de actualización quedaba debajo de la capa del panel de cuenta (no se podía clickear). Click afuera y botón ✕ cierran el panel de login. |
 
 ---
 
