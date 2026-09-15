@@ -1,93 +1,63 @@
-# 🎙️ Toki Podcast — Estudio de Audio para Windows
+# Llama-dita
 
-> Alternativa ultra liviana a Discord para transmisiones de voz 1 a 1 en tiempo real con medidores de intensidad y visualizadores de onda a 60 FPS. Se instala directamente en Windows como una aplicación nativa.
+Aplicación de comunicación de voz punto a punto (P2P) de baja latencia con análisis de señales de audio en tiempo real y ejecución local en Windows.
 
-[![Descargar Instalador](https://img.shields.io/badge/Descargar-TokiPodcast--Setup.exe-7c3aed?style=for-the-badge&logo=windows&logoColor=white)](installer/TokiPodcast-Setup.exe)
-[![RAM Usage](https://img.shields.io/badge/RAM%20Desktop-37.5%20MB-brightgreen?style=for-the-badge)](#-comparativa-de-rendimiento-vs-discord)
-[![Versión Web](https://img.shields.io/badge/Web%20Online-toki--podcast.pages.dev-f38020?style=for-the-badge&logo=cloudflare)](https://toki-podcast.pages.dev)
+## Descarga e Instalación
 
----
+1. Descargar el instalador de Windows:
+   - [Llama-dita-Setup.exe](installer/Llama-dita-Setup.exe)
+2. Ejecutar el archivo de instalación.
+3. La aplicación se instalará en el directorio local de usuario (`%LocalAppData%\Llama-dita`) y creará accesos directos en el Escritorio y el Menú Inicio.
 
-## 📥 Instalación en Windows (Estilo Discord)
+## Características Técnicas
 
-No necesitas usar navegadores ni abrir pestañas de Chrome:
-1. Descarga el instalador oficial:  
-   👉 **[Descargar TokiPodcast-Setup.exe](https://github.com/LivaNess/toki-podcast/raw/main/installer/TokiPodcast-Setup.exe)** *(solo 3.0 MB)*.
-2. Ejecuta el archivo con doble clic.
-3. Se instalará automáticamente en tu equipo (`%LocalAppData%\TokiPodcast`), creará accesos directos en el **Escritorio** y en el **Menú Inicio**, y se abrirá al terminar.
+- **Conexión P2P directa**: Implementación sobre WebRTC con servidores STUN para negociación NAT simétrica.
+- **Procesamiento de señal de audio (DSP)**: Procesamiento de muestras PCM a nivel de hardware (`ScriptProcessorNode`) con cálculo de RMS y pico en intervalos de ~21 ms.
+- **Medición visual**: Visualizador en tiempo real a 60 FPS con VU meter calibrado en decibelios (dB) y análisis de espectro de frecuencias por FFT.
+- **Bajo consumo de recursos**: Arquitectura basada en WebView2 nativo de Windows, con una huella de memoria promedio inferior a 40 MB de RAM y consumo de CPU nulo en estado de reposo.
 
----
-
-## 📊 Comparativa de Rendimiento vs Discord
-
-| Característica | Discord (Electron) | Toki Podcast (Nativo Windows) |
-| :--- | :--- | :--- |
-| **Memoria RAM** | **~500 MB a 1.200 MB** | **~37.5 MB** ⚡ *(15 a 20 veces menos)* |
-| **Tamaño del instalador** | ~150 MB | **3.04 MB** |
-| **Uso de CPU en reposo** | 2% – 8% | **0.0%** |
-| **Inicio y carga** | Pesado, múltiples procesos | Instantáneo |
-| **Arquitectura** | Chromium completo + Node.js | Windows Native WebView2 |
-
----
-
-## ✨ Características Principales
-
-- **Pantalla Dividida (Split Screen / 2 Cabinas)**: Cabina local para ti y cabina remota para tu amigo.
-- **Medidores de Intensidad de Audio en Tiempo Real**:
-  - VU Meters analógico-digitales con lectura de decibelios (`dB`) y porcentaje (`%`) con retención de picos (*Peak Hold*).
-  - Ecualizador gráfico de espectro de frecuencias en Canvas a 60 FPS.
-  - Halo de voz reactivo (*Vocal Aura*) que se expande y brilla en tiempo real con la voz.
-  - Indicador dinámico de estado (*Hablando* / *Silencio*).
-- **Procesamiento de Audio de Hardware**:
-  - Motor PCM directo (`ScriptProcessorNode`) con lectura de muestras cada ~21 ms.
-  - Control de sensibilidad y ganancia ajustable (50% a 350%).
-  - Monitor de audio en bucle (*Probar audio*) para escucharte a ti mismo.
-- **Conexión P2P Automática (WebRTC)**:
-  - Sistema de salas inteligentes con asignación simétrica de Cabina A y Cabina B.
-  - Generación de enlace de invitación con 1 solo clic.
-  - Audio bidireccional de baja latencia con cancelación de eco y reducción de ruido.
-
----
-
-## 🛠️ Estructura del Repositorio
+## Estructura del Proyecto
 
 ```
-toki-podcast/
-├── installer/             # Instalador oficial para Windows (TokiPodcast-Setup.exe)
-├── desktop/               # Código fuente del cliente de escritorio
-├── src/                   # Código de la aplicación (Audio PCM, Canvas, WebRTC)
-├── installer.iss          # Script de configuración de Inno Setup
-├── crear-instalador.bat   # Script de 1 clic para compilar un nuevo instalador
-├── actualizar.bat         # Script de 1 clic para hacer git pull y compilar
-└── package.json
+├── desktop/           # Configuración y código fuente del cliente de escritorio
+├── installer/         # Instalador ejecutable compilado (Llama-dita-Setup.exe)
+├── src/               # Módulos centrales (DSP de audio, conexión WebRTC y componentes)
+├── installer.iss      # Script de compilación de Inno Setup
+├── crear-instalador.bat # Script de compilación automatizada del instalador
+├── actualizar.bat     # Script de sincronización con repositorio remoto
+├── index.html         # Interfaz de usuario
+├── package.json       # Manifiesto de dependencias y scripts de Node.js
+└── vite.config.js     # Configuración del empaquetador Vite
 ```
 
----
+## Desarrollo y Compilación
 
-## 🚀 Cómo Desarrollar y Recompilar
+### Requisitos previos
+- Node.js (v18 o superior)
+- Inno Setup 6 (para generar el instalador de Windows)
 
-### 1. Clonar el repositorio
-```bash
-git clone https://github.com/LivaNess/toki-podcast.git
-cd toki-podcast
-```
-
-### 2. Ejecutar en desarrollo
+### Instalación de dependencias
 ```bash
 npm install
+```
+
+### Ejecución en entorno de desarrollo
+```bash
 npm run dev
 ```
 
-### 3. Generar un nuevo instalador de Windows (.exe)
-Haz doble clic en `crear-instalador.bat` o ejecuta:
+### Compilación de la aplicación
 ```bash
 npm run build
-cd desktop && npx @neutralinojs/neu build && cd ..
-"%LOCALAPPDATA%\Programs\Inno Setup 6\ISCC.exe" installer.iss
 ```
-El nuevo instalador se generará en `installer/TokiPodcast-Setup.exe`.
 
----
+### Generación del instalador de Windows
+Ejecutar el script:
+```cmd
+crear-instalador.bat
+```
+El archivo de instalación resultante se generará en `installer/Llama-dita-Setup.exe`.
 
-## 📄 Licencia
-Este proyecto es de código abierto bajo la licencia MIT.
+## Licencia
+
+MIT License.

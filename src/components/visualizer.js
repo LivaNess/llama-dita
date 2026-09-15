@@ -1,4 +1,4 @@
-// Audio visualizer engine for Toki Podcast
+// Audio visualizer engine for Llama-dita
 // Handles Canvas rendering (spectrum bars, VU meter, waveforms) at 60fps
 
 export class AudioVisualizer {

@@ -6,7 +6,7 @@ export class PeerManager {
     this.currentCall = null;
     this.dataConnection = null;
     this.roomId = null;
-    this.slot = null; // 'a' or 'b'
+    this.slot = null;
     this.localStream = null;
     this.heartbeatTimer = null;
 
@@ -29,7 +29,7 @@ export class PeerManager {
       this.roomId = room.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
     } else {
       const randomSuffix = Math.random().toString(36).substring(2, 8);
-      this.roomId = `toki-${randomSuffix}`;
+      this.roomId = `llamadita-${randomSuffix}`;
       const newUrl = new URL(window.location.href);
       newUrl.searchParams.set('room', this.roomId);
       window.history.replaceState({}, '', newUrl);
@@ -44,7 +44,6 @@ export class PeerManager {
     return url.toString();
   }
 
-  // Create silent stream fallback so call never fails if mic is temporarily waiting
   createSilentStream() {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     const ctx = new AudioContextClass();
@@ -56,26 +55,24 @@ export class PeerManager {
     return dst.stream;
   }
 
-  // Start Peer with auto-slot assignment ('a' or 'b')
   initPeer(stream, onStatusUpdate) {
     this.localStream = stream;
     if (onStatusUpdate) this.onConnectionStatusChange = onStatusUpdate;
 
-    this.onConnectionStatusChange?.('connecting', 'Conectando con la sala de podcast...');
+    this.onConnectionStatusChange?.('connecting', 'Estableciendo conexión P2P...');
     this.tryConnectSlot('a');
   }
 
   tryConnectSlot(targetSlot) {
     this.slot = targetSlot;
     const peerId = `${this.roomId}-${targetSlot}`;
-    console.log(`Intentando conectar en slot [${targetSlot}] con ID: ${peerId}`);
 
     if (this.peer) {
       try { this.peer.destroy(); } catch (e) {}
     }
 
     this.peer = new Peer(peerId, {
-      debug: 1,
+      debug: 0,
       config: {
         iceServers: [
           { urls: 'stun:stun.l.google.com:19302' },
@@ -87,34 +84,26 @@ export class PeerManager {
     });
 
     this.peer.on('open', (id) => {
-      console.log(`✓ Conectado exitosamente como: ${id} (Slot ${this.slot.toUpperCase()})`);
-
       if (this.slot === 'a') {
-        this.onConnectionStatusChange?.('waiting', 'Esperando a que tu amigo entre al enlace...');
+        this.onConnectionStatusChange?.('waiting', 'Esperando conexión remota...');
       } else {
-        // Slot B connects to Slot A
-        this.onConnectionStatusChange?.('connecting', 'Conectando con tu amigo...');
+        this.onConnectionStatusChange?.('connecting', 'Conectando con el participante...');
         const partnerId = `${this.roomId}-a`;
         this.connectToPartner(partnerId);
       }
     });
 
-    // Handle incoming calls (Slot A receiving from Slot B, or vice-versa)
     this.peer.on('call', (call) => {
-      console.log('Llamada entrante recibida de:', call.peer);
       this.currentCall = call;
-
       const activeStream = this.localStream || this.createSilentStream();
       call.answer(activeStream);
 
       call.on('stream', (remoteStream) => {
-        console.log('Stream de audio remoto recibido!');
-        this.onConnectionStatusChange?.('connected', '¡En vivo con tu amigo!');
+        this.onConnectionStatusChange?.('connected', 'Conexión activa');
         this.onRemoteStream?.(remoteStream);
       });
 
       call.on('close', () => {
-        console.log('Llamada cerrada por el par');
         this.handleDisconnect();
       });
 
@@ -123,56 +112,41 @@ export class PeerManager {
       });
     });
 
-    // Handle incoming data connections
     this.peer.on('connection', (conn) => {
-      console.log('Conexión de datos entrante de:', conn.peer);
       this.setupDataConnection(conn);
     });
 
-    // Error handling
     this.peer.on('error', (err) => {
-      console.warn(`Error en PeerJS (Slot ${this.slot}):`, err.type, err.message);
-
       if (err.type === 'unavailable-id') {
         if (this.slot === 'a') {
-          // Slot A is already occupied by friend! We take Slot B
-          console.log('Slot A ya está ocupado. Conectando como Slot B...');
           this.tryConnectSlot('b');
           return;
         } else {
-          this.onConnectionStatusChange?.('error', 'La sala está completa (máximo 2 participantes).');
+          this.onConnectionStatusChange?.('error', 'Sala completa (máximo 2 participantes).');
         }
       } else if (err.type === 'peer-unavailable') {
-        // Partner not ready yet
-        this.onConnectionStatusChange?.('waiting', 'Esperando a que tu amigo se una...');
+        this.onConnectionStatusChange?.('waiting', 'Esperando conexión remota...');
       } else {
         this.onError?.(err);
       }
     });
 
     this.peer.on('disconnected', () => {
-      console.warn('Peer desconectado, intentando reconectar...');
       try { this.peer.reconnect(); } catch (e) {}
     });
   }
 
-  // Connect Slot B to Slot A
   connectToPartner(partnerId) {
-    console.log('Llamando a par:', partnerId);
-
-    // 1. Data Connection
     const conn = this.peer.connect(partnerId, { reliable: true });
     this.setupDataConnection(conn);
 
-    // 2. Audio Call
     const activeStream = this.localStream || this.createSilentStream();
     const call = this.peer.call(partnerId, activeStream);
     this.currentCall = call;
 
     if (call) {
       call.on('stream', (remoteStream) => {
-        console.log('Stream de audio de par recibido!');
-        this.onConnectionStatusChange?.('connected', '¡En vivo con tu amigo!');
+        this.onConnectionStatusChange?.('connected', 'Conexión activa');
         this.onRemoteStream?.(remoteStream);
       });
 
@@ -181,7 +155,7 @@ export class PeerManager {
       });
 
       call.on('error', (err) => {
-        console.error('Error en llamada a par:', err);
+        console.error('Error en llamada saliente:', err);
       });
     }
   }
@@ -190,10 +164,8 @@ export class PeerManager {
     this.dataConnection = conn;
 
     conn.on('open', () => {
-      console.log('✓ Canal de datos abierto con:', conn.peer);
-      this.onConnectionStatusChange?.('connected', '¡En vivo con tu amigo!');
+      this.onConnectionStatusChange?.('connected', 'Conexión activa');
 
-      // Start heartbeat
       if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
       this.heartbeatTimer = setInterval(() => {
         if (conn.open) conn.send({ type: 'ping' });
@@ -209,7 +181,6 @@ export class PeerManager {
     });
 
     conn.on('close', () => {
-      console.log('Canal de datos cerrado');
       this.handleDisconnect();
     });
 
@@ -232,9 +203,9 @@ export class PeerManager {
       const newAudioTrack = newStream.getAudioTracks()[0];
 
       if (audioSender && newAudioTrack) {
-        audioSender.replaceTrack(newAudioTrack).then(() => {
-          console.log('Pista de audio actualizada en llamada WebRTC');
-        }).catch(err => console.warn('Error al reemplazar pista:', err));
+        audioSender.replaceTrack(newAudioTrack).catch(err => {
+          console.warn('Error al actualizar pista:', err);
+        });
       }
     }
   }
@@ -243,7 +214,7 @@ export class PeerManager {
     if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
     this.currentCall = null;
     this.dataConnection = null;
-    this.onConnectionStatusChange?.('disconnected', 'Tu amigo se ha desconectado.');
+    this.onConnectionStatusChange?.('disconnected', 'Participante desconectado');
   }
 
   destroy() {

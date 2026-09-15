@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/neutralinojs/neutralinojs/main/schemas/neutralino.config.schema.json",
-  "applicationId": "com.tokipodcast.app",
+  "applicationId": "com.llamadita.app",
   "version": "1.0.0",
   "defaultMode": "window",
   "port": 0,
@@ -20,7 +20,7 @@
   ],
   "modes": {
     "window": {
-      "title": "Toki Podcast Studio",
+      "title": "Llama-dita",
       "width": 1240,
       "height": 820,
       "minWidth": 800,
@@ -38,7 +38,7 @@
     }
   },
   "cli": {
-    "binaryName": "TokiPodcast",
+    "binaryName": "Llama-dita",
     "resourcesPath": "/resources/",
     "extensionsPath": "/extensions/",
     "clientLibrary": "/resources/js/neutralino.js",

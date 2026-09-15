@@ -1,14 +1,10 @@
 @echo off
-echo ==========================================
-echo    ACTUALIZANDO TOKI PODCAST CON GITHUB
-echo ==========================================
+echo Sincronizando con repositorio remoto...
 git pull
 echo.
-echo Compilando la ultima version...
+echo Actualizando dependencias y compilando...
 call npm install
 call npm run build
 echo.
-echo ==========================================
-echo  ¡Listo! Ya tienes la version mas reciente.
-echo ==========================================
+echo Sincronizacion completada.
 pause

@@ -1,4 +1,4 @@
-// Robust Audio manager for Toki Podcast with ScriptProcessor raw PCM engine
+// Robust Audio manager for Llama-dita with ScriptProcessor raw PCM engine
 
 class AudioManager {
   constructor() {
@@ -153,7 +153,7 @@ class AudioManager {
 
       return this.localStream;
     } catch (err) {
-      console.error('Error al inicializar micrófono:', err);
+      console.error('Error al inicializar micrÃ³fono:', err);
       throw err;
     }
   }

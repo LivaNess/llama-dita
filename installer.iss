@@ -1,30 +1,30 @@
 [Setup]
-AppName=Toki Podcast
-AppVersion=1.1.0
-AppPublisher=Toki Podcast
+AppName=Llama-dita
+AppVersion=1.0.0
+AppPublisher=Llama-dita
 AppPublisherURL=https://github.com/LivaNess/toki-podcast
-DefaultDirName={localappdata}\TokiPodcast
-DefaultGroupName=Toki Podcast
-OutputBaseFilename=TokiPodcast-Setup
-OutputDir=installer_output
+DefaultDirName={localappdata}\Llama-dita
+DefaultGroupName=Llama-dita
+OutputBaseFilename=Llama-dita-Setup
+OutputDir=installer
 Compression=lzma2/ultra64
 SolidCompression=yes
 PrivilegesRequired=lowest
 ArchitecturesInstallIn64BitMode=x64compatible
 DisableProgramGroupPage=yes
-UninstallDisplayIcon={app}\TokiPodcast.exe
+UninstallDisplayIcon={app}\Llama-dita.exe
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 
 [Files]
-Source: "C:\Users\juand\.gemini\antigravity\scratch\toki-desktop\dist\TokiPodcast\TokiPodcast-win_x64.exe"; DestDir: "{app}"; DestName: "TokiPodcast.exe"; Flags: ignoreversion
-Source: "C:\Users\juand\.gemini\antigravity\scratch\toki-desktop\dist\TokiPodcast\resources.neu"; DestDir: "{app}"; Flags: ignoreversion
+Source: "desktop\dist\Llama-dita\Llama-dita-win_x64.exe"; DestDir: "{app}"; DestName: "Llama-dita.exe"; Flags: ignoreversion
+Source: "desktop\dist\Llama-dita\resources.neu"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\Toki Podcast"; Filename: "{app}\TokiPodcast.exe"
-Name: "{group}\Desinstalar Toki Podcast"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\Toki Podcast"; Filename: "{app}\TokiPodcast.exe"; Tasks: desktopicon
+Name: "{group}\Llama-dita"; Filename: "{app}\Llama-dita.exe"
+Name: "{group}\Desinstalar Llama-dita"; Filename: "{uninstallexe}"
+Name: "{autodesktop}\Llama-dita"; Filename: "{app}\Llama-dita.exe"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\TokiPodcast.exe"; Description: "{cm:LaunchProgram,Toki Podcast}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\Llama-dita.exe"; Description: "{cm:LaunchProgram,Llama-dita}"; Flags: nowait postinstall skipifsilent
