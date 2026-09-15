@@ -2,7 +2,7 @@
 AppName=Llama-dita
 AppVersion=1.0.0
 AppPublisher=Llama-dita
-AppPublisherURL=https://github.com/LivaNess/toki-podcast
+AppPublisherURL=https://github.com/LivaNess/llama-dita
 DefaultDirName={localappdata}\Llama-dita
 DefaultGroupName=Llama-dita
 OutputBaseFilename=Llama-dita-Setup
