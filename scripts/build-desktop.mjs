@@ -16,7 +16,7 @@ const desktop = join(root, 'desktop');
 const resources = join(desktop, 'resources');
 const dist = join(root, 'dist');
 
-const REPO_RAW = 'https://raw.githubusercontent.com/LivaNess/llama-dita/main';
+const SITIO = 'https://llamadita.com.ar';
 
 if (!existsSync(join(dist, 'index.html'))) {
   console.error('No existe dist/index.html. Corré primero: npm run build');
@@ -50,8 +50,9 @@ if (!html.includes('__neutralino_globals.js')) {
 const manifest = {
   applicationId: cfg.applicationId,
   version,
-  // ?v= evita que el WebView o el CDN sirvan un resources.neu viejo
-  resourcesURL: `${REPO_RAW}/desktop/dist/${cfg.cli.binaryName}/resources.neu?v=${encodeURIComponent(version)}`,
+  // El paquete se sirve desde la web oficial (lo publica scripts/build-web.mjs).
+  // ?v= evita que el WebView sirva un resources.neu viejo.
+  resourcesURL: `${SITIO}/descargas/resources.neu?v=${encodeURIComponent(version)}`,
   data: { releasedAt: new Date().toISOString() }
 };
 writeFileSync(join(desktop, 'update-manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
@@ -64,4 +65,4 @@ run('npx --yes @neutralinojs/neu build');
 const neu = join(desktop, 'dist', cfg.cli.binaryName, 'resources.neu');
 if (!existsSync(neu)) { console.error('No se generó ' + neu); process.exit(1); }
 mkdirSync(join(root, 'installer'), { recursive: true });
-console.log(`\nListo: v${version}\n- ${neu}\n- desktop/update-manifest.json\nCommiteá y pusheá los dos para que las apps instaladas vean la actualización.`);
+console.log(`\nListo: v${version}\n- ${neu}\n- desktop/update-manifest.json\nAhora publicá la web (npm run deploy:web): de ahí bajan la actualización las apps instaladas.`);

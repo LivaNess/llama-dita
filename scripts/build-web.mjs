@@ -28,6 +28,17 @@ if (existsSync(installer)) {
   console.warn('AVISO: no existe installer/Llama-dita-Setup.exe; el botón de descarga va a dar 404.');
 }
 
+// Actualizaciones de la app instalada: el manifiesto y el paquete viajan con la web.
+const manifiesto = join(root, 'desktop', 'update-manifest.json');
+const paquete = join(root, 'desktop', 'dist', 'Llama-dita', 'resources.neu');
+if (existsSync(manifiesto) && existsSync(paquete)) {
+  copyFileSync(manifiesto, join(out, 'update-manifest.json'));
+  mkdirSync(join(out, 'descargas'), { recursive: true });
+  copyFileSync(paquete, join(out, 'descargas', 'resources.neu'));
+} else {
+  console.warn('AVISO: falta desktop/update-manifest.json o resources.neu; corré antes "npm run build:desktop" o las apps instaladas no verán la actualización.');
+}
+
 const indexPath = join(out, 'index.html');
 writeFileSync(indexPath, readFileSync(indexPath, 'utf8').replaceAll('{{VERSION}}', version).replaceAll('{{INSTALLER_SIZE_MB}}', sizeMb));
 writeFileSync(join(out, 'version.json'), JSON.stringify({ version, installer: '/descargas/Llama-dita-Setup.exe', builtAt: new Date().toISOString() }, null, 2) + '\n');

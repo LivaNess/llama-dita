@@ -1,23 +1,42 @@
 // Actualizaciones de la app.
-// - En escritorio (Neutralino): usa el updater nativo. Baja resources.neu nuevo desde GitHub
-//   y reinicia. No hace falta bajar el instalador de vuelta.
+// - En escritorio (Neutralino): baja el resources.neu nuevo, lo instala y reinicia.
 // - En navegador: compara versión y ofrece recargar.
-// El manifiesto y el resources.neu los publica `npm run build:desktop` en el repo.
+//
+// Fuente principal: la web oficial (llamadita.com.ar), que publica el manifiesto y el
+// paquete junto con el instalador (lo arma scripts/build-web.mjs). Si el dominio no
+// responde, cae a la API de GitHub, que sirve el mismo contenido del repo.
+// raw.githubusercontent quedó descartado: tiene cachés por servidor y llegó a ofrecer
+// una versión vieja.
 
 export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0';
-// Se lee desde la API de GitHub (sin el caché de 5 min de raw.githubusercontent, que llegó a
-// ofrecer versiones viejas) con Accept raw: devuelve el archivo tal cual, con CORS y caché de 60 s.
+
+const SITIO = 'https://llamadita.com.ar';
 const REPO = 'LivaNess/llama-dita';
 const API = `https://api.github.com/repos/${REPO}/contents`;
-const MANIFEST_URL = `${API}/desktop/update-manifest.json?ref=main`;
-const RESOURCES_URL = `${API}/desktop/dist/Llama-dita/resources.neu?ref=main`;
-const RAW_HEADERS = { Accept: 'application/vnd.github.raw' };
+
+const FUENTES = [
+  {
+    nombre: 'sitio',
+    manifest: `${SITIO}/update-manifest.json`,
+    paquete: `${SITIO}/descargas/resources.neu`,
+    headers: {}
+  },
+  {
+    nombre: 'github',
+    manifest: `${API}/desktop/update-manifest.json?ref=main`,
+    paquete: `${API}/desktop/dist/Llama-dita/resources.neu?ref=main`,
+    headers: { Accept: 'application/vnd.github.raw' }
+  }
+];
+
 const PREF_KEY = 'llamadita.autoUpdate'; // '1' = actualizar sola al abrir
 const CHECK_DELAY_MS = 4000;
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const sep = (url) => (url.includes('?') ? '&' : '?');
 
 const isDesktop = () => typeof window.NL_PORT !== 'undefined';
 let NL = null; // módulo @neutralinojs/lib, solo en escritorio
+let fuenteUsada = FUENTES[0];
 
 async function neutralino() {
   if (!isDesktop()) return null;
@@ -37,23 +56,32 @@ function newer(a, b) {
 export function getAutoUpdate() { try { return localStorage.getItem(PREF_KEY) === '1'; } catch (_) { return false; } }
 export function setAutoUpdate(on) { try { localStorage.setItem(PREF_KEY, on ? '1' : '0'); } catch (_) {} }
 
-// Devuelve { available, version, manifest }
+// Devuelve { available, version, manifest, fuente }
 export async function checkForUpdates() {
-  const r = await fetch(MANIFEST_URL + '&t=' + Date.now(), { headers: RAW_HEADERS, cache: 'no-store' });
-  if (!r.ok) throw new Error('No pude consultar las actualizaciones');
-  const manifest = await r.json();
-  if (!manifest || !manifest.version) throw new Error('Manifiesto de actualización inválido');
-  const version = String(manifest.version).replace(/[^0-9A-Za-z.]/g, '');
-  return { available: newer(version, APP_VERSION), version, manifest };
+  let ultimoError = null;
+  for (const fuente of FUENTES) {
+    try {
+      const r = await fetch(fuente.manifest + sep(fuente.manifest) + 't=' + Date.now(), { headers: fuente.headers, cache: 'no-store' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const manifest = await r.json();
+      if (!manifest || !manifest.version) throw new Error('manifiesto inválido');
+      fuenteUsada = fuente;
+      const version = String(manifest.version).replace(/[^0-9A-Za-z.]/g, '');
+      return { available: newer(version, APP_VERSION), version, manifest, fuente: fuente.nombre };
+    } catch (err) {
+      ultimoError = err;
+    }
+  }
+  throw new Error('No pude consultar las actualizaciones' + (ultimoError ? ` (${ultimoError.message})` : ''));
 }
 
 export async function installUpdate() {
   const nl = await neutralino();
   if (!nl) { window.location.reload(); return; }
-  // Escritorio: bajar resources.neu nuevo, pisar el instalado y reiniciar.
-  // (Mismo mecanismo que Neutralino.updater.install, pero con una fuente sin caché.)
-  const r = await fetch(RESOURCES_URL + '&t=' + Date.now(), { headers: RAW_HEADERS, cache: 'no-store' });
-  if (!r.ok) throw new Error('No pude bajar la actualización');
+  // Escritorio: bajar el resources.neu nuevo, pisar el instalado y reiniciar.
+  const url = fuenteUsada.paquete;
+  const r = await fetch(url + sep(url) + 't=' + Date.now(), { headers: fuenteUsada.headers, cache: 'no-store' });
+  if (!r.ok) throw new Error('No pude bajar la actualización (HTTP ' + r.status + ')');
   const data = await r.arrayBuffer();
   if (data.byteLength < 10000) throw new Error('La descarga vino incompleta');
   await nl.filesystem.writeBinaryFile(window.NL_PATH + '/resources.neu', data);
@@ -95,7 +123,7 @@ function renderPopover() {
   if (!pop) return;
   const status = busy ? 'Buscando…'
     : lastResult?.error ? `<span class="upd-err">${esc(lastResult.error)}</span>`
-    : lastResult?.available ? `Hay una versión nueva: <b>v${lastResult.version}</b>`
+    : lastResult?.available ? `Hay una versión nueva: <b>v${esc(lastResult.version)}</b>`
     : lastResult ? `Estás al día (v${APP_VERSION}).`
     : '';
   pop.innerHTML = `
@@ -148,7 +176,7 @@ function showBanner(version) {
   const el = document.createElement('div');
   el.id = 'updBanner';
   el.className = 'upd-banner';
-  el.innerHTML = `<span class="upd-banner-text">Hay una versión nueva de Llama-dita: v${version} (tenés la v${APP_VERSION}).</span>
+  el.innerHTML = `<span class="upd-banner-text">Hay una versión nueva de Llama-dita: v${esc(version)} (tenés la v${APP_VERSION}).</span>
     <button class="btn-invite" id="updBannerGo">${isDesktop() ? 'Actualizar ahora' : 'Recargar'}</button>
     <button class="upd-later" id="updBannerLater">Después</button>`;
   document.body.appendChild(el);

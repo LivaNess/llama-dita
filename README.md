@@ -36,13 +36,14 @@ La app instalada se actualiza sola, sin volver a bajar el instalador:
 
 - Al abrir, busca si hay una versión nueva. Si hay, muestra un aviso con **Actualizar ahora** o **Después**.
 - Click en el tag de versión del header (`v1.7.1A`) abre el panel de actualizaciones: **Buscar actualizaciones** y la opción **Actualizar sola al abrir la app**.
-- La actualización baja `resources.neu` (la app web empaquetada) desde este repo y reinicia. El ejecutable de Neutralino no cambia, solo hace falta el instalador la primera vez.
+- La actualización baja `resources.neu` (la app web empaquetada) desde llamadita.com.ar y reinicia. El ejecutable de Neutralino no cambia, solo hace falta el instalador la primera vez.
 
 ### Publicar una versión nueva
 
 1. Subí la versión en `package.json` (es la única fuente: el script la copia a `neutralino.config.json` e `installer.iss`).
 2. `npm run build:desktop` → deja `desktop/dist/Llama-dita/resources.neu` y `desktop/update-manifest.json`.
-3. Commit y push a `main` de esos dos archivos. Las apps instaladas ven la versión nueva en la próxima apertura (GitHub raw puede tardar unos minutos en refrescar).
+3. `npm run deploy:web` → publica la web oficial con ese manifiesto y ese paquete. **Este paso es el que hace que las apps instaladas vean la versión nueva.**
+4. Commit y push a `main`.
 4. Opcional, solo si cambió el ejecutable o para instalaciones nuevas: `crear-instalador.bat` (necesita Inno Setup 6).
 
 ## Estructura del Proyecto

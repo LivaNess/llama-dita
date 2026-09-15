@@ -65,4 +65,5 @@ Cuatro piezas: tres números y una letra → `H.A.F` + `letra`.
 | `1.8.1A` | Rediseño de interfaz con barra lateral (Antigravity). |
 | `1.9.1A` | Identidad visual: logo, paleta del logo y tipografía de marca. |
 | `1.10.1A` | Web oficial: presentación, descarga y registro en llamadita.com.ar. |
-| `1.10.1D` | Identidad visual en el paquete de escritorio y limpieza de carpetas de build. **← actual** |
+| `1.10.1D` | Identidad visual en el paquete de escritorio y limpieza de carpetas de build. |
+| `1.10.2A` | Mudanza al dominio propio: actualizaciones y descargas desde llamadita.com.ar. **← actual** |

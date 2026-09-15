@@ -3,7 +3,7 @@
   Referrer-Policy: strict-origin-when-cross-origin
   X-Frame-Options: DENY
   Permissions-Policy: camera=(), microphone=(), geolocation=()
-  Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://mwzkrahindnheuheoycv.supabase.co wss://mwzkrahindnheuheoycv.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://llamadita.com.ar https://mwzkrahindnheuheoycv.supabase.co wss://mwzkrahindnheuheoycv.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self'
 
 /descargas/*
   Content-Disposition: attachment
@@ -11,3 +11,7 @@
 
 /version.json
   Cache-Control: no-cache
+
+/update-manifest.json
+  Cache-Control: no-cache
+  Access-Control-Allow-Origin: *
