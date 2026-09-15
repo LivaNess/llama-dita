@@ -11,6 +11,7 @@
 
 /version.json
   Cache-Control: no-cache
+  Access-Control-Allow-Origin: *
 
 /update-manifest.json
   Cache-Control: no-cache

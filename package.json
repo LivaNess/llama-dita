@@ -1,7 +1,7 @@
 {
   "name": "llamadita",
   "private": true,
-  "version": "1.10.2A",
+  "version": "1.10.2B",
   "type": "module",
   "scripts": {
     "dev": "vite",
