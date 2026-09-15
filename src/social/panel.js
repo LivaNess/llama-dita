@@ -62,6 +62,8 @@ export async function initSocial(h) {
   });
   if (state.session) await onLogin();
   render();
+  // Primera vez / sin sesión: abrir el panel para que cree la cuenta con su mail.
+  if (!state.session) setTimeout(() => toggleDrawer(true), 600);
 }
 
 function mount() {
@@ -73,7 +75,7 @@ function mount() {
   headerBtn.className = 'btn-invite sc-header-btn';
   headerBtn.id = 'btnSocialToggle';
   headerBtn.title = 'Cuenta, amigos y canales';
-  headerBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Amigos</span>`;
+  headerBtn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Crear cuenta</span>`;
   headerBtn.addEventListener('click', () => toggleDrawer());
   (document.querySelector('.room-actions') || document.querySelector('.app-header') || document.body).appendChild(headerBtn);
 
@@ -123,7 +125,8 @@ function onLogout() {
   state.unsub = [];
   clearInterval(state.heartbeat);
   Object.assign(state, { me: null, friendships: [], channels: [], members: [], messages: [], currentChannel: null, incomingCall: null, outgoingCall: null });
-  headerBtn.querySelector('span').textContent = 'Amigos';
+  headerBtn.querySelector('span').textContent = 'Crear cuenta';
+  setTimeout(() => toggleDrawer(true), 300);
 }
 
 function subscribeAll(uid) {
@@ -254,13 +257,13 @@ function profileHeader() {
 function loginView() {
   const step = state.loginEmail ? 2 : 1;
   return `<div class="sc-login">
-    <h2>Entrá a tu cuenta</h2>
-    <p class="sc-muted">Sin contraseña: te mandamos un mail con un código y un enlace. Con cualquiera de los dos entrás.</p>
+    <h2>Creá tu cuenta</h2>
+    <p class="sc-muted">Solo con tu mail, sin contraseña. Te mandamos un código y un enlace: con cualquiera de los dos entrás. Si ya tenés cuenta, es el mismo paso con el mismo mail.</p>
     ${step === 1 ? `
       <form id="scEmailForm">
         <label>Tu mail</label>
         <input type="email" id="scEmail" placeholder="vos@ejemplo.com" autocomplete="email" required />
-        <button class="sc-primary" type="submit">Mandarme el código</button>
+        <button class="sc-primary" type="submit">Crear cuenta / Entrar</button>
       </form>` : `
       <form id="scCodeForm">
         <p class="sc-ok">Listo, revisá <b>${esc(state.loginEmail)}</b> (también spam).</p>
