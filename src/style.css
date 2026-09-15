@@ -709,3 +709,25 @@ body {
 .btn-join:active {
   transform: scale(0.97);
 }
+
+/* Actualizaciones (tag de versión clickeable, popover y banner) */
+button.logo-tag { font: inherit; cursor: pointer; }
+.upd-pop {
+  position: fixed; top: 64px; left: 24px; z-index: 130; width: 300px;
+  background: #131a2a; border: 1px solid rgba(168, 85, 247, 0.4); border-radius: 12px;
+  padding: 0.9rem 1rem; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  display: flex; flex-direction: column; gap: 0.6rem; font-size: 0.85rem;
+}
+.upd-row { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.upd-mode { color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.upd-status { color: var(--text-secondary); min-height: 1.2em; }
+.upd-err { color: #f87171; }
+.upd-pref { display: flex; align-items: center; gap: 0.4rem; color: var(--text-secondary); font-size: 0.78rem; cursor: pointer; }
+.upd-banner {
+  position: fixed; bottom: 1.2rem; left: 50%; transform: translateX(-50%); z-index: 130;
+  display: flex; align-items: center; gap: 0.8rem; padding: 0.7rem 1rem;
+  background: #131a2a; border: 1px solid rgba(37, 99, 235, 0.5); border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6); font-size: 0.88rem;
+}
+.upd-later { background: none; border: none; color: var(--text-secondary); cursor: pointer; font: inherit; }
+.upd-later:hover { color: #fff; }

@@ -1,43 +1,43 @@
-# Llama-dita — Registro de Sincronización y Estado de Agentes
+# Llama-dita — Registro de sincronización y estado de agentes
 
-Tablero de control y delimitación de trabajo compartido entre **Antigravity** y **Claude**.
-Ambos agentes deben actualizar este archivo antes de comenzar una tarea y al finalizarla.
-
----
-
-## 🔒 Zona de Trabajo Activa (Locks)
-
-| Agente | Área (Y.Z) | Versión Objetivo | Archivos en Edición | Estado |
-| :--- | :--- | :--- | :--- | :--- |
-| *Ninguno* | - | - | - | *Libre para tomar tareas* |
-
-> [!NOTE]
-> Para tomar una tarea, reemplaza la fila anterior con tu nombre de agente, área, versión objetivo y los archivos que vas a intervenir. Al hacer el commit final, restaura el estado a *Libre*.
+Tablero de control compartido entre **Antigravity** (Juan) y **Claude** (Martín).
+Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versionado está definido en `VERSIONADO.md`.
 
 ---
 
-## 🗺️ Mapa de Áreas de Trabajo
+## 🔒 Zona de trabajo activa (locks)
 
-| Código (Y) | Área | Archivos Principales | Descripción |
-| :---: | :--- | :--- | :--- |
-| **1** | Audio Core & DSP | `src/audio/audioManager.js` | Captura de micrófono, análisis PCM, decibelios, RMS y loopback. |
-| **2** | Red, Señalización & WebRTC | `src/network/peerManager.js` | Canales Supabase Realtime, negociación WebRTC, ICE, TURN y DataChannel. |
-| **3** | UI, Canvas & Estilos | `src/components/`, `src/style.css`, `index.html`, `src/main.js` | Interfaz dividida, vúmetros, espectro canvas, responsive y auras. |
-| **4** | Desktop & Empaquetado | `desktop/`, `installer.iss`, `*.bat` | Configuración de Neutralinojs, WebView2, scripts de build e Inno Setup. |
+| Agente | Versión objetivo | Archivos en edición | Estado |
+| :--- | :--- | :--- | :--- |
+| *Ninguno* | - | - | *Libre para tomar tareas* |
 
----
-
-## 📋 Historial de Cambios y Versiones (SemVer 2.0.0)
-
-| Versión | Agente | Área | Resumen Técnico |
-| :---: | :--- | :---: | :--- |
-| `1.0.0` | Equipo | Core | Versión inicial de la aplicación y empaquetado para Windows. |
-| `1.0.1` | Antigravity | Red | Migración completa de señalización a Supabase Realtime y WebRTC nativo con relé TURN. |
+> Para tomar una tarea, reemplazá la fila con tu agente, la versión objetivo y los archivos que vas a intervenir. Al hacer el commit final, restaurá el estado a *Libre*.
 
 ---
 
-## ⚠️ Reglas Inquebrantables para Agentes
-1. **Compilación Limpia**: Nunca hagas `git push` con la compilación rota (`npm run build` debe dar código 0).
-2. **Respeto de Áreas**: No toques archivos del área del otro agente a menos que esté especificado en el lock de `SYNC.md`.
-3. **Conventional Commits**: Mantén los mensajes de commit en formato estándar (`feat:`, `fix:`, `chore:`, `refactor:`).
-4. **Rebase Obligatorio**: Ejecuta siempre `git pull --rebase origin main` antes de empezar para evitar bifurcaciones no deseadas.
+## 📋 Historial de cambios y versiones
+
+Cronológico. Acá se lee qué significa cada área y foco (el número no es un mapa fijo).
+
+| Versión | Agente | Área / foco | Resumen |
+| :--- | :--- | :--- | :--- |
+| `1.1.1A` | Antigravity | Base P2P | Llamada de voz P2P, señalización migrada a Supabase Realtime, WebRTC nativo con relé TURN, cliente Windows. (Versión asignada retroactivamente: reemplaza `0.0.0.A` y `1.0.1`, esquemas anteriores obsoletos.) |
+| `1.2.1A` | Claude | Cuentas / amigos y canales | Login sin contraseña (código o enlace por mail), perfil, amigos con presencia, llamada directa con timbre, canales de texto (chat en vivo) y de voz con código de invitación. Esquema SQL con RLS en `supabase/migrations/`. Panel aditivo en `src/social/`. |
+| `1.3.1A` | Claude | Actualizaciones / updater | Al abrir busca versión nueva (aviso opcional, casilla "actualizar sola"). Tag de versión del header abre "Buscar actualizaciones". Escritorio: updater nativo de Neutralino desde `desktop/update-manifest.json` + `resources.neu` en el repo. `scripts/build-desktop.mjs` sincroniza versión y empaqueta. |
+
+---
+
+## ⚠️ Reglas para agentes
+1. **Build limpio**: nunca `git push` con `npm run build` roto.
+2. **Respetar locks**: no tocar archivos que el otro agente tiene bloqueados.
+3. **Versión en un solo lugar**: `package.json`. Commit `[H.A.F+letra] tipo: descripción`. Nunca subir el Hito sin permiso.
+4. **Rebase antes de empezar**: `git pull --rebase origin main`.
+5. **Sin menciones a otras apps de chat/voz** en ningún lado.
+
+---
+
+## 📌 Pendientes conocidos
+- SMTP propio en Supabase (con el mail por defecto del plan gratis: 2 mails/hora y plantilla no editable, así que hoy el mail trae solo el enlace).
+- Regenerar `installer/Llama-dita-Setup.exe` con `crear-instalador.bat` (Inno Setup) para instalaciones nuevas en `1.3.1A`.
+- La señalización (`src/network/peerManager.js`) crea su propio cliente Supabase; conviene que use `src/supabase/client.js` para no duplicar sesiones.
+- Al conectar por llamada directa, la cabina remota a veces muestra "Participante" en vez del nombre (el mensaje `profile` por DataChannel puede llegar antes de que el otro esté listo).

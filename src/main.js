@@ -1,6 +1,8 @@
 import { audioManager } from './audio/audioManager.js';
 import { PeerManager } from './network/peerManager.js';
 import { AudioVisualizer } from './components/visualizer.js';
+import { initSocial } from './social/panel.js';
+import { initUpdater } from './updater.js';
 
 // DOM Elements
 const audioPermissionBanner = document.getElementById('audioPermissionBanner');
@@ -295,7 +297,7 @@ function renderAudioMetrics() {
   } else if (audioManager.isMuted) {
     hostVuFill.style.width = '0%';
     hostVuPeak.style.left = '0%';
-    hostMeterReadout.textContent = 'SILENCIADO Â· 0%';
+    hostMeterReadout.textContent = 'SILENCIADO · 0%';
     hostSpeakingIndicator.className = 'speaking-indicator muted';
     hostSpeakingText.textContent = 'Silenciado';
     hostAvatarDisc.classList.remove('active');
@@ -317,7 +319,7 @@ function renderAudioMetrics() {
     }
     hostVuPeak.style.left = `${hostPeakHold}%`;
 
-    hostMeterReadout.textContent = `${db} dB Â· ${volume}%`;
+    hostMeterReadout.textContent = `${db} dB · ${volume}%`;
 
     if (isSpeaking) {
       hostSpeakingIndicator.className = 'speaking-indicator active';
@@ -344,7 +346,7 @@ function renderAudioMetrics() {
     if (isRemoteMuted) {
       guestVuFill.style.width = '0%';
       guestVuPeak.style.left = '0%';
-      guestMeterReadout.textContent = 'MUTED Â· 0%';
+      guestMeterReadout.textContent = 'MUTED · 0%';
       guestSpeakingIndicator.className = 'speaking-indicator muted';
       guestSpeakingText.textContent = 'Silenciado';
       guestVisualizer.draw(null, false);
@@ -362,7 +364,7 @@ function renderAudioMetrics() {
       }
       guestVuPeak.style.left = `${guestPeakHold}%`;
 
-      guestMeterReadout.textContent = `${db} dB Â· ${volume}%`;
+      guestMeterReadout.textContent = `${db} dB · ${volume}%`;
 
       if (isSpeaking) {
         guestSpeakingIndicator.className = 'speaking-indicator active';
@@ -455,6 +457,23 @@ hostNameInput.addEventListener('change', () => {
 // Start the app on load
 window.addEventListener('DOMContentLoaded', () => {
   init();
+  // Cuenta, amigos, canales y llamadas directas (Supabase). Aditivo a la sala P2P.
+  // No espera al micrófono: la cuenta tiene que estar disponible aunque el permiso demore o falle.
+  initSocial({
+    joinRoom: (code) => {
+      if (peerManager.setRoom(code)) {
+        roomPill.textContent = `Sala: ${peerManager.roomId}`;
+      }
+    },
+    getRoom: () => peerManager.roomId,
+    setLocalName: (name) => {
+      hostNameInput.value = name;
+      peerManager.sendData({ type: 'profile', name });
+    },
+    toast: showToast
+  });
+  // Buscar actualizaciones al abrir (opcional) + popover en el tag de versión del header.
+  initUpdater({ toast: showToast });
 });
 // Room Join Controls
 const inputJoinRoom = document.getElementById('inputJoinRoom');

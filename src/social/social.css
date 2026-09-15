@@ -1,0 +1,83 @@
+/* Panel social (cuenta, amigos, canales, llamadas). Aditivo: no toca style.css. */
+.sc-header-btn { background: linear-gradient(135deg, #7c3aed, #a855f7); box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3); }
+.sc-header-btn.active { outline: 2px solid rgba(168, 85, 247, 0.6); }
+.sc-header-btn span { max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.sc-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); z-index: 140; }
+.sc-drawer {
+  position: fixed; top: 0; left: 0; bottom: 0; width: min(380px, 100vw);
+  background: #0f1420; border-right: 1px solid var(--border-card, rgba(255,255,255,.08));
+  box-shadow: 8px 0 40px rgba(0,0,0,.5); z-index: 150; display: flex; flex-direction: column;
+  font-family: var(--font-sans); color: var(--text-primary, #f8fafc);
+}
+.sc-head { display: flex; align-items: center; gap: .6rem; padding: .9rem 1rem; border-bottom: 1px solid rgba(255,255,255,.08); }
+.sc-avatar { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: .85rem; background: linear-gradient(135deg, #7c3aed, #06b6d4); flex-shrink: 0; }
+.sc-head-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.sc-head-text strong { font-size: .95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sc-head-text small, .sc-item-text small { color: var(--text-muted, #64748b); font-size: .72rem; }
+.sc-status { background: rgba(255,255,255,.06); color: inherit; border: 1px solid rgba(255,255,255,.12); border-radius: 6px; padding: .3rem .4rem; font-size: .75rem; }
+.sc-icon-btn { background: none; border: none; color: var(--text-secondary, #94a3b8); font-size: 1rem; cursor: pointer; padding: .3rem; }
+.sc-icon-btn:hover { color: #fff; }
+
+.sc-tabs { display: flex; border-bottom: 1px solid rgba(255,255,255,.08); }
+.sc-tabs button { flex: 1; background: none; border: none; color: var(--text-secondary, #94a3b8); padding: .7rem 0; font-weight: 600; font-size: .82rem; cursor: pointer; border-bottom: 2px solid transparent; }
+.sc-tabs button.active { color: #fff; border-bottom-color: #a855f7; }
+.sc-badge { background: #ef4444; color: #fff; border-radius: 999px; padding: 0 .4rem; font-size: .7rem; }
+
+.sc-body { padding: .9rem 1rem; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: .5rem; }
+.sc-body h4 { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted, #64748b); margin-top: .6rem; }
+
+.sc-row { display: flex; gap: .4rem; align-items: center; }
+.sc-row input, .sc-row select, .sc-form input, .sc-login input { flex: 1; min-width: 0; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12); color: inherit; border-radius: 8px; padding: .5rem .65rem; font-size: .85rem; font-family: inherit; }
+.sc-row input:focus, .sc-form input:focus, .sc-login input:focus { outline: none; border-color: #a855f7; }
+
+.sc-primary, .sc-ghost, .sc-danger, .sc-call { border: none; border-radius: 8px; padding: .55rem .9rem; font-weight: 600; font-size: .85rem; cursor: pointer; font-family: inherit; transition: transform .15s, opacity .15s; }
+.sc-primary { background: linear-gradient(135deg, #7c3aed, #a855f7); color: #fff; }
+.sc-ghost { background: rgba(255,255,255,.07); color: var(--text-secondary, #94a3b8); }
+.sc-ghost:hover { color: #fff; }
+.sc-danger { background: rgba(239, 68, 68, .15); color: #f87171; }
+.sc-call { background: rgba(16, 185, 129, .18); color: #34d399; }
+.sc-call:disabled { opacity: .35; cursor: default; }
+.sc-small { padding: .35rem .6rem; font-size: .78rem; }
+.sc-primary:hover:not(:disabled) { transform: translateY(-1px); }
+.sc-primary:disabled { opacity: .6; cursor: wait; }
+.sc-link { background: none; border: none; color: #a855f7; cursor: pointer; font-size: .8rem; padding: .3rem 0; font-family: inherit; text-align: left; }
+
+.sc-item { display: flex; align-items: center; gap: .55rem; padding: .5rem .6rem; border-radius: 8px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.05); color: inherit; font-family: inherit; text-align: left; width: 100%; }
+.sc-clickable { cursor: pointer; }
+.sc-clickable:hover { border-color: rgba(168, 85, 247, .5); }
+.sc-item-text { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.sc-item-text strong { font-size: .86rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sc-kind { width: 22px; text-align: center; color: var(--text-muted, #64748b); font-weight: 700; }
+.sc-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; background: #475569; }
+.sc-dot.online { background: #10b981; box-shadow: 0 0 8px rgba(16,185,129,.7); }
+.sc-dot.idle { background: #f59e0b; }
+.sc-dot.dnd { background: #ef4444; }
+
+.sc-empty, .sc-muted { color: var(--text-muted, #64748b); font-size: .8rem; }
+.sc-tiny { font-size: .72rem; }
+.sc-error { color: #f87171; font-size: .8rem; }
+.sc-ok { color: #34d399; font-size: .82rem; }
+
+.sc-login { display: flex; flex-direction: column; gap: .7rem; padding: 1.2rem 1rem; }
+.sc-login h2 { font-size: 1.15rem; }
+.sc-login form, .sc-form { display: flex; flex-direction: column; gap: .5rem; }
+.sc-login label, .sc-form label { font-size: .75rem; color: var(--text-secondary, #94a3b8); }
+
+.sc-channel-head { display: flex; flex-direction: column; gap: .3rem; align-items: flex-start; }
+.sc-messages { display: flex; flex-direction: column; gap: .4rem; max-height: 40vh; overflow-y: auto; padding: .4rem; background: rgba(0,0,0,.25); border-radius: 8px; }
+.sc-msg { background: rgba(255,255,255,.05); border-radius: 8px; padding: .4rem .6rem; font-size: .84rem; max-width: 92%; align-self: flex-start; word-break: break-word; }
+.sc-msg.mine { align-self: flex-end; background: rgba(124, 58, 237, .3); }
+.sc-msg small { display: block; color: var(--text-muted, #64748b); font-size: .68rem; margin-bottom: .15rem; }
+.sc-danger-row { margin-top: .8rem; }
+
+.sc-call-banner {
+  position: fixed; top: 1rem; left: 50%; transform: translateX(-50%); z-index: 160;
+  display: flex; align-items: center; gap: .8rem; padding: .7rem 1rem;
+  background: #131a2a; border: 1px solid rgba(168, 85, 247, .5); border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,.6); font-family: var(--font-sans); font-size: .9rem; color: #fff;
+}
+.sc-ring { animation: sc-ring 1s infinite; font-size: 1.2rem; }
+@keyframes sc-ring { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-15deg); } 75% { transform: rotate(15deg); } }
+
+.sc-drawer[hidden], .sc-overlay[hidden] { display: none !important; }

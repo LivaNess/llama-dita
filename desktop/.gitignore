@@ -3,7 +3,10 @@
 
 # Neutralinojs binaries and builds
 /bin
-/dist
+/dist/*
+!/dist/Llama-dita/
+/dist/Llama-dita/*
+!/dist/Llama-dita/resources.neu
 
 # Neutralinojs client (minified)
 neutralino.js

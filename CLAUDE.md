@@ -1,64 +1,67 @@
-# Llama-dita — Protocolo de Desarrollo y Colaboración Multi-Agente (Claude & Antigravity)
+# Llama-dita — Protocolo de desarrollo y colaboración multi-agente (Claude & Antigravity)
 
-Este proyecto es desarrollado en paralelo por dos agentes de IA:
-- **Antigravity**
-- **Claude**
+Este proyecto lo desarrollan en paralelo dos personas con sus agentes de IA:
+- **Juan (LivaNess)** con **Antigravity**
+- **Martín (Mreboredo)** con **Claude**
 
-Para evitar conflictos de git, pérdidas de código y solapamientos, **ambos agentes deben leer este archivo y SYNC.md obligatoriamente al inicio de cada turno.**
-
----
-
-## 1. Esquema Obligatorio de Control de Versiones: Semantic Versioning (SemVer 2.0.0)
-
-Se adopta formalmente el estándar **SemVer 2.0.0 (`MAJOR.MINOR.PATCH`)**:
-- **MAJOR** (ej. `1.0.0` ➔ `2.0.0`): Cambios incompatibles de gran escala o reestructuraciones completas.
-- **MINOR** (ej. `1.0.0` ➔ `1.1.0`): Nuevas funcionalidades retrocompatibles (ej. cuentas, amigos, canales, updater).
-- **PATCH** (ej. `1.0.0` ➔ `1.0.1`): Correcciones de errores, fixes de red o parches sin alterar la API.
-
-La versión vive en `package.json` como **fuente única de verdad** y se propaga automáticamente a `desktop/neutralino.config.json` e `installer.iss`.
-
-Al realizar un commit, utilizar **Conventional Commits**:
-- `feat:` Nuevas funcionalidades
-- `fix:` Correcciones de bugs
-- `refactor:` Refactorización sin cambios de comportamiento
-- `chore:` Tareas de mantenimiento, dependencias o configuración
+Para evitar conflictos de git, pérdida de código y solapamientos, **ambos agentes leen este archivo, `SYNC.md` y `VERSIONADO.md` al inicio de cada turno.**
 
 ---
 
-## 2. Protocolo de Bloqueo y Coordinación (Lectura Obligatoria de `SYNC.md`)
+## 1. Versionado: `HITO.ÁREA.FOCO` + letra · ej. `1.3.1A`
 
-Antes de realizar CUALQUIER edición en el código:
+Definido completo en **`VERSIONADO.md`** (leerlo). Resumen:
 
-1. **Sincronizar el repositorio**:
-   ```bash
-   git pull --rebase origin main
-   ```
-2. **Revisar `SYNC.md`**:
-   - Consultar la sección **"Zona de Trabajo Activa (Locks)"**.
-   - Si el otro agente tiene bloqueada un área o archivo en curso, **NO modifiques esos archivos**. Trabaja en otra área disponible o espera a que finalice.
-3. **Registrar tu tarea en `SYNC.md`**:
-   - Modifica la tabla de locks con tu nombre de agente, área (`Y.Z`), archivos que vas a intervenir y la versión objetivo.
-4. **Hacer cambios exclusivamente en el alcance delimitado**.
-5. **Verificar compilación**:
-   ```bash
-   npm run build
-   ```
-   *(La compilación debe terminar con código de salida 0 sin errores)*.
-6. **Actualizar `SYNC.md`**:
-   - Liberar el lock activo (*Libre para tomar tareas*).
-   - Agregar la nueva entrada en la tabla **"Historial de Cambios y Versiones"**.
-7. **Commit y Push**:
-   - Mensaje de commit estándar: `tipo(alcance): descripción concisa` (ej. `feat: auto-updater`, `fix: stun/turn relay`)
-   - Ejecutar `git push origin main`.
+- **Hito** sube solo con permiso de Martín o Juan. **Área** sube al cambiar de área de trabajo. **Foco** sube al cambiar de cosa puntual dentro del área. **Letra** sube en cada commit sobre el mismo foco.
+- No es semver ni un mapa fijo de áreas: es cronológico. Qué significa cada número se lee en el historial de `SYNC.md`.
+- La versión vive **solo en `package.json`**. La UI la toma del build; `npm run build:desktop` la copia a `desktop/neutralino.config.json` e `installer.iss` y escribe el manifiesto de actualización. No editar esos a mano.
+- Formato de commit: `[1.3.1B] tipo: descripción corta` (tipos: feat, fix, docs, chore, refactor).
 
 ---
 
-## 3. Pila Tecnológica y Arquitectura
-- **Frontend Web**: Vanilla JavaScript modular (ESM), HTML5 Canvas para visualizadores de audio en tiempo real (60 FPS), Vite como empaquetador.
-- **Motor de Audio**: Web Audio API (`AudioContext`, `AnalyserNode`, direct PCM RMS / peak meters en dB y %).
-- **Red & P2P**:
-  - **Señalización**: Supabase Realtime (Broadcast y Presence) conectado al proyecto `LLAMA DITA` (`mwzkrahindnheuheoycv`).
-  - **Transporte de Audio**: `RTCPeerConnection` nativo con servidores STUN (Google, Cloudflare) y servidores TURN de retransmisión (OpenRelay Metered en puertos 80/443 TCP y UDP).
-  - **Canal de Datos**: WebRTC `DataChannel` para metadatos (nombre, mute, estado de ping).
-- **Cliente Windows**: Neutralinojs v6 + WebView2 (~37 MB de consumo RAM).
-- **Instalador Windows**: Inno Setup 6 generando `installer/Llama-dita-Setup.exe`.
+## 2. Protocolo de coordinación (`SYNC.md`)
+
+Antes de editar código:
+
+1. **Sincronizar**: `git pull --rebase origin main`.
+2. **Revisar `SYNC.md`** → "Zona de trabajo activa (locks)". Si el otro agente tiene bloqueados archivos, no tocarlos: trabajar en otra cosa o esperar.
+3. **Registrar la tarea** en la tabla de locks: agente, versión objetivo, archivos que se van a intervenir.
+4. **Cambiar solo lo delimitado.** Si hace falta tocar algo fuera del lock, ampliarlo en `SYNC.md` primero.
+5. **Verificar**: `npm run build` (salida 0, sin errores). Si se tocó algo del escritorio o se publica versión: `npm run build:desktop`.
+6. **Actualizar `SYNC.md`**: liberar el lock y agregar la fila en "Historial".
+7. **Commit y push** a `main`: `[versión] tipo: descripción`.
+
+Reglas:
+- Nunca pushear con el build roto.
+- Nunca subir el Hito sin permiso explícito.
+- **Cero menciones a otras apps de chat/voz** en código, UI, docs o commits. Llama-dita se describe por lo que es.
+- Antes de reinventar algo, mirar si ya existe: `src/supabase/client.js` es el único cliente Supabase compartido (auth incluida); la señalización en `src/network/peerManager.js` debería usar ese mismo cliente y no crear otro.
+
+---
+
+## 3. Pila tecnológica y arquitectura
+
+- **Frontend web**: JavaScript vanilla modular (ESM), HTML5 Canvas para visualizadores de audio a 60 FPS, Vite.
+- **Motor de audio**: Web Audio API (`AudioContext`, `AnalyserNode`, RMS/pico en dB y %).
+- **Red y P2P**: señalización por Supabase Realtime (Broadcast y Presence); transporte `RTCPeerConnection` con STUN (Google, Cloudflare) y TURN (OpenRelay Metered 80/443 TCP y UDP); `DataChannel` para metadatos.
+- **Backend**: Supabase, proyecto `LLAMA DITA` (`mwzkrahindnheuheoycv`). Auth sin contraseña (código o enlace por mail). Tablas con RLS: `profiles`, `friendships`, `channels`, `channel_members`, `messages`, `call_invites`. Esquema en `supabase/migrations/`. Las claves de `src/supabase/client.js` son públicas por diseño; lo que protege es RLS.
+- **Panel social** (`src/social/`): perfil, amigos, canales de texto (chat en vivo) y de voz, llamada directa con timbre. Aditivo a la sala P2P.
+- **Actualizaciones** (`src/updater.js`): al abrir consulta `desktop/update-manifest.json` en este repo; en escritorio usa el updater nativo de Neutralino (baja `desktop/dist/Llama-dita/resources.neu` y reinicia). Publicar versión = subir `package.json` + `npm run build:desktop` + push a `main`.
+- **Cliente Windows**: Neutralino v6 + WebView2. **Instalador**: Inno Setup 6 → `installer/Llama-dita-Setup.exe` (solo hace falta para instalaciones nuevas).
+
+---
+
+## 4. Mapa de carpetas
+
+```
+src/audio/           captura y análisis de audio
+src/network/         señalización y WebRTC
+src/components/      visualizadores canvas
+src/social/          cuentas, amigos, canales, llamadas directas
+src/supabase/        cliente Supabase compartido
+src/updater.js       actualizaciones
+supabase/migrations/ esquema SQL del backend
+scripts/             build-desktop.mjs (empaquetado + manifiesto)
+desktop/             Neutralino (config, resources, update-manifest.json, dist/…/resources.neu)
+installer.iss        Inno Setup
+```
