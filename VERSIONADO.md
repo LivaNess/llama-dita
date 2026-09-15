@@ -64,4 +64,5 @@ Cuatro piezas: tres números y una letra → `H.A.F` + `letra`.
 | `1.8.1A` | Interfaz: barra lateral persistente (canales, amigos, pie de usuario con muteo) y vistas condicionales (chat de canal / cabinas en llamada activa / standby limpio). |
 | `1.8.1A` | Rediseño de interfaz con barra lateral (Antigravity). |
 | `1.9.1A` | Identidad visual: logo, paleta del logo y tipografía de marca. |
-| `1.10.1A` | Web oficial: presentación, descarga y registro en llamadita.com.ar. **← actual** |
+| `1.10.1A` | Web oficial: presentación, descarga y registro en llamadita.com.ar. |
+| `1.10.1D` | Identidad visual en el paquete de escritorio y limpieza de carpetas de build. **← actual** |
