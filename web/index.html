@@ -151,17 +151,7 @@
     </div>
   </footer>
 
-  <script>
-    // Dirección oficial: llamadita.com.ar. Si alguien entra por la dirección vieja
-    // de Cloudflare Pages, lo mandamos al dominio, pero solo cuando ya responde.
-    (async () => {
-      if (!location.hostname.endsWith('.pages.dev')) return;
-      try {
-        const r = await fetch('https://llamadita.com.ar/version.json', { cache: 'no-store', mode: 'cors' });
-        if (r.ok) location.replace('https://llamadita.com.ar' + location.pathname + location.search + location.hash);
-      } catch (_) { /* el dominio todavía no resuelve: se sigue usando esta dirección */ }
-    })();
-  </script>
+  <script type="module" src="/js/dominio.js"></script>
   <script type="module" src="/js/registro.js"></script>
 </body>
 </html>
