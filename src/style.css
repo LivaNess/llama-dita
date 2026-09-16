@@ -80,23 +80,9 @@ body {
   transform: scale(1.04);
 }
 
-/* Header */
+/* Header (oculto: el control y título residen en la cabecera de cada vista activa) */
 .app-header {
-  height: 64px;
-  min-height: 64px;
-  max-height: 64px;
-  box-sizing: border-box;
-  padding: 0 1.5rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid var(--border-card);
-  backdrop-filter: blur(12px);
-  background: rgba(10, 13, 20, 0.8);
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  flex-shrink: 0;
+  display: none !important;
 }
 
 .logo-area {

@@ -93,12 +93,7 @@ body {
 
 /* ---------- Cabecera y controles ---------- */
 .app-header {
-  height: 64px;
-  min-height: 64px;
-  max-height: 64px;
-  box-sizing: border-box;
-  border-bottom: 1px solid rgba(143, 166, 255, 0.12);
-  background: rgba(13, 20, 48, 0.55);
+  display: none !important;
 }
 .room-id-pill { border-color: rgba(143, 166, 255, 0.22); color: var(--text-secondary); }
 .btn-invite, .btn-join {

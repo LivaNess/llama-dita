@@ -19,6 +19,16 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.24.1C · 2026-09-16 · Antigravity
+**Qué cambió.** Eliminación del espacio vacío en la parte superior del panel de chat: la barra de cabecera vacía (`.app-header`) que quedaba arriba del nombre del amigo ("MALDITO TOKICHI") fue ocultada, haciendo que la barra del chat suba a la parte superior de la ventana y quede perfectamente alineada a la misma altura que la cabecera de la barra lateral.
+**Por qué.** Pedido de Juan para quitar el espacio ocioso superior y subir la cabecera del chat y los mensajes hacia arriba.
+**Dónde.** `index.html`, `src/style.css`, `src/brand.css`, `package.json`.
+**Cómo se verifica.**
+1. Ejecutar `npm run verificar`.
+2. Al abrir cualquier chat directo o de canal, la barra con el nombre del amigo y los botones ("Llamar", "Salir del chat", menú) se ubica en el tope de la ventana sin ningún renglón oscuro ocioso por encima.
+
+---
+
 ### 0.24.1B · 2026-09-16 · Antigravity
 **Qué cambió.** Cuatro correcciones críticas sobre la llamada y la vista de cabinas:
 1. **Fotos en las cabinas ("DEBE MOSTRAR FOTOS"):** Ahora se cargan y muestran las fotos de perfil reales en los discos de avatar del usuario local y del amigo conectado (resolviendo las direcciones firmadas de `avatar_key` mediante `urlParaVer`).

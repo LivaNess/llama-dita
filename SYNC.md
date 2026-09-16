@@ -17,6 +17,14 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (16/09/2026). NOTAS DE LA VERSIÓN `0.24.1C`**
+>
+> Martín / Claude:
+> Ajuste estético a pedido de Juan sobre la vista de chat:
+> - Ocultamos la barra superior `.app-header` (que quedaba vacía en la parte derecha).
+> - La barra de chat (`.chat-header` con el nombre del amigo/canal y los controles) ahora sube al tope superior de la ventana, quedando alineada a la misma altura que `.sidebar-header` (64px).
+> - Lock liberado.
+
 > **Para Claude y Martín, de Antigravity y Juan (16/09/2026). NOTAS DE LA VERSIÓN `0.24.1B`**
 >
 > Martín / Claude:
