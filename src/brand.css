@@ -147,3 +147,181 @@ h1, h2, h3, .standby-title, .logo-title { font-family: var(--font-display); }
 .sidebar-header .logo-area { flex-wrap: nowrap; gap: 0.5rem; }
 .sidebar-header .logo-title { white-space: nowrap; font-size: 0.98rem; letter-spacing: 0.04em; }
 .sidebar-header .logo-tag { flex-shrink: 0; font-size: 0.62rem; padding: 0.15rem 0.45rem; }
+
+/* ---------- Modal sorpresa: Cumpleaños de Martín ---------- */
+.bday-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(6, 10, 24, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  opacity: 1;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+  overflow: hidden;
+}
+
+.bday-overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.bday-modal {
+  position: relative;
+  width: min(540px, 94vw);
+  background: linear-gradient(165deg, #182552 0%, #0D1430 65%, #080D20 100%);
+  border: 1px solid rgba(244, 236, 220, 0.35);
+  border-radius: 24px;
+  padding: 2.4rem 2rem;
+  text-align: center;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.8), 0 0 50px rgba(91, 124, 250, 0.25);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: bdayPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes bdayPop {
+  0% { transform: scale(0.85); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.bday-confetti {
+  position: absolute;
+  top: -24px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-around;
+  font-size: 1.5rem;
+  pointer-events: none;
+  animation: bdayFloat 3s ease-in-out infinite alternate;
+}
+
+@keyframes bdayFloat {
+  0% { transform: translateY(0px) rotate(0deg); }
+  100% { transform: translateY(-8px) rotate(6deg); }
+}
+
+.bday-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(244, 236, 220, 0.12);
+  border: 1px solid rgba(244, 236, 220, 0.35);
+  color: var(--brand-cream);
+  font-family: var(--font-display);
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 1.2rem;
+}
+
+.bday-icon-wrap {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(91, 124, 250, 0.3) 0%, rgba(20, 29, 58, 0.8) 70%);
+  border: 2px solid rgba(143, 166, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.2rem;
+  box-shadow: 0 0 30px rgba(91, 124, 250, 0.35);
+}
+
+.bday-llama-icon {
+  font-size: 2.8rem;
+  line-height: 1;
+}
+
+.bday-party-icon {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  font-size: 1.6rem;
+  animation: bdaySpin 2s infinite ease-in-out alternate;
+}
+
+@keyframes bdaySpin {
+  0% { transform: scale(1) rotate(-10deg); }
+  100% { transform: scale(1.15) rotate(15deg); }
+}
+
+.bday-title {
+  font-family: var(--font-display);
+  font-size: 2.1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #FFFFFF;
+  margin-bottom: 0.5rem;
+  text-shadow: 0 2px 14px rgba(244, 236, 220, 0.25);
+  background: linear-gradient(135deg, #FFFFFF 0%, var(--brand-cream) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.bday-subtitle {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--brand-blue-soft);
+  margin-bottom: 1.2rem;
+}
+
+.bday-subtitle strong {
+  color: var(--brand-cream);
+}
+
+.bday-card-text {
+  background: rgba(10, 15, 34, 0.65);
+  border: 1px solid rgba(143, 166, 255, 0.12);
+  border-radius: 14px;
+  padding: 1.1rem 1.4rem;
+  margin-bottom: 1.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.bday-card-text p {
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.bday-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: linear-gradient(135deg, #5B7CFA 0%, #3B5BDB 100%);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 0.85rem 1.8rem;
+  border-radius: 12px;
+  font-family: var(--font-display);
+  font-size: 0.98rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 8px 24px rgba(91, 124, 250, 0.45);
+}
+
+.bday-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(91, 124, 250, 0.6);
+}
+
+.bday-btn:active {
+  transform: translateY(0);
+}

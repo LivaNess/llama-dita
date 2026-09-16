@@ -19,6 +19,12 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 1.15.1B · 2026-09-16 · Antigravity
+**Qué cambió.** Se agregó un cartel festivo en pantalla completa al iniciar la aplicación con saludo y felicitación por los 28 años de Martín (Dev & CEO de Llama-dita), con diseño dark studio conmemorativo, animación y botón para ingresar a la app.
+**Por qué.** Pedido especial de Juan para celebrar el cumpleaños número 28 de Martín.
+**Dónde.** `index.html`, `src/brand.css`, `src/main.js`.
+**Cómo se verifica.** Abrir la aplicación: aparece el cartel de felicitación en pantalla completa con el mensaje para Martín y se cierra limpiamente al tocar el botón o presionar Escape.
+
 ### 1.15.1A · 2026-09-15 · Claude
 **Qué cambió.** La app dejó de gastar procesador cuando no hay nada que mirar. Medido en la
 máquina de Martín, con la ventana abierta y sin llamada: **pasó de 6,49% a 0,45% de CPU**.

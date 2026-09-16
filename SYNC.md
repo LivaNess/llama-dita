@@ -50,6 +50,7 @@ Cronológico. Acá se lee qué significa cada área y foco (el número no es un 
 | `1.14.1A` | Claude | Interfaz / botón de llamar | El emoji del teléfono (rosa en Windows) se reemplaza por un ícono vectorial que toma el verde del botón. Mismo ícono en la barra lateral, el panel de amigos y el aviso de llamada entrante. |
 | `1.14.2A` | Claude | Interfaz / salir de la llamada | Botón "Salir de la llamada" en la cabecera, visible solo con alguien del otro lado. `peerManager.leaveRoom()` corta, sale del canal de señalización y vuelve a una sala propia vacía (si se quedaba en la misma, la presencia del otro los volvía a juntar). |
 | `1.15.1A` | Claude | Rendimiento / bucle de dibujo | El dibujo de medidores y espectro corría a 60 cuadros por segundo aunque las cabinas no estuvieran en pantalla. Con la ventana atrás va a la mitad de cuadros. Medido: de 6,49% a 0,45% de CPU sin llamada. |
+| `1.15.1B` | Antigravity | Interfaz / saludo cumpleaños Martín | Cartel festivo en pantalla completa al iniciar la app celebrando los 28 años de Martín (Dev & CEO), con diseño dark studio conmemorativo y botón de entrada. |
 ---
 
 ## ⚠️ Reglas para agentes

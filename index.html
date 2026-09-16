@@ -353,8 +353,31 @@
     </div><!-- /.app-main-area -->
   </div><!-- /.app-layout -->
 
-  <audio id="remoteAudioElement" autoplay playsinline></audio>
-  <div class="toast-container" id="toastContainer"></div>
+  <!-- Modal sorpresa: Cumpleaños de Martín (Dev & CEO) -->
+  <div class="bday-overlay" id="bdayOverlay">
+    <div class="bday-modal">
+      <div class="bday-confetti" aria-hidden="true">
+        <span>🎉</span><span>✨</span><span>🎂</span><span>🎈</span><span>🚀</span><span>🦙</span>
+      </div>
+      <div class="bday-badge">🎂 ¡HOY SE FESTEJA! 🎂</div>
+      <div class="bday-icon-wrap">
+        <span class="bday-llama-icon">🦙</span>
+        <span class="bday-party-icon">🎉</span>
+      </div>
+      <h1 class="bday-title">¡Felices 28 Años Martín!</h1>
+      <p class="bday-subtitle">Feliz cumpleaños al <strong>Dev & CEO</strong> de Llama-dita</p>
+      <div class="bday-card-text">
+        <p>De parte de Juan y de todo el equipo: ¡te deseamos un cumpleaños inolvidable!</p>
+        <p>Gracias por toda la pasión, las horas de código y la garra que le ponés al proyecto todos los días. ¡Que sea un año lleno de éxitos y salas repletas de amigos! 🎙️✨</p>
+      </div>
+      <button class="bday-btn" id="btnBdayClose">
+        <span>¡Muchas Gracias! Entrar a Llama-dita</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 18 15 12 9 6"></polyline>
+        </svg>
+      </button>
+    </div>
+  </div>
 
   <script type="module" src="/src/main.js"></script>
 </body>
