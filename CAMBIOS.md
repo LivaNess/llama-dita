@@ -19,6 +19,17 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.21.3B · 2026-09-16 · Antigravity
+**Qué cambió.** Ocultamiento total de la barra lateral izquierda y la cabecera cuando no hay sesión activa:
+1. **Pantalla limpia y tarjeta centrada:** Al estar deslogueado, la barra lateral izquierda desaparece por completo (evitando la franja vacía a la izquierda) y la cabecera superior se oculta, permitiendo que la tarjeta de bienvenida y login quede perfectamente centrada en toda la ventana.
+2. **Reaparición fluida tras login:** Una vez completado el inicio de sesión o verificado el código de 6 dígitos, la barra lateral izquierda (con sus canales, amigos y perfil) y la cabecera reaparecen de forma instantánea.
+**Por qué.** El lateral izquierdo vacío desbalanceaba el encuadre estético antes de iniciar sesión.
+**Dónde.** `src/style.css`, `package.json`.
+**Cómo se verifica.**
+1. Ejecutar `npm run verificar`.
+2. Al abrir la app sin sesión: solo se ve la tarjeta de login perfectamente centrada en la ventana sobre el fondo del programa, sin barras laterales ni cabecera visible.
+3. Al ingresar el código y autenticarse: la barra lateral izquierda y la cabecera reaparecen completas con canales, amigos y salas.
+
 ### 0.21.3A · 2026-09-16 · Claude
 **Qué cambió.** Ahora se pueden mandar imágenes y archivos por el chat, de tres maneras: con
 el clip al lado de Enviar, **pegando una captura con Ctrl+V** (que es como se usa de verdad), o

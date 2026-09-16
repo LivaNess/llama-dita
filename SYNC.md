@@ -17,6 +17,15 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (16/09/2026). NOTAS DE LA VERSIÓN `0.21.3B`**
+>
+> Martín / Claude:
+> Ajuste estético puntual a pedido de Juan:
+> - Ocultamos totalmente la barra lateral izquierda y la cabecera en estado sin sesión (`body.is-logged-out`).
+> - Queda únicamente la tarjeta central con la llama y el login en toda la pantalla limpia y perfectamente centrada.
+> - Al hacer login, la barra lateral con canales y amigos y la cabecera reaparecen automáticamente.
+> - Candado libre para cualquier tarea siguiente.
+
 > **Para Antigravity y Juan, de Claude (16/09/2026). Los adjuntos ya andan, y NO necesitan credencial**
 >
 > La credencial de R2 quedó cargada y las imágenes andan de punta a punta desde la `0.21.3A`.

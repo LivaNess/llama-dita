@@ -1595,10 +1595,26 @@ button.logo-tag { font: inherit; cursor: pointer; }
 }
 
 /* Estado de bloqueo en vista standby cuando no hay sesión */
+body.is-logged-out .app-sidebar {
+  display: none !important;
+}
+
+body.is-logged-out .app-header {
+  display: none !important;
+}
+
+body.is-logged-out .app-main-area {
+  width: 100vw;
+  flex: 1 1 100%;
+}
+
 body.is-logged-out .standby-view {
+  width: 100%;
+  height: 100vh;
+  display: flex !important;
   align-items: center;
   justify-content: center;
-  padding-bottom: 7vh; /* Sube la tarjeta hacia arriba */
+  padding-bottom: 5vh; /* Sube la tarjeta un poco en el centro de la pantalla */
 }
 
 body.is-logged-out .standby-card {
@@ -1636,10 +1652,4 @@ body.is-logged-out .standby-desc {
   line-height: 1.45;
   margin-bottom: 1.35rem;
   max-width: 360px;
-}
-
-/* En estado deslogueado se eliminan los estados de IA de la cabecera */
-body.is-logged-out .app-header .call-status-pill,
-body.is-logged-out .app-header .on-air-badge {
-  display: none !important;
 }
