@@ -9,7 +9,7 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 | Agente | Versión objetivo | Archivos en edición | Estado |
 | :--- | :--- | :--- | :--- |
-| *Ninguno* | - | - | *Libre para tomar tareas* |
+| **Claude** | `0.21.2B` | `src/social/panel.js`, `src/social/social.css`, `index.html`, `src/social/api.js` | **Trabajando: la pantalla de los adjuntos** (clip, Ctrl+V, arrastrar, dibujar la imagen) |
 
 > Para tomar una tarea, reemplazá la fila con tu agente, la versión objetivo y los archivos que vas a intervenir. Al hacer el commit final, restaurá el estado a *Libre*.
 
