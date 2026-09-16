@@ -122,6 +122,56 @@ no es un chiche: es el que avisa cuándo tocar la mudanza.
 
 ---
 
+## 2d. El tallo y las ramas
+
+Las áreas dicen **de qué se trata cada cosa**. No dicen **qué va primero**. Y no es lo mismo un
+cimiento que una rama, por gruesa que sea la rama.
+
+### El tallo: siete cosas que, si se hacen tarde, obligan a rehacer lo de arriba
+
+1. **Dónde vive la configuración.** Un solo lugar donde están los ajustes y los perfiles. Todo
+   lo que venga después se enchufa acá. Si cada función guarda lo suyo por su lado, después hay
+   dos fuentes peleando por el mismo dato.
+2. **La forma de los datos.** Espacio, canal, miembro, mensaje. Agregar la idea de "espacio"
+   más adelante es una migración sobre datos que ya existen; agregarla ahora es una columna.
+3. **Los permisos garantizados por la base.** Si un permiso solo se respeta en la pantalla, no
+   existe: cualquiera que sepa pedirlo de otra forma se lo saltea.
+4. **El historial guardado en la PC y el borrado.** Define si el chat escala sin pagar y si
+   "borrar" significa algo. Va antes de las funciones lindas del chat, no después.
+5. **La señalización dirigida.** Que el apretón de manos de una llamada le llegue a la persona
+   que corresponde y no a toda la sala. Hoy se le grita a todos y cada uno descarta lo que no
+   es suyo, y eso multiplica el consumo por la cantidad de gente que haya.
+6. **La puerta del repartidor.** Una función chica de servidor que entrega pases de entrada.
+   Es donde se hace cumplir quién puede entrar, y es la costura que permite cambiar de
+   proveedor sin tocar la app.
+7. **El transporte detrás de una sola interfaz.** Que "hablar con alguien" sea una sola puerta
+   por dentro, y que si atrás hay conexión directa, todos con todos, o repartidor, sea un
+   detalle que se cambia sin que nada de arriba se entere.
+
+### Las ramas gruesas
+
+Cuelgan del tallo. Entre ellas se pueden hacer en el orden que convenga, y ninguna obliga a
+rehacer el tallo: **el chat completo**, **la voz en grupo**, **pantalla y cámara**, **el
+medidor y los presets**, **el ayudante nativo**.
+
+### Las ramitas
+
+Se suman cuando haya ganas y no cambian nada de abajo: encuestas, hilos, foros, emojis propios,
+soundboard, eventos programados, bots.
+
+### El primer tramo: un chat que ande bien
+
+Decisión de Martín y Juan: **lo primero que tiene que funcionar, sin cosas raras, es el chat.**
+
+Y es una buena elección por un motivo que no es obvio: **un chat bien hecho arrastra cuatro de
+los siete cimientos.** Para que ande de verdad hace falta la forma de los datos (1 y 2), los
+permisos de quién escribe dónde (3) y el historial local con su borrado (4). O sea que mientras
+se construye lo que se ve, queda hecho más de la mitad de lo que no se ve.
+
+Los tres cimientos que quedan (5, 6 y 7) son todos de llamadas, y van con la voz en grupo.
+
+---
+
 ## 3. Los cuatro presets
 
 Todo lo que consume recursos se agrupa en cuatro perfiles. Se elige uno y listo, pero cada
