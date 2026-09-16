@@ -47,6 +47,12 @@ con Windows. Ese es el motivo estructural por el que podemos pesar cinco veces m
 competencia. Si algún día alguien propone migrar a un framework que mete su propio Chromium,
 la respuesta es no.
 
+**Línea de base medida (2026-09-15, versión `1.15.1A`):** con la app abierta y sin llamada,
+422 MB de memoria de trabajo, 220 MB de memoria propia y 0,45 % de procesador. La primera
+medición había dado 6,49 % de procesador: era nuestro propio bucle de dibujo corriendo a 60
+cuadros por segundo contra pantallas que nadie estaba mirando. Sirve de recordatorio de la
+regla que sigue.
+
 **d. Primero se mide, después se optimiza.** Si el diferencial es "consume menos", tiene que
 haber un número a la vista. Por eso el medidor de consumo es el primer hito y no el último.
 
