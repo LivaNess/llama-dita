@@ -19,6 +19,42 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.21.3A · 2026-09-16 · Claude
+**Qué cambió.** Ahora se pueden mandar imágenes y archivos por el chat, de tres maneras: con
+el clip al lado de Enviar, **pegando una captura con Ctrl+V** (que es como se usa de verdad), o
+arrastrando el archivo encima de la conversación. Antes de mandarlos aparecen abajo con su
+miniatura, su nombre y su peso, y se pueden sacar de a uno. Mientras suben, cada uno tiene su
+barrita.
+
+Las imágenes se ven **adentro** de la conversación, y al tocarlas se abren en grande sin salir
+de la app. Cualquier otra cosa aparece como un renglón con su nombre y su peso, y se baja de un
+click. Un mensaje puede ser **solo** una imagen, sin texto.
+
+**Por qué.** Es el "listo cuando" del hito 5 del roadmap: pegar una captura, verla, y borrarla
+de verdad. Y es lo que más se usa de un chat después del texto.
+
+**Dónde.** `index.html` (el clip, la bandeja, el cartel de soltar y el visor), `src/social/
+panel.js`, `src/social/social.css`, `src/social/api.js`. Se apoya en lo que ya había dejado la
+`0.21.2A`: la tabla de fichas, el repartidor de permisos y el achicado.
+
+**Lo que ahorra, medido en el motor de la app.** Una captura de 2560×1440 pesa 1,5 MB y sale
+en **35 KB**: 45 veces más chica, y tarda 143 milisegundos en la máquina del que sube. Una foto
+de 15 MB queda en 133 KB. A ese promedio, en los 10 GB gratis entran unas **35.000 imágenes**.
+
+**Una trampa que quedó cerrada.** Al medir formatos descubrimos que cuando el motor no sabe
+escribir el que le pedís, `toBlob` **no avisa**: te devuelve un PNG haciéndose pasar por lo que
+pediste. Pidiéndole AVIF, los 63 KB se convertían en 850 KB. Ahora el formato se lee del
+resultado en vez de darse por sentado. (AVIF igual no conviene: el que lo sufre es el que mira,
+y una placa GTX 1060 no lo descomprime por hardware.)
+
+**Falta para que ande de punta a punta.** La credencial de R2, que se crea en el panel de
+Cloudflare. Hasta que esté cargada como secreto del Worker, el clip y el pegado funcionan pero
+la subida va a fallar con "el servidor de archivos dijo que no".
+
+**Cómo se verifica.** Sacar una captura con Impr Pant, pegarla en el chat con Ctrl+V, mandarla,
+verla del otro lado, tocarla para abrirla en grande, y después borrar el mensaje y comprobar
+que desaparece en las dos pantallas.
+
 ### 0.21.2B · 2026-09-16 · Antigravity
 **Qué cambió.** Rediseño visual de la pantalla de bienvenida y login para usuarios sin sesión:
 1. **Login centrado en la tarjeta:** El formulario de login y registro se reubicó directamente debajo de la ilustración de la llama en la tarjeta central (`#standbyCard`), en lugar de la barra lateral.

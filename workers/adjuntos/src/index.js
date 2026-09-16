@@ -151,6 +151,12 @@ function cliente(env) {
   });
 }
 
+// Mientras la credencial de R2 no este cargada como secreto, el servicio contesta pero no
+// puede firmar nada. Mejor decirlo con todas las letras que devolver "algo se rompio".
+function faltaLaCredencial(env) {
+  return !env.R2_ACCESS_KEY_ID || !env.R2_SECRET_ACCESS_KEY;
+}
+
 async function firmar(env, key, metodo, segundos, extra = {}) {
   const url = new URL(`https://${env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${env.R2_BUCKET}/${key}`);
   url.searchParams.set('X-Amz-Expires', String(segundos));
@@ -163,6 +169,9 @@ async function firmar(env, key, metodo, segundos, extra = {}) {
 // 1. Pedir permiso para subir
 // ------------------------------------------------------------------
 async function permisoParaSubir(req, env, origen) {
+  if (faltaLaCredencial(env)) {
+    return json({ error: 'Los archivos todavía no están habilitados: falta cargar la credencial del almacenamiento.' }, 503, origen);
+  }
   const quien = await quienSos(req, env);
   if (!quien) return json({ error: 'Sesión inválida o vencida.' }, 401, origen);
 
@@ -212,6 +221,9 @@ async function permisoParaSubir(req, env, origen) {
 // 2. Pedir permiso para ver
 // ------------------------------------------------------------------
 async function permisoParaVer(req, env, origen) {
+  if (faltaLaCredencial(env)) {
+    return json({ error: 'Los archivos todavía no están habilitados: falta cargar la credencial del almacenamiento.' }, 503, origen);
+  }
   const quien = await quienSos(req, env);
   if (!quien) return json({ error: 'Sesión inválida o vencida.' }, 401, origen);
 
@@ -267,7 +279,7 @@ export default {
       if (req.method === 'POST' && pathname === '/subir') return await permisoParaSubir(req, env, origen);
       if (req.method === 'GET' && pathname === '/ver') return await permisoParaVer(req, env, origen);
       if (req.method === 'POST' && pathname === '/borrar') return await borrarObjetos(req, env, origen);
-      if (pathname === '/salud') return json({ ok: true }, 200, origen);
+      if (pathname === '/salud') return json({ ok: true, credencial: !faltaLaCredencial(env) }, 200, origen);
     } catch (e) {
       // Nunca devolver el detalle del error hacia afuera: puede traer el nombre del bucket o
       // pedazos de la firma.
