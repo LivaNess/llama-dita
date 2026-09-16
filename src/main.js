@@ -63,8 +63,17 @@ const studioBoothsView = document.getElementById('studioBoothsView');
 const standbyView = document.getElementById('standbyView');
 const btnSidebarMic = document.getElementById('btnSidebarMic');
 let currentActiveChannel = null;
+let isUserLoggedIn = false;
 
 function updateMainViews() {
+  if (!isUserLoggedIn) {
+    if (btnLeaveCall) btnLeaveCall.hidden = true;
+    if (channelChatView) channelChatView.style.display = 'none';
+    if (studioBoothsView) studioBoothsView.style.display = 'none';
+    if (standbyView) standbyView.style.display = 'flex';
+    return;
+  }
+
   // El botón de cortar solo tiene sentido si hay alguien del otro lado.
   if (btnLeaveCall) btnLeaveCall.hidden = !(isConnected || peerManager.remotePeerId);
 
@@ -559,6 +568,13 @@ window.addEventListener('DOMContentLoaded', () => {
     toast: showToast,
     onChannelChange: (channel) => {
       currentActiveChannel = channel;
+      updateMainViews();
+    },
+    onAuthStateChange: (loggedIn) => {
+      isUserLoggedIn = !!loggedIn;
+      if (!loggedIn && isConnected) {
+        leaveCall();
+      }
       updateMainViews();
     }
   });

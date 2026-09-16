@@ -34,8 +34,11 @@
         </div>
       </div>
 
+      <!-- Panel de Login en Barra Lateral (cuando no hay sesión activa) -->
+      <div class="sidebar-login-container" id="sidebarLoginContainer" style="display: none;"></div>
+
       <!-- Contenido scrolleable de la barra lateral -->
-      <div class="sidebar-scrollable">
+      <div class="sidebar-scrollable" id="sidebarScrollable">
         <!-- SECCIÓN CANALES -->
         <div class="sidebar-section" id="sectionChannels">
           <div class="sidebar-section-header">
@@ -333,12 +336,12 @@
 
         <!-- VISTA 3: STANDBY LIMPIO (CUANDO NO HAY CHAT Y NO HAY SESIÓN CONECTADA) -->
         <section class="main-view standby-view" id="standbyView">
-          <div class="standby-card">
-            <div class="standby-icon">
+          <div class="standby-card" id="standbyCard">
+            <div class="standby-icon" id="standbyIcon">
               <img src="/brand/logo-mark-light.svg" alt="" width="88" height="88" />
             </div>
-            <h3 class="standby-title">Sin sesión activa</h3>
-            <p class="standby-desc">Elegí un canal o llamá a un amigo desde la barra lateral para empezar.</p>
+            <h3 class="standby-title" id="standbyTitle">Sin sesión activa</h3>
+            <p class="standby-desc" id="standbyDesc">Elegí un canal o llamá a un amigo desde la barra lateral para empezar.</p>
           </div>
         </section>
 

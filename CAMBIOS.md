@@ -19,6 +19,18 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.21.1B · 2026-09-16 · Antigravity
+**Qué cambió.** Bloqueo completo del programa para usuarios sin sesión activa y pantalla de login/registro integrada permanentemente en la barra lateral izquierda:
+1. **Acceso bloqueado sin sesión:** Si no estás logueado o verificado, el programa no permite interactuar con cabinas, canales de chat ni realizar llamadas. En el centro se muestra la tarjeta de "Acceso restringido" y en la cabecera el estado queda en "Sin sesión" con indicador "BLOQUEADO".
+2. **Login/Registro completo en la barra lateral:** La barra lateral izquierda muestra directamente el formulario completo de inicio de sesión / creación de cuenta sin botón de cerrar `✕`, ocultando las listas de canales, amigos y perfil hasta que el usuario se autentique exitosamente.
+3. **El drawer flotante ya no se abre sin sesión:** Se eliminó el cajón flotante que permitía cerrarse o evadir el inicio de sesión.
+**Por qué.** El programa no debe permitir el acceso ni interacción a personas que no estén autenticadas o registradas con una cuenta existente o verificada.
+**Dónde.** `index.html`, `src/style.css`, `src/main.js`, `src/social/panel.js`, `package.json`.
+**Cómo se verifica.**
+1. Ejecutar `npm run verificar` para asegurar compatibilidad de protocolo.
+2. Abrir la app sin sesión (o cerrar sesión): la barra lateral izquierda muestra el formulario de login/registro sin botón `✕`, los canales y amigos están ocultos, el centro indica "Acceso restringido", no se puede llamar ni chatear y el header indica "Sin sesión" / "BLOQUEADO".
+3. Al ingresar el mail y código de 6 dígitos (o iniciar sesión con una cuenta válida), la barra lateral se desbloquea de inmediato mostrando los canales, amigos y pie de perfil, y la vista principal vuelve a standby o cabina.
+
 ### 0.21.1A · 2026-09-16 · Claude
 **Qué cambió.** Tres cosas que se ven:
 

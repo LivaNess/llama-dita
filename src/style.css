@@ -1449,3 +1449,142 @@ button.logo-tag { font: inherit; cursor: pointer; }
   background: rgba(239, 68, 68, 0.16);
   color: #fca5a5;
 }
+
+/* ------------------------------------------------------------------
+   Panel de Login integrado en la barra lateral (Sin sesión activa)
+------------------------------------------------------------------ */
+.sidebar-login-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1.25rem 1rem;
+}
+
+.sidebar-login-container .sc-login {
+  padding: 0;
+  gap: 0.85rem;
+}
+
+.sidebar-login-container .sc-login h2 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--brand-cream, #fff);
+  margin-bottom: 0.2rem;
+}
+
+.sidebar-login-container .sc-muted {
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.sidebar-login-container label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sidebar-login-container input {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #fff;
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.86rem;
+}
+
+.sidebar-login-container input:focus {
+  outline: none;
+  border-color: var(--brand-blue, #a855f7);
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.sidebar-login-container .sc-primary {
+  width: 100%;
+  padding: 0.65rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  margin-top: 0.25rem;
+}
+
+.sidebar-login-container .sc-link {
+  font-size: 0.78rem;
+  margin-top: 0.2rem;
+}
+
+.sidebar-login-container .sc-mode {
+  display: flex;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 3px;
+  margin-bottom: 0.2rem;
+}
+
+.sidebar-login-container .sc-mode button {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  padding: 0.45rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.78rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s ease;
+}
+
+.sidebar-login-container .sc-mode button.active {
+  background: var(--brand-blue, #7c3aed);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Estado de bloqueo en vista standby cuando no hay sesión */
+body.is-logged-out .app-sidebar {
+  width: 300px;
+  min-width: 300px;
+  max-width: 300px;
+}
+
+body.is-logged-out .standby-card {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(14, 20, 42, 0.6);
+  padding: 2.2rem 2rem;
+  border-radius: 20px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+}
+
+body.is-logged-out .standby-icon {
+  background: rgba(91, 124, 250, 0.1);
+  border-color: rgba(91, 124, 250, 0.25);
+  box-shadow: 0 0 24px rgba(91, 124, 250, 0.15);
+}
+
+body.is-logged-out .standby-title {
+  color: var(--brand-cream, #fff);
+  font-size: 1.35rem;
+}
+
+body.is-logged-out .standby-desc {
+  color: var(--text-secondary, #94a3b8);
+  max-width: 340px;
+}
+
+body.is-logged-out .app-header .call-status-pill {
+  color: var(--text-muted);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+body.is-logged-out .on-air-badge {
+  opacity: 0.6;
+}

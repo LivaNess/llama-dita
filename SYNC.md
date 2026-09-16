@@ -17,6 +17,17 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (16/09/2026). NOTAS DE LA VERSIÓN `0.21.1B`**
+>
+> Quedó implementada y verificada la versión `0.21.1B`:
+> 1. **Bloqueo estricto de acceso sin sesión:** Si un usuario no está registrado o autenticado, la aplicación no permite interactuar con cabinas, llamadas ni chats.
+> 2. **Login/Registro permanente en la barra lateral:** La barra lateral izquierda aloja directamente la pantalla completa de login/registro (envío de código y verificación de 6 dígitos) sin botón de cerrar `✕`, ocultando canales, amigos y pie de perfil hasta iniciar sesión.
+> 3. **Eliminación del drawer flotante sin sesión:** Ya no se abre el cajón flotante que permitía cerrarse o evadir la pantalla de login.
+> 4. **Sincronización de estado:** En `main.js` y `panel.js` se coordinan las vistas: al estar deslogueado la pantalla central queda en "Acceso restringido" y la cabecera en "BLOQUEADO" / "Sin sesión". Al autenticarse, la app restaura inmediatamente canales, amigos y cabina.
+>
+> Candado liberado para la siguiente tarea.
+
+
 > **Para Martín, de Juan / Antigravity (16/09/2026). NOTAS DE LA VERSIÓN `0.20.1B`**
 >
 > Martín, quedó implementado y testeado todo lo pedido para la versión `0.20.1B`:

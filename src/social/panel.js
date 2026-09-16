@@ -78,8 +78,6 @@ export async function initSocial(h) {
   if (state.session) guardarSesion(state.session);
   if (state.session) await onLogin();
   render();
-  // Primera vez / sin sesión: abrir el panel para que cree la cuenta con su mail.
-  if (!state.session) setTimeout(() => toggleDrawer(true), 600);
 }
 
 function mount() {
@@ -115,11 +113,26 @@ function mount() {
     if (state.pendingRender && !drawer.contains(document.activeElement)) { state.pendingRender = false; render(); }
   }, 0));
 
+  const sidebarLogin = document.getElementById('sidebarLoginContainer');
+  if (sidebarLogin) {
+    sidebarLogin.addEventListener('focusout', () => setTimeout(() => {
+      if (state.pendingRender && !sidebarLogin.contains(document.activeElement)) {
+        state.pendingRender = false;
+        render();
+      }
+    }, 0));
+  }
+
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !drawer.hidden) toggleDrawer(false); });
   bindSidebarForms();
 }
 
 function toggleDrawer(force) {
+  if (!state.session || !state.me) {
+    if (drawer) drawer.hidden = true;
+    if (overlay) overlay.hidden = true;
+    return;
+  }
   const open = force ?? drawer.hidden;
   drawer.hidden = !open;
   overlay.hidden = !open;
@@ -180,7 +193,10 @@ function startPresence(uid) {
 // No re-dibujar el panel mientras alguien está escribiendo en él (perdería lo tipeado).
 function safeRender() {
   const a = document.activeElement;
-  if (drawer && !drawer.hidden && a && drawer.contains(a) && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) {
+  const sidebarLogin = document.getElementById('sidebarLoginContainer');
+  const inDrawer = drawer && !drawer.hidden && a && drawer.contains(a);
+  const inSidebarLogin = sidebarLogin && a && sidebarLogin.contains(a);
+  if ((inDrawer || inSidebarLogin) && /^(INPUT|TEXTAREA|SELECT)$/.test(a?.tagName)) {
     state.pendingRender = true;
     return;
   }
@@ -193,8 +209,10 @@ function onLogout() {
   clearInterval(state.heartbeat);
   state.directos.clear();
   Object.assign(state, { me: null, friendships: [], channels: [], members: [], messages: [], currentChannel: null, incomingCall: null, outgoingCall: null });
+  if (drawer) drawer.hidden = true;
+  if (overlay) overlay.hidden = true;
   headerBtn.querySelector('span').textContent = 'Crear cuenta';
-  setTimeout(() => toggleDrawer(true), 300);
+  render();
 }
 
 function subscribeAll(uid) {
@@ -295,11 +313,22 @@ async function cancelOutgoing() {
 // Render
 // ------------------------------------------------------------------
 function render() {
+  const isLogged = !!(state.session && state.me);
+  hooks.onAuthStateChange?.(isLogged);
+
   renderCallBanner();
   renderSidebar();
   renderChat();
   hooks.onChannelChange?.(state.currentChannel);
-  if (!state.session) { drawer.innerHTML = loginView(); bindLogin(); return; }
+
+  if (!state.session) {
+    if (drawer) {
+      drawer.hidden = true;
+      drawer.innerHTML = '';
+    }
+    if (overlay) overlay.hidden = true;
+    return;
+  }
   if (!state.me) { drawer.innerHTML = `<div class="sc-empty">Cargando tu cuenta…</div>`; return; }
   drawer.innerHTML = `
     ${profileHeader()}
@@ -324,11 +353,12 @@ function profileHeader() {
 }
 
 // ---- Login ----
-function loginView() {
+function loginView({ isSidebar = false } = {}) {
   const step = state.loginEmail ? 2 : 1;
   const signup = state.loginMode !== 'login';
-  return `<div class="sc-login">
-    <div class="sc-row"><h2>${signup ? 'Creá tu cuenta' : 'Iniciá sesión'}</h2><button class="sc-icon-btn" id="scCloseLogin" title="Cerrar">✕</button></div>
+  const closeBtn = isSidebar ? '' : '<button class="sc-icon-btn" id="scCloseLogin" title="Cerrar">✕</button>';
+  return `<div class="sc-login ${isSidebar ? 'sc-login-sidebar' : ''}">
+    <div class="sc-row"><h2>${signup ? 'Creá tu cuenta' : 'Iniciá sesión'}</h2>${closeBtn}</div>
     <div class="sc-mode">
       <button type="button" class="${signup ? 'active' : ''}" data-mode="signup">Crear cuenta</button>
       <button type="button" class="${signup ? '' : 'active'}" data-mode="login">Ya tengo cuenta</button>
@@ -354,33 +384,34 @@ function loginView() {
   </div>`;
 }
 
-function bindLogin() {
-  drawer.querySelector('#scEmailForm')?.addEventListener('submit', async (e) => {
+function bindLogin(container = drawer) {
+  if (!container) return;
+  container.querySelector('#scEmailForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const btn = e.target.querySelector('button'); btn.disabled = true;
-    try { state.loginEmail = await sendCode(drawer.querySelector('#scEmail').value, { createUser: state.loginMode !== 'login' }); state.codeOnly = false; render(); }
-    catch (err) { showLoginError(err.message + (/Demasiados/.test(err.message) ? ' Si ya tenés un código, tocá "Ya tengo un código".' : '')); btn.disabled = false; }
+    const btn = e.target.querySelector('button'); if (btn) btn.disabled = true;
+    try { state.loginEmail = await sendCode(container.querySelector('#scEmail').value, { createUser: state.loginMode !== 'login' }); state.codeOnly = false; render(); }
+    catch (err) { showLoginError(err.message + (/Demasiados/.test(err.message) ? ' Si ya tenés un código, tocá "Ya tengo un código".' : ''), container); if (btn) btn.disabled = false; }
   });
-  drawer.querySelector('#scCodeForm')?.addEventListener('submit', async (e) => {
+  container.querySelector('#scCodeForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const btn = e.target.querySelector('button'); btn.disabled = true;
-    try { await verifyCode(state.loginEmail, drawer.querySelector('#scCode').value); state.loginEmail = null; }
-    catch (err) { showLoginError(err.message); btn.disabled = false; }
+    const btn = e.target.querySelector('button'); if (btn) btn.disabled = true;
+    try { await verifyCode(state.loginEmail, container.querySelector('#scCode').value); state.loginEmail = null; }
+    catch (err) { showLoginError(err.message, container); if (btn) btn.disabled = false; }
   });
-  drawer.querySelector('#scBack')?.addEventListener('click', () => { state.loginEmail = null; state.codeOnly = false; render(); });
-  drawer.querySelector('#scHaveCode')?.addEventListener('click', () => {
-    const v = (drawer.querySelector('#scEmail').value || '').trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return showLoginError('Primero escribí tu mail.');
+  container.querySelector('#scBack')?.addEventListener('click', () => { state.loginEmail = null; state.codeOnly = false; render(); });
+  container.querySelector('#scHaveCode')?.addEventListener('click', () => {
+    const v = (container.querySelector('#scEmail').value || '').trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return showLoginError('Primero escribí tu mail.', container);
     state.loginEmail = v; state.codeOnly = true; render();
   });
-  drawer.querySelector('#scCloseLogin')?.addEventListener('click', () => toggleDrawer(false));
-  drawer.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => { state.loginMode = b.dataset.mode; state.loginEmail = null; render(); }));
-  drawer.querySelector('#scEmail')?.focus();
-  drawer.querySelector('#scCode')?.focus();
+  container.querySelector('#scCloseLogin')?.addEventListener('click', () => toggleDrawer(false));
+  container.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => { state.loginMode = b.dataset.mode; state.loginEmail = null; render(); }));
+  container.querySelector('#scEmail')?.focus();
+  container.querySelector('#scCode')?.focus();
 }
 
-function showLoginError(msg) {
-  const el = drawer.querySelector('#scLoginError');
+function showLoginError(msg, container = drawer) {
+  const el = container?.querySelector('#scLoginError') || drawer?.querySelector('#scLoginError');
   if (el) { el.textContent = msg; el.hidden = false; }
 }
 
@@ -772,6 +803,51 @@ function renderCallBanner() {
 // Renderizado de Barra Lateral (Canales, Amigos y Pie de Usuario)
 // ------------------------------------------------------------------
 function renderSidebar() {
+  const isLogged = !!(state.session && state.me);
+  const sidebarLogin = document.getElementById('sidebarLoginContainer');
+  const sidebarScrollable = document.getElementById('sidebarScrollable');
+  const sidebarUserFooter = document.getElementById('sidebarUserFooter');
+
+  const standbyTitle = document.getElementById('standbyTitle');
+  const standbyDesc = document.getElementById('standbyDesc');
+  const callStatus = document.getElementById('callStatus');
+  const onAirBadge = document.getElementById('onAirBadge');
+  const onAirText = document.getElementById('onAirText');
+
+  if (!isLogged) {
+    document.body.classList.add('is-logged-out');
+
+    if (sidebarLogin) {
+      sidebarLogin.style.display = 'block';
+      sidebarLogin.innerHTML = loginView({ isSidebar: true });
+      bindLogin(sidebarLogin);
+    }
+    if (sidebarScrollable) sidebarScrollable.style.display = 'none';
+    if (sidebarUserFooter) sidebarUserFooter.style.display = 'none';
+
+    if (standbyTitle) standbyTitle.textContent = 'Acceso restringido';
+    if (standbyDesc) standbyDesc.textContent = 'Iniciá sesión o creá tu cuenta en la barra lateral para acceder al programa, canales y llamadas.';
+    if (callStatus) callStatus.textContent = 'Sin sesión';
+    if (onAirBadge) onAirBadge.classList.remove('live');
+    if (onAirText) onAirText.textContent = 'BLOQUEADO';
+
+    return;
+  }
+
+  // Usuario autenticado
+  document.body.classList.remove('is-logged-out');
+  if (sidebarLogin) {
+    sidebarLogin.style.display = 'none';
+    sidebarLogin.innerHTML = '';
+  }
+  if (sidebarScrollable) sidebarScrollable.style.display = '';
+  if (sidebarUserFooter) sidebarUserFooter.style.display = '';
+
+  if (standbyTitle) standbyTitle.textContent = 'Sin sesión activa';
+  if (standbyDesc) standbyDesc.textContent = 'Seleccioná un canal de texto en la barra lateral o llamá a un amigo.';
+  if (callStatus && callStatus.textContent === 'Sin sesión') callStatus.textContent = 'Sin llamada';
+  if (onAirText && onAirText.textContent === 'BLOQUEADO') onAirText.textContent = 'STANDBY';
+
   const channelsList = document.getElementById('sidebarChannelsList');
   const friendsList = document.getElementById('sidebarFriendsList');
   const requestsList = document.getElementById('sidebarRequestsList');
@@ -780,17 +856,11 @@ function renderSidebar() {
   const userHandle = document.getElementById('sidebarUserHandle');
 
   // 1. Pie de Usuario
-  if (state.session && state.me) {
-    const name = state.me.display_name || state.me.username;
-    const initials = name.slice(0, 2).toUpperCase();
-    if (userAvatar) userAvatar.textContent = initials;
-    if (userName) userName.textContent = name;
-    if (userHandle) userHandle.textContent = `@${state.me.username}`;
-  } else {
-    if (userAvatar) userAvatar.textContent = 'YO';
-    if (userName) userName.textContent = 'Crear cuenta';
-    if (userHandle) userHandle.textContent = 'Clic para entrar';
-  }
+  const name = state.me.display_name || state.me.username;
+  const initials = name.slice(0, 2).toUpperCase();
+  if (userAvatar) userAvatar.textContent = initials;
+  if (userName) userName.textContent = name;
+  if (userHandle) userHandle.textContent = `@${state.me.username}`;
 
   // 2. Lista de Canales
   if (channelsList) {
