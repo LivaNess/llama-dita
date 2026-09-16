@@ -274,7 +274,6 @@ async function callFriend(friendProfile) {
   try {
     state.outgoingCall = await api.createCallInvite(state.me.id, friendProfile.id, room);
     state.outgoingCall.profile = friendProfile;
-    hooks.toast?.(`Llamando a ${friendProfile.display_name || friendProfile.username}…`);
     toggleDrawer(false);
     render();
   } catch (e) { hooks.toast?.(e.message); }

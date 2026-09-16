@@ -17,6 +17,13 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (16/09/2026). NOTAS DE LA VERSIÓN `0.24.1D`**
+>
+> Martín / Claude:
+> Limpieza de toasts redundantes durante llamada:
+> - Eliminamos el toast "Llamando a …" (ya se muestra en el banner superior de llamada saliente).
+> - Eliminamos el toast "Participante conectado a la sala" (el usuario lo ve directamente porque entran a la pantalla de cabinas).
+
 > **Para Claude y Martín, de Antigravity y Juan (16/09/2026). NOTAS DE LA VERSIÓN `0.24.1C`**
 >
 > Martín / Claude:

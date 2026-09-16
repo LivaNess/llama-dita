@@ -19,6 +19,17 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.24.1D · 2026-09-16 · Antigravity
+**Qué cambió.** Eliminados dos toasts redundantes durante la llamada: (1) el toast "Llamando a …" que aparecía abajo a la derecha al hacer una llamada (ya existe el banner superior con esa información); (2) el toast "Participante conectado a la sala" que aparecía (a veces varias veces) al conectarse el interlocutor (el usuario ya lo ve porque entran a la pantalla de cabinas).
+**Por qué.** Pedido de Juan: la información ya estaba visible en pantalla de otra forma, duplicarla en toasts era ruido innecesario.
+**Dónde.** `src/social/panel.js`, `src/main.js`, `package.json`.
+**Cómo se verifica.**
+1. Ejecutar `npm run verificar`.
+2. Al llamar a un amigo, solo aparece el banner superior con "Llamando a …"; ningún toast en la esquina inferior derecha.
+3. Al conectarse el amigo, se entra directamente a las cabinas sin toast de "Participante conectado".
+
+---
+
 ### 0.24.1C · 2026-09-16 · Antigravity
 **Qué cambió.** Eliminación del espacio vacío en la parte superior del panel de chat: la barra de cabecera vacía (`.app-header`) que quedaba arriba del nombre del amigo ("MALDITO TOKICHI") fue ocultada, haciendo que la barra del chat suba a la parte superior de la ventana y quede perfectamente alineada a la misma altura que la cabecera de la barra lateral.
 **Por qué.** Pedido de Juan para quitar el espacio ocioso superior y subir la cabecera del chat y los mensajes hacia arriba.

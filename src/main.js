@@ -255,7 +255,6 @@ function setupNetworking() {
     if (status === 'connected') {
       isConnected = true;
       setCallStatus(conQuien ? `En llamada con ${conQuien}` : 'En llamada');
-      showToast('Participante conectado a la sala');
       updateSocialCallState();
       updateBoothProfiles();
       const social = typeof getSocialState === 'function' ? getSocialState() : null;
