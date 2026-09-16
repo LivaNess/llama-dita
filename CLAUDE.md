@@ -6,6 +6,19 @@ Este proyecto lo desarrollan en paralelo dos personas con sus agentes de IA:
 
 Para evitar conflictos de git, pérdida de código y solapamientos, **ambos agentes leen este archivo, `SYNC.md` y `VERSIONADO.md` al inicio de cada turno.**
 
+**Los cuatro documentos y para qué sirve cada uno:**
+
+| Documento | Para qué |
+|---|---|
+| `CLAUDE.md` | cómo trabajamos: versionado, locks, reglas |
+| `ESQUELETO.md` | qué es cada parte, dónde vive y con qué se conecta |
+| `SYNC.md` | quién está tocando qué **ahora** |
+| `CAMBIOS.md` | qué se hizo en cada versión y cómo verificarlo |
+
+**Dos obligaciones al terminar una tarea:** si creaste un área nueva, se registra en
+`ESQUELETO.md` con sus conexiones; si publicaste una versión, se registra en `CAMBIOS.md`.
+Sin eso, la tarea no está terminada.
+
 ---
 
 ## 1. Versionado: `HITO.ÁREA.FOCO` + letra · ej. `1.3.1A`

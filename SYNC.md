@@ -17,6 +17,9 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📋 Historial de cambios y versiones
 
+> El detalle de cada versión (qué cambió, por qué y cómo verificarlo) vive ahora en
+> **`CAMBIOS.md`**. Acá queda la tabla corta de coordinación entre agentes.
+
 Cronológico. Acá se lee qué significa cada área y foco (el número no es un mapa fijo).
 
 | Versión | Agente | Área / foco | Resumen |
