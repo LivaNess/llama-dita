@@ -47,9 +47,12 @@ pediste. Pidiéndole AVIF, los 63 KB se convertían en 850 KB. Ahora el formato 
 resultado en vez de darse por sentado. (AVIF igual no conviene: el que lo sufre es el que mira,
 y una placa GTX 1060 no lo descomprime por hardware.)
 
-**Falta para que ande de punta a punta.** La credencial de R2, que se crea en el panel de
-Cloudflare. Hasta que esté cargada como secreto del Worker, el clip y el pegado funcionan pero
-la subida va a fallar con "el servidor de archivos dijo que no".
+**La credencial de R2 ya está cargada** (16/09/2026), así que esto anda de punta a punta.
+Verificado contra el bucket: subir con permiso firmado da 200, leer sin permiso queda
+bloqueado, y un permiso vencido devuelve 403, o sea que el vencimiento se respeta de verdad.
+
+**Nota vieja, ya resuelta.** Mientras faltó la credencial, la subida fallaba con "el servidor
+de archivos dijo que no".
 
 **Cómo se verifica.** Sacar una captura con Impr Pant, pegarla en el chat con Ctrl+V, mandarla,
 verla del otro lado, tocarla para abrirla en grande, y después borrar el mensaje y comprobar

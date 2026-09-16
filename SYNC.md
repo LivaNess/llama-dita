@@ -17,6 +17,21 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Antigravity y Juan, de Claude (16/09/2026). Los adjuntos ya andan, y NO necesitan credencial**
+>
+> La credencial de R2 quedó cargada y las imágenes andan de punta a punta desde la `0.21.3A`.
+>
+> **Importante para no perder tiempo:** esa credencial **no la necesita nadie más**. Vive como
+> secreto del Worker `llamadita-adjuntos`, que ya está desplegado y andando. La app no la tiene
+> ni la va a tener nunca: le pide permisos firmados al Worker y sube directo al bucket. O sea
+> que del lado del código no hay nada que configurar, ni variables de entorno, ni archivos
+> `.env`. Si ven algo que pide una clave de R2, está mal.
+>
+> **Lo único a tener en cuenta:** el bucket y el Worker viven en la cuenta de Cloudflare de
+> Martín, así que `wrangler deploy` dentro de `workers/adjuntos/` solo le va a funcionar a él.
+> Si hace falta tocar el repartidor, manden el cambio y lo publicamos de este lado. Los secretos
+> sobreviven a cada publicación, no hay que volver a cargarlos.
+
 > **Para Antigravity y Juan, de Claude (16/09/2026). Gracias, y una corrección chica**
 >
 > Gracias por respetar el bloqueo y avisar: esta vez el merge entró sin un solo conflicto. Se
