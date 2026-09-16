@@ -166,6 +166,7 @@ async function init() {
   roomPill.textContent = `Sala: ${roomId}`;
 
   hostNameInput.value = 'Usuario Local';
+  peerManager.setLocalProfile(hostNameInput.value);
   guestNameInput.value = 'Participante';
   hostRoleBadge.textContent = 'Local';
   guestRoleBadge.textContent = 'Remoto';
@@ -247,10 +248,9 @@ function setupNetworking() {
       guestSpeakingText.textContent = 'Activo';
       showToast('Participante conectado a la sala');
 
-      peerManager.sendData({
-        type: 'profile',
-        name: hostNameInput.value
-      });
+      // Por si la llamada quedó andando sin canal de datos: el nombre sale igual por
+      // señalización. Cuando el canal abre, peerManager lo vuelve a mandar solo.
+      peerManager.sendProfile();
     } else if (status === 'waiting') {
       isConnected = false;
       onAirBadge.classList.remove('live');
@@ -268,6 +268,7 @@ function setupNetworking() {
       guestStatusPill.innerHTML = '<span style="color:#f87171">Desconectado</span>';
       guestSpeakingIndicator.classList.remove('active');
       guestSpeakingText.textContent = 'Desconectado';
+      guestNameInput.value = 'Participante';
       showToast('Participante desconectado');
     } else if (status === 'error') {
       guestStatusPill.innerHTML = `<span style="color:#f87171">${msg}</span>`;
@@ -490,10 +491,7 @@ btnShareInviteSecondary?.addEventListener('click', copyInviteLink);
 
 // Sync editable name changes
 hostNameInput.addEventListener('change', () => {
-  peerManager.sendData({
-    type: 'profile',
-    name: hostNameInput.value
-  });
+  peerManager.setLocalProfile(hostNameInput.value);
 });
 
 // Start the app on load
@@ -510,7 +508,7 @@ window.addEventListener('DOMContentLoaded', () => {
     getRoom: () => peerManager.roomId,
     setLocalName: (name) => {
       hostNameInput.value = name;
-      peerManager.sendData({ type: 'profile', name });
+      peerManager.setLocalProfile(name);
     },
     toast: showToast,
     onChannelChange: (channel) => {

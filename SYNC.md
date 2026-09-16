@@ -45,6 +45,7 @@ Cronológico. Acá se lee qué significa cada área y foco (el número no es un 
 | `1.10.3A` | Antigravity | Web oficial / diseño dark studio | Rediseño completo de la web oficial (`web/index.html` y `web/css/site.css`) adoptando la estética de la app de escritorio: paleta dark studio (#0A0F22), tarjetas glassmorphism, simulación de cabinas de audio con vúmetros y badges en vivo, inputs oscuros con foco azul eléctrico y logo claro. |
 | `1.11.2C` | Antigravity | Interfaz / cabeceras alineadas y pie fijo | Alineación a 64px de las cabeceras superior e izquierda para eliminar la discontinuidad en la línea horizontal divisoria, barra lateral a 100% de altura y pie de usuario `[YO] + [MIC]` fijado de forma permanente al margen inferior izquierdo. |
 | `1.12.1A` | Claude | Red y voz / una sola conexión | La señalización dejó de crear su propio cliente Supabase y usa `src/supabase/client.js`. Cada usuario pasa de dos conexiones en vivo a una: con el plan gratis (200 en total) el techo pasa de ~100 a ~200 personas. |
+| `1.12.2A` | Claude | Red y voz / nombre del participante | El nombre se manda cuando el canal de datos abre (no cuando la llamada pasa a "conectado", que es antes de que el otro escuche) y quien lo recibe contesta con el suyo. Al cortarse, la cabina remota vuelve a "Participante". |
 ---
 
 ## ⚠️ Reglas para agentes
@@ -83,6 +84,3 @@ Lo que quedó andando y verificado en esta sesión:
    instalaciones existentes se actualizan solas igual.
 3. **Íconos del escritorio**: la ventana y la bandeja del sistema siguen con los íconos de
    fábrica de Neutralino, no con el logo.
-4. **Nombre del participante en la llamada**: a veces la cabina remota muestra
-   "Participante" en vez del nombre, porque el dato viaja por el canal de datos y puede
-   llegar antes de que el otro lado esté listo.

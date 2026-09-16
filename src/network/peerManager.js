@@ -33,6 +33,7 @@ export class PeerManager {
     this.iceCandidateQueue = [];
     this.heartbeatTimer = null;
     this.isInitiatingCall = false;
+    this.localName = null;
 
     // Callbacks
     this.onRemoteStream = null;
@@ -385,7 +386,7 @@ export class PeerManager {
         this.iceCandidateQueue.push(data);
       }
     } else if (type === 'direct-data') {
-      this.onRemoteData?.(data);
+      this.handleRemoteData(data);
     }
   }
 
@@ -418,6 +419,11 @@ export class PeerManager {
       console.log('Canal de datos abierto');
       this.onConnectionStatusChange?.('connected', 'Conexión activa');
 
+      // Recién acá el otro lado está escuchando de verdad. Si mandamos el nombre antes
+      // (al pasar a "conectado"), puede llegar a la nada y la cabina remota queda en
+      // "Participante".
+      this.sendProfile();
+
       if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
       this.heartbeatTimer = setInterval(() => {
         if (this.dataChannel && this.dataChannel.readyState === 'open') {
@@ -436,7 +442,7 @@ export class PeerManager {
           return;
         }
         if (data.type === 'pong') return;
-        this.onRemoteData?.(data);
+        this.handleRemoteData(data);
       } catch (err) {
         console.warn('Error al parsear mensaje en DataChannel:', err);
       }
@@ -449,6 +455,28 @@ export class PeerManager {
     channel.onerror = (err) => {
       console.warn('Error en DataChannel:', err);
     };
+  }
+
+  // Nombre visible en la cabina del otro lado. Queda guardado para poder reenviarlo:
+  // si el dato llega antes de que el otro esté listo, se pierde y nadie lo pide de nuevo.
+  setLocalProfile(name) {
+    this.localName = name || null;
+    this.sendProfile();
+  }
+
+  // Ida y vuelta: el primero en mandar pide respuesta, el que recibe contesta con el
+  // suyo. Así los dos terminan con el nombre del otro sin importar quién llegó primero.
+  sendProfile(wantsReply = true) {
+    if (!this.localName) return;
+    this.sendData({ type: 'profile', name: this.localName, wantsReply });
+  }
+
+  handleRemoteData(data) {
+    if (!data) return;
+    if (data.type === 'profile' && data.wantsReply) {
+      this.sendProfile(false);
+    }
+    this.onRemoteData?.(data);
   }
 
   sendData(data) {

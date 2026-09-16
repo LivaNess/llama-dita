@@ -84,7 +84,8 @@ prueba y con qué hay que tener cuidado.
 - **Cómo se prueba:** dos PCs en la misma sala; el estado pasa a "Conexión activa".
 - **Cuidado:** desde la `1.12.1A` usa el cliente compartido de área E. No volver a
   `createClient` acá: cada cliente nuevo abre una conexión en vivo más por usuario y el
-  plan gratis permite 200 en total.
+  plan gratis permite 200 en total. Los datos que van por el canal (nombre, muteo) se
+  mandan cuando el canal **abre**: antes de eso el otro lado todavía no escucha.
 
 ### E. Cliente Supabase compartido
 - **Archivos:** `src/supabase/client.js`

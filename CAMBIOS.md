@@ -19,6 +19,19 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 1.12.2A · 2026-09-15 · Claude
+**Qué cambió.** La cabina del otro lado muestra su nombre y no "Participante". Si la
+persona se renombra o entra con su cuenta después, el cambio le llega igual; cuando se
+corta la llamada, el nombre vuelve a "Participante" en vez de quedar el del anterior.
+**Por qué.** El nombre se mandaba una sola vez, en el momento en que la llamada pasaba a
+"conectado". Ese aviso suele llegar antes de que el canal de datos esté abierto del otro
+lado, así que el dato se perdía y nadie lo volvía a pedir.
+**Dónde.** `src/network/peerManager.js` y `src/main.js` (áreas D y A).
+**Cómo se verifica.** `npm run dev`, dos pestañas en la misma sala. Cambiar el nombre en
+una: aparece en la cabina remota de la otra. Recargar una de las dos: la que vuelve tiene
+que mostrar el nombre de la otra sin que nadie toque nada (antes quedaba en
+"Participante").
+
 ### 1.12.1A · 2026-09-15 · Claude
 **Qué cambió.** La llamada usa la misma conexión a Supabase que el resto de la app, en vez
 de abrir una segunda por su cuenta. Para quien usa la app no cambia nada; lo que cambia es
