@@ -25,7 +25,8 @@ Source: "desktop\dist\Llama-dita\resources.neu"; DestDir: "{app}"; Flags: ignore
 ; El enlace del mail (llamadita://) abre la app
 Root: HKCU; Subkey: "Software\Classes\llamadita"; ValueType: string; ValueName: ""; ValueData: "URL:Llama-dita"; Flags: uninsdeletekey
 Root: HKCU; Subkey: "Software\Classes\llamadita"; ValueType: string; ValueName: "URL Protocol"; ValueData: ""
-Root: HKCU; Subkey: "Software\Classes\llamadita\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\Llama-dita.exe"" ""%1"""
+; Apunta al script, no al ejecutable: abrir una segunda copia de la app falla.
+Root: HKCU; Subkey: "Software\Classes\llamadita\shell\open\command"; ValueType: string; ValueName: ""; ValueData: "cmd /c """"{app}\abrir-enlace.cmd"" ""%1"""""
 
 [Icons]
 Name: "{group}\Llama-dita"; Filename: "{app}\Llama-dita.exe"
