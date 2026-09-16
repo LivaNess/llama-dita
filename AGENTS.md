@@ -18,6 +18,10 @@ Este archivo es la puerta de entrada. Si sos un agente trabajando en este reposi
 2. **La versión vive solo en `package.json`**, con el esquema `HITO.ÁREA.FOCO`+letra de
    `VERSIONADO.md`. El primer número no se toca sin permiso de Martín o Juan.
 3. **Commit:** `[versión] tipo: descripción` (feat, fix, docs, chore, refactor).
+   **Sin líneas `Co-Authored-By:` de las IAs** (pedido de Juan, aceptado por Martín el
+   16/09/2026): GitHub las toma como colaborador oficial del repositorio, y la lista de
+   colaboradores tiene que quedar a nombre de los humanos. El trabajo del agente se registra en
+   `CAMBIOS.md` y en el historial de `SYNC.md`, que es donde se lee de verdad quién hizo qué.
 4. **Área nueva** (carpeta o archivo con responsabilidad propia): se registra en
    `ESQUELETO.md` con de qué depende y quién depende de ella, en el mismo commit.
 5. **Versión publicada:** se registra en `CAMBIOS.md` con qué cambió, por qué, dónde y
