@@ -77,12 +77,24 @@ export async function listChannels() {
   return data || [];
 }
 
-export async function createChannel(myId, name, kind) {
+export async function createChannel(myId, name, kind, roomCode = null) {
+  const payload = { owner_id: myId, name: name.trim(), kind };
+  if (roomCode) payload.room_code = roomCode;
   const { data, error } = await supabase
     .from('channels')
-    .insert({ owner_id: myId, name: name.trim(), kind })
+    .insert(payload)
     .select()
     .single();
+  fail(error);
+  return data;
+}
+
+export async function getChannelByRoomCode(roomCode) {
+  const { data, error } = await supabase
+    .from('channels')
+    .select('id, owner_id, name, kind, invite_code, room_code, created_at')
+    .eq('room_code', roomCode)
+    .maybeSingle();
   fail(error);
   return data;
 }

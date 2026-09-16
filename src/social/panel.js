@@ -405,9 +405,10 @@ function friendsView() {
 
 // ---- Canales ----
 function channelsView() {
-  if (state.currentChannel) return channelDetail();
-  const mine = state.channels.filter((c) => c.owner_id === state.me.id);
-  const others = state.channels.filter((c) => c.owner_id !== state.me.id);
+  if (state.currentChannel && !state.currentChannel.room_code?.startsWith('dm-')) return channelDetail();
+  const regular = state.channels.filter((c) => !c.room_code?.startsWith('dm-'));
+  const mine = regular.filter((c) => c.owner_id === state.me.id);
+  const others = regular.filter((c) => c.owner_id !== state.me.id);
   const item = (c) => `<button class="sc-item sc-clickable" data-open="${c.id}"><span class="sc-kind">${c.kind === 'voice' ? '🔊' : '#'}</span><div class="sc-item-text"><strong>${esc(c.name)}</strong><small>${c.kind === 'voice' ? 'Canal de voz' : 'Canal de texto'}${c.owner_id === state.me.id ? ' · tuyo' : ''}</small></div></button>`;
   return `
     <form class="sc-row" id="scCreateForm">
@@ -450,9 +451,64 @@ function msgItem(m) {
   return `<div class="sc-msg ${mine ? 'mine' : ''}"><small>${esc(m.author?.display_name || m.author?.username || 'cuenta borrada')} · ${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}</small><div>${esc(m.body)}</div></div>`;
 }
 
-async function openChannel(id) {
+function getDmFriend(c) {
+  if (c.dmFriend) return c.dmFriend;
+  if (c.room_code?.startsWith('dm-')) {
+    const ids = c.room_code.slice(3).split('-');
+    const friendId = ids.find((id) => id !== state.me?.id);
+    if (friendId) {
+      const f = state.friendships.find((x) => (x.requester_id === friendId || x.addressee_id === friendId) && x.status === 'accepted');
+      if (f) return otherSide(f);
+      const m = state.members.find((x) => x.user_id === friendId);
+      if (m?.profile) return m.profile;
+    }
+  }
+  return null;
+}
+
+async function openDmWithFriend(friend) {
+  if (!state.session || !state.me) {
+    toggleDrawer(true);
+    return;
+  }
+  const pair = [state.me.id, friend.id].sort();
+  const dmRoomCode = `dm-${pair[0]}-${pair[1]}`;
+
+  let ch = state.channels.find((c) => c.room_code === dmRoomCode);
+  if (!ch) {
+    try {
+      ch = await api.getChannelByRoomCode(dmRoomCode);
+    } catch (_) {}
+  }
+  if (!ch) {
+    try {
+      ch = await api.createChannel(state.me.id, friend.display_name || friend.username, 'text', dmRoomCode);
+      try {
+        await api.addFriendToChannel(ch.id, friend.id);
+      } catch (_) {}
+    } catch (err) {
+      try {
+        ch = await api.getChannelByRoomCode(dmRoomCode);
+      } catch (_) {}
+    }
+  }
+  if (ch) {
+    ch.dmFriend = friend;
+    if (!state.channels.find((c) => c.id === ch.id)) {
+      state.channels.push(ch);
+    }
+    if (state.currentChannel?.id === ch.id) {
+      closeChannel();
+    } else {
+      openChannel(ch.id, friend);
+    }
+  }
+}
+
+async function openChannel(id, dmFriend = null) {
   const c = state.channels.find((x) => x.id === id);
   if (!c) return;
+  if (dmFriend) c.dmFriend = dmFriend;
   state.currentChannel = c;
   toggleDrawer(false);
   state.members = [];
@@ -463,7 +519,9 @@ async function openChannel(id) {
   state.channelUnsub = api.subscribe('chan-' + id, [
     { table: 'messages', event: 'INSERT', filter: `channel_id=eq.${id}`, cb: async (p) => {
       if (state.currentChannel?.id !== id) return;
-      const author = state.members.find((m) => m.user_id === p.new.author_id)?.profile;
+      let author = state.members.find((m) => m.user_id === p.new.author_id)?.profile;
+      if (!author && p.new.author_id === state.me?.id) author = state.me;
+      if (!author && c.dmFriend && p.new.author_id === c.dmFriend.id) author = c.dmFriend;
       state.messages.push({ ...p.new, author });
       render();
     } },
@@ -606,16 +664,17 @@ function renderSidebar() {
 
   // 2. Lista de Canales
   if (channelsList) {
+    const regularChannels = state.channels.filter((c) => !c.room_code?.startsWith('dm-'));
     if (!state.session) {
       channelsList.innerHTML = `<p class="sc-muted sc-tiny" style="padding: 0.5rem 0.6rem;">Iniciá sesión para ver canales.</p>`;
-    } else if (!state.channels.length) {
+    } else if (!regularChannels.length) {
       channelsList.innerHTML = `<p class="sc-muted sc-tiny" style="padding: 0.5rem 0.6rem;">Sin canales. Creá uno con +.</p>`;
     } else {
-      channelsList.innerHTML = state.channels.map((c) => {
+      channelsList.innerHTML = regularChannels.map((c) => {
         const isActive = state.currentChannel?.id === c.id;
         const icon = c.kind === 'voice' ? '🔊' : '#';
         return `
-          <button class="sidebar-channel-item ${isActive ? 'active' : ''}" data-sidebar-channel="${c.id}" title="${esc(c.name)} (${c.kind === 'voice' ? 'Voz' : 'Texto'})">
+          <button class="sidebar-channel-item ${isActive ? 'active' : ''}" data-sidebar-channel="${c.id}" title="${esc(c.name)} (${c.kind === 'voice' ? 'Voz' : 'Texto'}) · Clic derecho para opciones">
             <span class="channel-kind">${icon}</span>
             <span class="channel-name">${esc(c.name)}</span>
           </button>
@@ -623,14 +682,18 @@ function renderSidebar() {
       }).join('');
 
       channelsList.querySelectorAll('[data-sidebar-channel]').forEach((btn) => {
+        const id = btn.dataset.sidebarChannel;
+        const chan = regularChannels.find((x) => x.id === id);
         btn.addEventListener('click', () => {
-          const id = btn.dataset.sidebarChannel;
           if (state.currentChannel?.id === id) {
             closeChannel();
           } else {
             openChannel(id);
           }
         });
+        if (chan) {
+          btn.addEventListener('contextmenu', (e) => showChannelContextMenu(e, chan));
+        }
       });
     }
   }
@@ -676,26 +739,123 @@ function renderSidebar() {
       if (!friends.length) {
         friendsList.innerHTML = `<p class="sc-muted sc-tiny" style="padding: 0.5rem 0.6rem;">Sin amigos. Agregá con +.</p>`;
       } else {
-        friendsList.innerHTML = friends.map(({ f, p }) => `
-          <div class="sidebar-friend-item">
-            ${statusDot(p)}
-            <div class="friend-info">
-              <span class="friend-name">${esc(p.display_name || p.username)}</span>
-              <span class="friend-handle">@${esc(p.username)}</span>
+        friendsList.innerHTML = friends.map(({ f, p }) => {
+          const isDmActive = Boolean(
+            state.currentChannel?.room_code?.startsWith('dm-') &&
+            state.currentChannel.room_code.includes(p.id)
+          );
+          return `
+            <div class="sidebar-friend-item ${isDmActive ? 'active' : ''}" data-sidebar-friend="${p.id}" title="Clic para abrir chat con ${esc(p.display_name || p.username)}">
+              ${statusDot(p)}
+              <div class="friend-info">
+                <span class="friend-name">${esc(p.display_name || p.username)}</span>
+                <span class="friend-handle">@${esc(p.username)}</span>
+              </div>
+              <button class="btn-friend-call" data-sidebar-call="${p.id}" title="Llamar" ${isOnline(p) ? '' : 'disabled'}>${ICONO_TELEFONO}</button>
             </div>
-            <button class="btn-friend-call" data-sidebar-call="${p.id}" title="Llamar" ${isOnline(p) ? '' : 'disabled'}>${ICONO_TELEFONO}</button>
-          </div>
-        `).join('');
+          `;
+        }).join('');
 
         friendsList.querySelectorAll('[data-sidebar-call]').forEach((b) => {
-          b.addEventListener('click', () => {
+          b.addEventListener('click', (e) => {
+            e.stopPropagation();
             const friend = friends.find((x) => x.p.id === b.dataset.sidebarCall)?.p;
             if (friend) callFriend(friend);
+          });
+        });
+
+        friendsList.querySelectorAll('[data-sidebar-friend]').forEach((item) => {
+          item.addEventListener('click', (e) => {
+            if (e.target.closest('.btn-friend-call')) return;
+            const friend = friends.find((x) => x.p.id === item.dataset.sidebarFriend)?.p;
+            if (friend) openDmWithFriend(friend);
           });
         });
       }
     }
   }
+}
+
+// ------------------------------------------------------------------
+// Menú Contextual para Canales (Clic derecho en sidebar)
+// ------------------------------------------------------------------
+function showChannelContextMenu(e, channel) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  document.getElementById('channelContextMenu')?.remove();
+
+  const isOwner = channel.owner_id === state.me?.id;
+  const menu = document.createElement('div');
+  menu.id = 'channelContextMenu';
+  menu.className = 'channel-context-menu';
+
+  menu.innerHTML = `
+    <button type="button" data-action="copy">
+      <span>📋 Copiar invitación</span>
+    </button>
+    ${isOwner ? `
+      <button type="button" data-action="delete" class="danger">
+        <span>🗑️ Eliminar canal</span>
+      </button>
+    ` : `
+      <button type="button" data-action="leave" class="danger">
+        <span>🚪 Salir del canal</span>
+      </button>
+    `}
+  `;
+
+  document.body.appendChild(menu);
+  const x = Math.min(e.clientX, window.innerWidth - 190);
+  const y = Math.min(e.clientY, window.innerHeight - 90);
+  menu.style.left = `${x}px`;
+  menu.style.top = `${y}px`;
+
+  menu.querySelector('[data-action="copy"]')?.addEventListener('click', () => {
+    menu.remove();
+    navigator.clipboard.writeText(channel.invite_code).then(() => {
+      hooks.toast?.('Código de invitación copiado');
+    });
+  });
+
+  menu.querySelector('[data-action="delete"]')?.addEventListener('click', () => {
+    menu.remove();
+    if (confirm(`¿Seguro que querés eliminar el canal "${channel.name}"?`)) {
+      act(async () => {
+        await api.deleteChannel(channel.id);
+        if (state.currentChannel?.id === channel.id) closeChannel();
+      }, 'Canal eliminado');
+    }
+  });
+
+  menu.querySelector('[data-action="leave"]')?.addEventListener('click', () => {
+    menu.remove();
+    if (confirm(`¿Seguro que querés salir del canal "${channel.name}"?`)) {
+      act(async () => {
+        await api.leaveChannel(channel.id, state.me.id);
+        if (state.currentChannel?.id === channel.id) closeChannel();
+      }, 'Saliste del canal');
+    }
+  });
+
+  const dismiss = (evt) => {
+    if (!menu.contains(evt.target)) {
+      menu.remove();
+      document.removeEventListener('pointerdown', dismiss);
+      document.removeEventListener('keydown', onKeyDown);
+    }
+  };
+  const onKeyDown = (evt) => {
+    if (evt.key === 'Escape') {
+      menu.remove();
+      document.removeEventListener('pointerdown', dismiss);
+      document.removeEventListener('keydown', onKeyDown);
+    }
+  };
+  setTimeout(() => {
+    document.addEventListener('pointerdown', dismiss);
+    document.addEventListener('keydown', onKeyDown);
+  }, 10);
 }
 
 // ------------------------------------------------------------------
@@ -707,24 +867,46 @@ function renderChat() {
   if (!state.currentChannel) return;
 
   const c = state.currentChannel;
+  const isDm = Boolean(c.room_code?.startsWith('dm-'));
+  const dmFriend = isDm ? getDmFriend(c) : null;
+
   const icon = document.getElementById('chatChannelIcon');
   const title = document.getElementById('chatChannelTitle');
   const type = document.getElementById('chatChannelType');
   const voiceBtn = document.getElementById('btnChatVoice');
+  const callBtn = document.getElementById('btnChatCall');
   const copyBtn = document.getElementById('btnChatCopyInvite');
   const closeBtn = document.getElementById('btnChatClose');
   const messagesBox = document.getElementById('chatMessages');
+  const chatInput = document.getElementById('chatMessageInput');
 
-  if (icon) icon.textContent = c.kind === 'voice' ? '🔊' : '#';
-  if (title) title.textContent = c.name;
-  if (type) type.textContent = c.kind === 'voice' ? 'Canal de voz' : 'Canal de texto';
-
-  if (voiceBtn) {
-    voiceBtn.style.display = c.kind === 'voice' ? 'inline-block' : 'none';
-    voiceBtn.onclick = () => {
-      hooks.joinRoom?.(c.room_code);
-      hooks.toast?.(`Entrando a la sala de voz de ${c.name}`);
-    };
+  if (isDm && dmFriend) {
+    if (icon) icon.textContent = '@';
+    if (title) title.textContent = dmFriend.display_name || dmFriend.username;
+    if (type) type.textContent = `@${dmFriend.username} · Chat privado`;
+    if (copyBtn) copyBtn.style.display = 'none';
+    if (voiceBtn) voiceBtn.style.display = 'none';
+    if (callBtn) {
+      callBtn.style.display = 'inline-flex';
+      callBtn.disabled = !isOnline(dmFriend);
+      callBtn.title = isOnline(dmFriend) ? `Llamar a ${dmFriend.display_name || dmFriend.username}` : 'No está conectado';
+      callBtn.onclick = () => callFriend(dmFriend);
+    }
+    if (chatInput) chatInput.placeholder = `Mensaje para @${dmFriend.username}...`;
+  } else {
+    if (icon) icon.textContent = c.kind === 'voice' ? '🔊' : '#';
+    if (title) title.textContent = c.name;
+    if (type) type.textContent = c.kind === 'voice' ? 'Canal de voz' : 'Canal de texto';
+    if (copyBtn) copyBtn.style.display = 'inline-block';
+    if (callBtn) callBtn.style.display = 'none';
+    if (voiceBtn) {
+      voiceBtn.style.display = c.kind === 'voice' ? 'inline-block' : 'none';
+      voiceBtn.onclick = () => {
+        hooks.joinRoom?.(c.room_code);
+        hooks.toast?.(`Entrando a la sala de voz de ${c.name}`);
+      };
+    }
+    if (chatInput) chatInput.placeholder = `@ escriba aquí...`;
   }
 
   if (copyBtn) {

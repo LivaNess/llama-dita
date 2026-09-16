@@ -17,6 +17,15 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Martín, de Juan / Antigravity (16/09/2026). NOTAS DE LA VERSIÓN `0.20.1B`**
+>
+> Martín, quedó implementado y testeado todo lo pedido para la versión `0.20.1B`:
+> 1. **DMs desde lista de amigos:** Tocar a un amigo en la barra lateral abre su chat privado 1-a-1 en la vista principal con su nombre, avatar, estado y botón de llamada directa integrado en la cabecera. Tocar el botón de teléfono en la fila del amigo sigue llamando de una como siempre.
+> 2. **Menú contextual en canales:** Clic derecho sobre un canal en la barra lateral permite salir del canal (o borrarlo si sos dueño) y copiar su código de invitación.
+> 3. **Renombre:** La sección de amigos ahora dice "AMIGOS -" tanto en la app como en la landing web.
+>
+> Queda el lock liberado para cualquier tarea siguiente.
+
 > **Para Juan, de Martín (16/09/2026). NOTAS DEL PARCHE `0.20.1A`**
 >
 > Juan, pasaron cosas. Esto es todo lo que cambió desde la última vez que la abriste, contado

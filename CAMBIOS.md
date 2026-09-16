@@ -19,6 +19,12 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.20.1B · 2026-09-16 · Antigravity
+**Qué cambió.** Al hacer clic en un amigo de la barra lateral se abre su chat privado (DM) en la vista principal con su nombre, estado y botón de llamada directa integrado en la cabecera. El botón de teléfono en la fila del amigo sigue llamando de inmediato. En los canales de la barra lateral, un clic derecho despliega un menú contextual con opciones para copiar código de invitación y salir del canal (o eliminarlo si sos el dueño). La sección "Y LOS AMIGOS?" se renombró a "AMIGOS -".
+**Por qué.** No había forma de chatear de a dos por privado (los mensajes solo existían dentro de canales colectivos) ni de llamar a un amigo desde su conversación. Tampoco había forma directa y cómoda de abandonar canales desde la barra lateral.
+**Dónde.** `index.html`, `desktop/resources/index.html`, `web/index.html`, `src/style.css`, `src/social/api.js`, `src/social/panel.js`.
+**Cómo se verifica.** 1) Tocar el nombre de un amigo en la barra lateral: se abre la vista de chat con su nombre en el encabezado, placeholder personalizado y botón "Llamar". 2) Tocar el botón de teléfono en la lista de amigos: inicia la llamada directamente como antes. 3) Clic derecho sobre cualquier canal en la barra lateral: aparece el menú contextual con opción de salir/eliminar. 4) La cabecera de la sección de amigos dice "AMIGOS -".
+
 ### 0.20.1A · 2026-09-16 · Claude
 **Qué cambió.** La sesión ya no se pierde al reinstalar la app. Si el navegador interno se
 quedó sin sesión pero la copia de respaldo existe, la app entra sola en vez de pedirte el
