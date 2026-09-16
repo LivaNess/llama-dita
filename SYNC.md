@@ -9,7 +9,7 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 | Agente | Versión objetivo | Archivos en edición | Estado |
 | :--- | :--- | :--- | :--- |
-| Claude | `1.12.1A` → `1.13.1A` | `src/network/peerManager.js`, `src/main.js`, `desktop/resources/icons/` | Pendientes 2, 4 y 5 (cliente compartido, nombre del participante, íconos) |
+| *Ninguno* | - | - | *Libre para tomar tareas* |
 
 > Para tomar una tarea, reemplazá la fila con tu agente, la versión objetivo y los archivos que vas a intervenir. Al hacer el commit final, restaurá el estado a *Libre*.
 
@@ -58,28 +58,35 @@ Cronológico. Acá se lee qué significa cada área y foco (el número no es un 
 
 ---
 
-## 📍 Dónde estamos (cierre 2026-09-15, versión `1.11.2B`)
+## 📍 Dónde estamos (cierre 2026-09-15, versión `1.13.1A`)
 
-Lo que quedó andando y verificado en esta sesión:
-
-- **Dominio propio**: `llamadita.com.ar` delegado a Cloudflare, con la web, las
-  actualizaciones y las descargas saliendo de ahí. La dirección vieja de Pages redirige.
-- **Mail**: Resend verificado; los códigos de ingreso salen desde `acceso@llamadita.com.ar`
-  con tope de 100 por hora. Casillas `dantey24@` (Martín) y `liva@` (Juan) por Email Routing.
-- **Ingreso**: el mail trae código de 6 dígitos y enlace; el enlace deja la sesión iniciada
-  en la app (esquema `llamadita://` + copia al portapapeles como respaldo).
-- **Accesos**: Juan es Owner en Supabase, Super Administrator en Cloudflare y está invitado
-  como Admin en Resend.
-- **Documentos**: `AGENTS.md`, `ESQUELETO.md` y `CAMBIOS.md`, con verificación automática en
-  cada push (`npm run verificar` + GitHub Actions, en verde).
+- **Red y voz**: la llamada dejó de abrir su propia conexión a Supabase; usa la del resto
+  de la app. Cada usuario pasa de dos conexiones en vivo a una, así que el techo del plan
+  gratis (200) pasa de ~100 personas a ~200. El nombre del otro ya llega siempre a su
+  cabina, y al cortarse vuelve a "Participante".
+- **Escritorio**: la ventana y la bandeja muestran el logo. El paquete `resources.neu` del
+  repositorio ya es `1.13.1A`.
+- **Sin publicar**: la versión está commiteada pero **no** deployada. Hasta correr
+  `npm run deploy:web`, las apps instaladas siguen viendo la `1.11.2B`.
+- **Infraestructura** (sin cambios desde la `1.11.2B`): dominio propio `llamadita.com.ar`
+  con web, actualizaciones y descargas; Resend mandando los códigos desde
+  `acceso@llamadita.com.ar`; Juan con accesos de Owner/Admin en Supabase, Cloudflare y
+  Resend; `AGENTS.md` + `npm run verificar` corriendo solos en cada push.
 
 ---
 
 ## 📌 Pendientes conocidos
 
-1. **Prueba real de llamada entre dos personas** (Martín y Juan, cada uno en su PC). Es lo
-   único grande sin verificar de punta a punta: llamada directa desde la lista de amigos,
-   con audio en los dos sentidos.
-2. **Regenerar el instalador** con `crear-instalador.bat` (necesita Inno Setup, lo tiene
-   Juan). El actual es de una versión vieja y no registra el esquema del enlace. Las
-   instalaciones existentes se actualizan solas igual.
+1. **Prueba real de llamada entre dos personas** (Martín y Juan, cada uno en su PC, con
+   audio en los dos sentidos desde la lista de amigos). Sigue siendo lo único grande sin
+   verificar de punta a punta. Lo que sí se probó de la `1.12.x`: dos pestañas en la misma
+   sala llegan a "Conectado" con el cliente compartido y se pasan el nombre en los dos
+   sentidos; el audio no se pudo probar así porque las dos pestañas comparten el mismo
+   micrófono.
+2. **Publicar la `1.13.1A`**: `npm run deploy:web` para que las apps instaladas reciban la
+   actualización. Sin eso, lo de arriba no le llega a nadie.
+3. **Regenerar el instalador** con `crear-instalador.bat`. Necesita Inno Setup 6, que **no
+   está instalado en la PC de Martín** (se buscó: ni en Archivos de programa ni en
+   `%LOCALAPPDATA%`); lo tiene Juan. El `installer.iss` ya quedó apuntando a la `1.13.1A`.
+   El actual es de una versión vieja y no registra el esquema del enlace; las instalaciones
+   existentes se actualizan solas igual.
