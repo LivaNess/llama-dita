@@ -31,6 +31,11 @@ ventana y la barra de tareas. Para regenerarlos: abrir la app en el navegador, d
 `/favicon.svg` en un canvas del tamaño que haga falta y guardar el PNG.
 **Ojo.** El ícono del ejecutable en sí (el `.exe` en el Explorador) viene incrustado en el
 binario de Neutralino y no cambia con esto.
+**Además.** Se regeneró `installer/Llama-dita-Setup.exe` con esta versión (Inno Setup 6.7.3,
+instalado en la PC de Martín en `%LOCALAPPDATA%\Programs\Inno Setup 6`). El Setup que había
+era de una versión vieja y no registraba el esquema `llamadita://`, así que en una
+instalación nueva el enlace del mail no abría la app. Se verifica instalando en una máquina
+limpia y tocando el enlace del mail.
 
 ### 1.12.2A · 2026-09-15 · Claude
 **Qué cambió.** La cabina del otro lado muestra su nombre y no "Participante". Si la

@@ -66,9 +66,12 @@ Cronológico. Acá se lee qué significa cada área y foco (el número no es un 
   cabina, y al cortarse vuelve a "Participante".
 - **Escritorio**: la ventana y la bandeja muestran el logo. El paquete `resources.neu` del
   repositorio ya es `1.13.1A`.
-- **Sin publicar**: la `1.13.1A` está commiteada pero **no** deployada. Lo que hoy baja
-  de `llamadita.com.ar` es la `1.11.2C` que publicó Antigravity; hasta correr
-  `npm run deploy:web`, las apps instaladas se quedan ahí.
+- **Publicada**: la `1.13.1A` está deployada en `llamadita.com.ar` (manifiesto, paquete de
+  actualización e instalador nuevo en `/descargas/`). Las apps instaladas la reciben al abrir.
+- **Instalador**: `installer/Llama-dita-Setup.exe` regenerado con la `1.13.1A`, ya con el
+  registro del esquema `llamadita://`. Inno Setup 6.7.3 quedó instalado en la PC de Martín
+  (`%LOCALAPPDATA%\Programs\Inno Setup 6`), así que `crear-instalador.bat` ahora corre acá
+  y no depende de Juan.
 - **Infraestructura** (sin cambios desde la `1.11.2B`): dominio propio `llamadita.com.ar`
   con web, actualizaciones y descargas; Resend mandando los códigos desde
   `acceso@llamadita.com.ar`; Juan con accesos de Owner/Admin en Supabase, Cloudflare y
@@ -84,10 +87,6 @@ Cronológico. Acá se lee qué significa cada área y foco (el número no es un 
    sala llegan a "Conectado" con el cliente compartido y se pasan el nombre en los dos
    sentidos; el audio no se pudo probar así porque las dos pestañas comparten el mismo
    micrófono.
-2. **Publicar la `1.13.1A`**: `npm run deploy:web` para que las apps instaladas reciban la
-   actualización. Sin eso, lo de arriba no le llega a nadie.
-3. **Regenerar el instalador** con `crear-instalador.bat`. Necesita Inno Setup 6, que **no
-   está instalado en la PC de Martín** (se buscó: ni en Archivos de programa ni en
-   `%LOCALAPPDATA%`); lo tiene Juan. El `installer.iss` ya quedó apuntando a la `1.13.1A`.
-   El actual es de una versión vieja y no registra el esquema del enlace; las instalaciones
-   existentes se actualizan solas igual.
+2. **Probar el instalador nuevo en una máquina limpia**: que instale, que el enlace del
+   mail abra la app y que no quede una segunda ventana. Nunca se probó una instalación
+   desde cero con el esquema registrado.
