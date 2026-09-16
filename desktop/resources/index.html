@@ -8,9 +8,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="/assets/index-B4aCzydv.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-Czspwcgs.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <script type="module" crossorigin src="/assets/index-BCDfKlON.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-yufXs88B.css">
 </head>
 <body>
   <!-- Banner de permiso de audio en navegadores restrictivos -->
@@ -116,21 +116,7 @@
       <!-- Header principal -->
       <header class="app-header">
         <div class="room-actions">
-          <div class="room-id-pill" id="roomPill" title="Código de tu sala actual">Sala: ...</div>
-          
-          <button class="btn-invite" id="btnCopyInvite" title="Copiar código de tu sala para enviárselo a tu compañero">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
-              <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
-            </svg>
-            <span>Copiar Código</span>
-          </button>
-
-          <!-- Entrada para unirse a sala existente -->
-          <div class="join-room-wrapper">
-            <input type="text" id="inputJoinRoom" class="input-join-room" placeholder="Código o enlace..." title="Pega aquí el código de sala o enlace de tu compañero" />
-            <button class="btn-join" id="btnJoinRoom">Unirse</button>
-          </div>
+          <div class="call-status-pill" id="callStatus">Sin llamada</div>
 
           <!-- Cortar: aparece solo cuando hay alguien del otro lado -->
           <button class="btn-hangup" id="btnLeaveCall" title="Cortar la llamada y volver a tu sala" hidden>
@@ -354,6 +340,10 @@
     </div><!-- /.app-main-area -->
   </div><!-- /.app-layout -->
 
+  <!-- El audio del otro lado sale por acá. Sin este elemento no se escucha nada. -->
+  <audio id="remoteAudioElement" autoplay playsinline></audio>
+  <div class="toast-container" id="toastContainer"></div>
+
   <!-- Modal sorpresa: Cumpleaños de Martín (Dev & CEO) -->
   <div class="bday-overlay" id="bdayOverlay">
     <div class="bday-modal">
@@ -379,6 +369,6 @@
       </button>
     </div>
   </div>
-
+
 </body>
 </html>

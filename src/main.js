@@ -11,10 +11,12 @@ const btnActivateAudio = document.getElementById('btnActivateAudio');
 
 const onAirBadge = document.getElementById('onAirBadge');
 const onAirText = document.getElementById('onAirText');
-const roomPill = document.getElementById('roomPill');
-const btnCopyInvite = document.getElementById('btnCopyInvite');
+const callStatus = document.getElementById('callStatus');
 const btnLeaveCall = document.getElementById('btnLeaveCall');
-const btnShareInviteSecondary = document.getElementById('btnShareInviteSecondary');
+
+// La cabecera dice con quién estás hablando, no en qué sala técnica estás.
+let conQuien = null;
+function setCallStatus(texto) { if (callStatus) callStatus.textContent = texto; }
 
 // Local Booth DOM
 const hostBooth = document.getElementById('hostBooth');
@@ -166,8 +168,8 @@ async function startMicrophone(deviceId = null) {
 
 // Initialize Application
 async function init() {
-  const { roomId } = peerManager.detectRoom();
-  roomPill.textContent = `Sala: ${roomId}`;
+  peerManager.detectRoom();
+  setCallStatus('Sin llamada');
 
   hostNameInput.value = 'Usuario Local';
   peerManager.setLocalProfile(hostNameInput.value);
@@ -250,6 +252,7 @@ function setupNetworking() {
       guestStatusPill.innerHTML = '<span style="color:#34d399">Conectado</span>';
       guestSpeakingIndicator.className = 'speaking-indicator';
       guestSpeakingText.textContent = 'Activo';
+      setCallStatus(conQuien ? `En llamada con ${conQuien}` : 'En llamada');
       showToast('Participante conectado a la sala');
 
       // Por si la llamada quedó andando sin canal de datos: el nombre sale igual por
@@ -273,6 +276,8 @@ function setupNetworking() {
       guestSpeakingIndicator.classList.remove('active');
       guestSpeakingText.textContent = 'Desconectado';
       guestNameInput.value = 'Participante';
+      setCallStatus('Sin llamada');
+      conQuien = null;
       showToast('Participante desconectado');
     } else if (status === 'error') {
       guestStatusPill.innerHTML = `<span style="color:#f87171">${msg}</span>`;
@@ -299,6 +304,8 @@ function setupNetworking() {
   peerManager.onRemoteData = (data) => {
     if (data.type === 'profile' && data.name) {
       guestNameInput.value = data.name;
+      conQuien = data.name;
+      if (isConnected) setCallStatus(`En llamada con ${data.name}`);
     } else if (data.type === 'mute') {
       if (data.muted) {
         guestSpeakingIndicator.className = 'speaking-indicator muted';
@@ -502,7 +509,7 @@ btnToggleRemoteAudio.addEventListener('click', () => {
 // Salir de la llamada: corta, vuelve a una sala propia vacía y deja la app en standby.
 // El otro lado se entera solo (desaparece nuestra presencia del canal de señalización).
 function leaveCall() {
-  const nuevaSala = peerManager.leaveRoom();
+  peerManager.leaveRoom();
 
   isConnected = false;
   remoteStream = null;
@@ -519,25 +526,13 @@ function leaveCall() {
   guestSpeakingIndicator.className = 'speaking-indicator';
   guestSpeakingText.textContent = 'Sin conexión';
 
-  roomPill.textContent = `Sala: ${nuevaSala}`;
+  conQuien = null;
+  setCallStatus('Sin llamada');
   showToast('Saliste de la llamada');
   updateMainViews();
 }
 
 btnLeaveCall?.addEventListener('click', leaveCall);
-
-// Copy Invite Link to Clipboard
-function copyInviteLink() {
-  const code = peerManager.roomId;
-  navigator.clipboard.writeText(code).then(() => {
-    showToast(`Código copiado: ${code}`);
-  }).catch(() => {
-    window.prompt('Copia este código de sala:', code);
-  });
-}
-
-btnCopyInvite?.addEventListener('click', copyInviteLink);
-btnShareInviteSecondary?.addEventListener('click', copyInviteLink);
 
 // Sync editable name changes
 hostNameInput.addEventListener('change', () => {
@@ -550,9 +545,10 @@ window.addEventListener('DOMContentLoaded', () => {
   // Cuenta, amigos, canales y llamadas directas (Supabase). Aditivo a la sala P2P.
   // No espera al micrófono: la cuenta tiene que estar disponible aunque el permiso demore o falle.
   initSocial({
-    joinRoom: (code) => {
+    joinRoom: (code, nombre) => {
       if (peerManager.setRoom(code)) {
-        roomPill.textContent = `Sala: ${peerManager.roomId}`;
+        conQuien = nombre || null;
+        setCallStatus(nombre ? `Llamando a ${nombre}…` : 'Conectando…');
       }
     },
     getRoom: () => peerManager.roomId,
@@ -571,34 +567,6 @@ window.addEventListener('DOMContentLoaded', () => {
   // El enlace del mail abre la app (esquema llamadita://).
   initDeepLink({ toast: showToast });
 });
-// Room Join Controls
-const inputJoinRoom = document.getElementById('inputJoinRoom');
-const btnJoinRoom = document.getElementById('btnJoinRoom');
-
-function handleJoinRoom() {
-  const code = inputJoinRoom.value.trim();
-  if (!code) {
-    showToast('Ingresa un código de sala válido');
-    return;
-  }
-
-  const success = peerManager.setRoom(code);
-  if (success) {
-    roomPill.textContent = `Sala: ${peerManager.roomId}`;
-    showToast(`Conectando a la sala ${peerManager.roomId}...`);
-    inputJoinRoom.value = '';
-  } else {
-    showToast('Código de sala no válido');
-  }
-}
-
-btnJoinRoom?.addEventListener('click', handleJoinRoom);
-inputJoinRoom?.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    handleJoinRoom();
-  }
-});
-
 // Modal de cumpleaños de Martín (Dev & CEO)
 const bdayOverlay = document.getElementById('bdayOverlay');
 const btnBdayClose = document.getElementById('btnBdayClose');

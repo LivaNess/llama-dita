@@ -51,6 +51,7 @@ Cronológico. Acá se lee qué significa cada área y foco (el número no es un 
 | `1.14.2A` | Claude | Interfaz / salir de la llamada | Botón "Salir de la llamada" en la cabecera, visible solo con alguien del otro lado. `peerManager.leaveRoom()` corta, sale del canal de señalización y vuelve a una sala propia vacía (si se quedaba en la misma, la presencia del otro los volvía a juntar). |
 | `1.15.1A` | Claude | Rendimiento / bucle de dibujo | El dibujo de medidores y espectro corría a 60 cuadros por segundo aunque las cabinas no estuvieran en pantalla. Con la ventana atrás va a la mitad de cuadros. Medido: de 6,49% a 0,45% de CPU sin llamada. |
 | `1.15.1B` | Antigravity | Interfaz / saludo cumpleaños Martín | Cartel festivo en pantalla completa al iniciar la app celebrando los 28 años de Martín (Dev & CEO), con diseño dark studio conmemorativo y botón de entrada. |
+| `1.16.1A` | Claude | Interfaz / llamar a un amigo | Fix: la `1.15.1B` había borrado el reproductor de audio remoto y el contenedor de avisos del final de `index.html`; sin eso la llamada conectaba pero no sonaba. Además se sacó el sistema de códigos de sala: se llama desde la lista de amigos y la cabecera muestra con quién hablás. |
 ---
 
 ## ⚠️ Reglas para agentes

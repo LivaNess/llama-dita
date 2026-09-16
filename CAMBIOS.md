@@ -19,6 +19,23 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 1.16.1A · 2026-09-16 · Claude
+**Qué cambió.** Dos cosas. **Volvieron a funcionar las llamadas**: no se escuchaba al otro
+lado. Y **se fue el sistema de códigos de sala**: ya no hay que copiar ni pegar nada. Llamás
+a un amigo desde la lista y la sala se abre sola. La cabecera dejó de mostrar un código y
+ahora dice con quién estás hablando.
+**Por qué.** En la `1.15.1B`, al agregar el cartel de cumpleaños, se borraron sin querer dos
+líneas del final de `index.html`: el reproductor del audio remoto y el contenedor de avisos.
+Sin el reproductor la llamada se conectaba igual pero no sonaba nada, y cualquier aviso en
+pantalla tiraba error. Lo de los códigos era una segunda puerta para entrar a una sala que ya
+se abre sola al llamar a un amigo: solo agregaba confusión.
+**Dónde.** `index.html`, `src/main.js`, `src/style.css`, `src/social/panel.js` (áreas A y F).
+**Cómo se verifica.** Dos personas: una llama a la otra desde la lista de amigos, la otra
+atiende, y se escuchan. La cabecera de las dos dice "En llamada con …". No hay ningún lugar
+donde pegar un código.
+**Para la próxima.** Los elementos del final de `index.html` (`remoteAudioElement` y
+`toastContainer`) no son decorativos: si se tocan, la llamada deja de sonar.
+
 ### 1.15.1B · 2026-09-16 · Antigravity
 **Qué cambió.** Se agregó un cartel festivo en pantalla completa al iniciar la aplicación con saludo y felicitación por los 28 años de Martín (Dev & CEO de Llama-dita), con diseño dark studio conmemorativo, animación y botón para ingresar a la app.
 **Por qué.** Pedido especial de Juan para celebrar el cumpleaños número 28 de Martín.

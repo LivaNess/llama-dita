@@ -211,7 +211,7 @@ function otherSide(f) { return f.requester_id === state.me.id ? f.addressee : f.
 
 async function callFriend(friendProfile) {
   const room = randomRoom();
-  hooks.joinRoom?.(room);
+  hooks.joinRoom?.(room, friendProfile.display_name || friendProfile.username);
   try {
     state.outgoingCall = await api.createCallInvite(state.me.id, friendProfile.id, room);
     state.outgoingCall.profile = friendProfile;
@@ -257,7 +257,7 @@ async function answerCall(status) {
   try {
     await api.updateCallInvite(call.id, status);
     if (status === 'accepted') {
-      hooks.joinRoom?.(call.room_code);
+      hooks.joinRoom?.(call.room_code, call.from?.display_name || call.from?.username);
       toggleDrawer(false);
     }
   } catch (e) { hooks.toast?.(e.message); }
