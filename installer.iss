@@ -1,6 +1,6 @@
 [Setup]
 AppName=Llama-dita
-AppVersion=0.21.3B
+AppVersion=0.21.3C
 AppPublisher=Llama-dita
 AppPublisherURL=https://llamadita.com.ar
 DefaultDirName={localappdata}\Llama-dita

@@ -19,6 +19,46 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.21.3C · 2026-09-16 · Claude
+**Qué cambió.** Dos cosas que Martín encontró probando los adjuntos:
+
+1. **Editar un mensaje ya no le borra la imagen.** Antes, si un mensaje tenía una captura y le
+   cambiabas el texto, la imagen desaparecía de la pantalla.
+2. **Un mensaje de texto CON imagen ya no se manda pelado.** Antes podía aparecer solo el texto.
+
+Además: el lápiz de editar solo sale en los mensajes que **tienen** texto. Un mensaje que es
+solo una imagen no tiene nada que editar, y ofrecerlo era invitar al problema.
+
+**Por qué pasaba, que es el mismo motivo para los dos.** El aviso en vivo de Supabase trae la
+fila **pelada**: el mensaje, sin los archivos que le cuelgan de otra tabla. Yo usaba esa fila
+para reemplazar la que ya estaba en pantalla, así que al editar, la versión sin imagen pisaba a
+la que sí la tenía. Y cuando mandabas texto con imagen, si el aviso del archivo llegaba un
+instante **antes** que el del mensaje, no encontraba a quién pegarse y se descartaba.
+
+**Cómo quedó arreglado**, en tres capas, porque una sola no alcanzaba:
+- Lo que llega en vivo manda **solo sobre lo que efectivamente trae**: nunca puede borrar algo
+  que ya sabíamos. Probado contra la función real, no contra una copia.
+- Un archivo que llega antes que su mensaje **espera** hasta 30 segundos en vez de tirarse.
+- Y después de mandar un archivo, el que lo mandó le pide al servidor lo que cambió, en vez de
+  confiar en que los avisos lleguen completos y en orden. Es una consulta chica y solo corre al
+  mandar un archivo.
+
+**Dónde.** `src/social/panel.js`.
+
+**La base nunca estuvo mal**, y se verificó: editar un mensaje con adjunto lo deja intacto del
+lado del servidor. Era todo de la pantalla.
+
+**Y de paso: se vació la cola de borrado.** Los archivos de los mensajes que Martín borró
+probando seguían en el bucket, porque la cola se llenaba pero todavía no había nada que la
+vaciara. Se vaciaron los 8 y se comprobó que el objeto ya no existe (404) y que el bucket quedó
+en cero. **Vaciarla automáticamente sigue pendiente** (es el paso 4 de la ficha del chat): por
+ahora, cuando se borra un mensaje con archivo, el archivo queda encolado hasta que alguien
+dispare la purga.
+
+**Cómo se verifica.** Mandar un mensaje con texto **y** una captura: tienen que verse los dos.
+Editarle el texto: la imagen tiene que quedar. Y en un mensaje que es solo imagen, el lápiz no
+tiene que aparecer.
+
 ### 0.21.3B · 2026-09-16 · Antigravity
 **Qué cambió.** Ocultamiento total de la barra lateral izquierda y la cabecera cuando no hay sesión activa:
 1. **Pantalla limpia y tarjeta centrada:** Al estar deslogueado, la barra lateral izquierda desaparece por completo (evitando la franja vacía a la izquierda) y la cabecera superior se oculta, permitiendo que la tarjeta de bienvenida y login quede perfectamente centrada en toda la ventana.

@@ -528,7 +528,7 @@ function msgItem(m) {
     <small>${esc(autorDe(m))} · ${hora}${m.edited_at ? ' · editado' : ''}</small>
     ${m.body ? `<div class="sc-msg-body">${esc(m.body)}</div>` : ''}
     ${(m.adjuntos || []).length ? `<div class="sc-msg-adjuntos">${m.adjuntos.map(adjuntoItem).join('')}</div>` : ''}
-    ${puedoBorrar ? `<div class="sc-msg-acciones">${mine ? `<button type="button" class="sc-msg-accion" data-editar="${esc(m.id)}" title="Editar">✎</button>` : ''}<button type="button" class="sc-msg-accion" data-borrar="${esc(m.id)}" title="Borrar para todos">✕</button></div>` : ''}
+    ${puedoBorrar ? `<div class="sc-msg-acciones">${mine && m.body ? `<button type="button" class="sc-msg-accion" data-editar="${esc(m.id)}" title="Editar el texto">✎</button>` : ''}<button type="button" class="sc-msg-accion" data-borrar="${esc(m.id)}" title="Borrar para todos">✕</button></div>` : ''}
   </div>`;
 }
 
@@ -554,7 +554,17 @@ function nombreCanal(c) {
 function mezclar(actuales, nuevos, lapidas = []) {
   const borrados = new Set(lapidas.map((l) => String(l.message_id)));
   const porId = new Map();
-  for (const m of [...actuales, ...nuevos]) porId.set(String(m.id), m);
+  for (const m of actuales) porId.set(String(m.id), m);
+
+  for (const m of nuevos) {
+    const clave = String(m.id);
+    const viejo = porId.get(clave);
+    // El aviso en vivo trae la fila PELADA: el mensaje sin los archivos que le cuelgan. Si se
+    // reemplazara sin mirar, editar el texto de un mensaje con una imagen la hacia desaparecer.
+    // Lo que llega manda, pero solo sobre lo que efectivamente trae.
+    porId.set(clave, viejo && !m.adjuntos ? { ...viejo, ...m, adjuntos: viejo.adjuntos } : m);
+  }
+
   for (const id of borrados) porId.delete(id);
   // Se ordena por la hora convertida a numero, no por el texto: el aviso en vivo y la consulta
   // al servidor no siempre escriben la fecha igual, y comparar textos pondria un mensaje nuevo
@@ -594,9 +604,16 @@ async function sincronizar(channelId) {
 async function llegoMensaje(channelId, fila) {
   const perfil = state.members.find((m) => m.user_id === fila.author_id)?.profile;
   const m = { ...fila, author: perfil ? { username: perfil.username, display_name: perfil.display_name } : null };
-  // Si no trae texto, es un mensaje de puro archivo: sin esto quedaria un globo vacio hasta
-  // que llegue el aviso del adjunto, que puede perderse si la conexion parpadea.
-  if (!m.body) {
+  // Lo que haya llegado antes que el mensaje.
+  const esperando = adjuntosHuerfanos.get(String(m.id));
+  if (esperando) {
+    adjuntosHuerfanos.delete(String(m.id));
+    for (const a of esperando) pegarAdjunto(m, a);
+  }
+
+  // Si no trae texto ni archivos, es un mensaje de puro archivo cuyo aviso todavia no llego:
+  // sin esto quedaria un globo vacio si el aviso se pierde por un parpadeo de la conexion.
+  if (!m.body && !m.adjuntos?.length) {
     try { m.adjuntos = await api.adjuntosDe(m.id); } catch (_) {}
   }
   await cache.guardarMensajes([m]);
@@ -609,10 +626,28 @@ async function llegoMensaje(channelId, fila) {
 // El aviso de un mensaje nuevo trae la fila pelada, sin lo que cuelga de ella. El adjunto
 // llega por separado (se inserta en la misma transaccion, asi que es casi al mismo tiempo) y
 // se pega al mensaje que ya esta en pantalla.
+// El mensaje y su archivo se guardan en la misma transaccion, asi que los dos avisos llegan
+// casi juntos, pero no hay garantia de en que orden. Si el archivo llega primero, se guarda
+// aca hasta que aparezca su mensaje; si no, un mensaje de texto CON imagen se dibujaba con el
+// texto solo.
+const adjuntosHuerfanos = new Map(); // id de mensaje -> adjuntos que llegaron antes de tiempo
+
+function pegarAdjunto(m, fila) {
+  m.adjuntos = [...(m.adjuntos || []).filter((a) => a.id !== fila.id), fila];
+  return m;
+}
+
 async function llegoAdjunto(channelId, fila) {
   const m = state.messages.find((x) => String(x.id) === String(fila.message_id));
-  if (!m) return; // todavia no llego el mensaje: al llegar se trae sus adjuntos solo
-  m.adjuntos = [...(m.adjuntos || []).filter((a) => a.id !== fila.id), fila];
+  if (!m) {
+    const clave = String(fila.message_id);
+    adjuntosHuerfanos.set(clave, [...(adjuntosHuerfanos.get(clave) || []), fila]);
+    // No se guardan para siempre: si el mensaje nunca llega (lo borraron, o no era para
+    // nosotros), esto no puede quedar creciendo en memoria.
+    setTimeout(() => adjuntosHuerfanos.delete(clave), 30000);
+    return;
+  }
+  pegarAdjunto(m, fila);
   await cache.guardarMensajes([m]);
   if (state.currentChannel?.id !== channelId) return;
   render();
@@ -698,11 +733,17 @@ async function borrarMensaje(id) {
   } catch (e) { hooks.toast?.(e.message); }
 }
 
+// Se edita el TEXTO, nunca los archivos: un mensaje que es solo una imagen no tiene nada que
+// editar, y por eso ni siquiera muestra el lapiz.
 async function editarMensaje(id) {
   const actual = state.messages.find((m) => String(m.id) === String(id));
-  if (!actual) return;
-  const texto = prompt('Editar el mensaje:', actual.body);
+  if (!actual || !actual.body) return;
+  const texto = prompt('Editar el mensaje (los archivos no se tocan):', actual.body);
   if (texto === null || texto.trim() === actual.body) return;
+  if (!texto.trim()) {
+    hooks.toast?.('Un mensaje no puede quedar vacío. Si lo querés sacar, borralo.');
+    return;
+  }
   try { await api.editMessage(id, texto); } catch (e) { hooks.toast?.(e.message); }
 }
 
@@ -840,6 +881,10 @@ async function mandarMensaje(texto, devolverTexto) {
     await api.enviarConArchivos(c.id, texto, fichas);
     state.mandando = false;
     vaciarBandeja();
+    // Red de seguridad para el que manda: en vez de confiar en que los avisos en vivo lleguen
+    // completos y en orden, se le pide al servidor lo que cambio. Es una consulta chica y se
+    // hace solo al mandar un archivo, no en cada mensaje.
+    if (state.currentChannel?.id === c.id) { await sincronizar(c.id); render(); }
   } catch (e) {
     state.mandando = false;
     renderBandeja();
