@@ -5,6 +5,7 @@
 //  4. Corre `neu update` (si faltan los binarios) y `neu build` → desktop/dist/Llama-dita/resources.neu
 // Uso: npm run build:desktop   (después, si hay Inno Setup: crear-instalador.bat)
 import { execSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -46,23 +47,44 @@ if (!html.includes('__neutralino_globals.js')) {
   writeFileSync(indexPath, html);
 }
 
-// 3. Manifiesto de actualización
-const manifest = {
-  applicationId: cfg.applicationId,
-  version,
-  // El paquete se sirve desde la web oficial (lo publica scripts/build-web.mjs).
-  // ?v= evita que el WebView sirva un resources.neu viejo.
-  resourcesURL: `${SITIO}/descargas/resources.neu?v=${encodeURIComponent(version)}`,
-  data: { releasedAt: new Date().toISOString() }
-};
-writeFileSync(join(desktop, 'update-manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
-
-// 4. Paquete Neutralino
+// 3. Paquete Neutralino
 const run = (cmd) => { console.log('> ' + cmd); execSync(cmd, { cwd: desktop, stdio: 'inherit', shell: true }); };
 if (!existsSync(join(desktop, 'bin'))) run('npx --yes @neutralinojs/neu update');
 run('npx --yes @neutralinojs/neu build');
 
 const neu = join(desktop, 'dist', cfg.cli.binaryName, 'resources.neu');
 if (!existsSync(neu)) { console.error('No se generó ' + neu); process.exit(1); }
+
+// 4. Manifiesto de actualización, con la huella del paquete recién generado.
+// La huella es lo que le permite al updater comprobar que bajó exactamente esto y no otra
+// cosa: su única verificación era que el archivo pesara más de 10 KB.
+const huella = createHash('sha256').update(readFileSync(neu)).digest('hex');
+const manifest = {
+  applicationId: cfg.applicationId,
+  version,
+  // El paquete se sirve desde la web oficial (lo publica scripts/build-web.mjs).
+  // ?v= evita que el WebView sirva un resources.neu viejo.
+  resourcesURL: `${SITIO}/descargas/resources.neu?v=${encodeURIComponent(version)}`,
+  sha256: huella,
+  data: { releasedAt: new Date().toISOString() }
+};
+writeFileSync(join(desktop, 'update-manifest.json'), JSON.stringify(manifest, null, 2) + String.fromCharCode(10));
+
+// 5. El script del enlace del mail viaja con el instalador.
+// Si no, en una instalación nueva el registro de Windows apunta a un archivo que todavía no
+// existe (lo escribe la app en su primer arranque) y tocar el enlace del mail no hace nada.
+// Tiene que decir lo mismo que el SCRIPT de src/social/deeplink.js.
+const CR = String.fromCharCode(13) + String.fromCharCode(10);
+const scriptEnlace = [
+  '@echo off',
+  'setlocal enabledelayedexpansion',
+  'set "URL=%~1"',
+  'if not exist "%~dp0.tmp" mkdir "%~dp0.tmp"',
+  '> "%~dp0.tmp' + String.fromCharCode(92) + 'enlace.txt" echo !URL!',
+  'tasklist /FI "IMAGENAME eq Llama-dita.exe" | find /I "Llama-dita.exe" >nul',
+  'if errorlevel 1 start "" "%~dp0Llama-dita.exe"',
+  'endlocal'
+].join(CR) + CR;
+writeFileSync(join(desktop, 'dist', cfg.cli.binaryName, 'abrir-enlace.cmd'), scriptEnlace);
 mkdirSync(join(root, 'installer'), { recursive: true });
 console.log(`\nListo: v${version}\n- ${neu}\n- desktop/update-manifest.json\nAhora publicá la web (npm run deploy:web): de ahí bajan la actualización las apps instaladas.`);

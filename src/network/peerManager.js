@@ -362,7 +362,12 @@ export class PeerManager {
 
     if (type === 'offer') {
       this.remotePeerId = from;
-      this.setupPeerConnection();
+
+      // Si ya hay una conexión viva, esta oferta es una renegociación (por ejemplo, el otro
+      // lado está reintentando los caminos de red). Se contesta sobre la misma conexión en vez
+      // de tirar todo y empezar de nuevo: así la llamada se recupera sin cortar el audio.
+      const esRenegociacion = this.pc && this.pc.signalingState !== 'closed' && !!this.pc.remoteDescription;
+      if (!esRenegociacion) this.setupPeerConnection();
 
       try {
         await this.pc.setRemoteDescription(new RTCSessionDescription(data));
@@ -539,17 +544,30 @@ export class PeerManager {
     }
   }
 
-  restartIceConnection() {
-    if (!this.pc) return;
+  // Reintento cuando la conexión se cae o se degrada.
+  //
+  // Antes esto llamaba a restartIce() y acto seguido a initiateCall(), que crea una conexión
+  // nueva de cero y tira a la basura el reinicio recién pedido. O sea: decía "reiniciar la
+  // red" y en realidad rehacía la llamada entera, cortando el audio.
+  //
+  // Ahora se renegocian los caminos de red sobre la misma conexión, que es lo que hace que una
+  // llamada sobreviva a un cambio de wifi a datos móviles sin que nadie note nada.
+  async restartIceConnection() {
+    if (!this.pc || !this.remotePeerId) return;
+    // Renegocia uno solo de los dos, el mismo criterio con el que se decide quién llama.
+    if (this.myPeerId < this.remotePeerId) return;
+
     try {
-      if (typeof this.pc.restartIce === 'function') {
-        this.pc.restartIce();
-      }
-      if (this.myPeerId > this.remotePeerId) {
-        this.initiateCall();
-      }
-    } catch (e) {
-      console.warn('Error al reiniciar ICE:', e);
+      const offer = await this.pc.createOffer({ iceRestart: true });
+      await this.pc.setLocalDescription(offer);
+      this.sendSignal({
+        from: this.myPeerId,
+        to: this.remotePeerId,
+        type: 'offer',
+        data: { type: offer.type, sdp: offer.sdp }
+      });
+    } catch (err) {
+      console.warn('Error al reiniciar la conexión:', err);
     }
   }
 

@@ -19,6 +19,26 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.17.2A · 2026-09-16 · Claude
+**Qué cambió.** Tres arreglos que no se ven pero evitan problemas feos.
+1. **La actualización ahora se verifica.** El manifiesto publica la huella del paquete y la app
+   comprueba que bajó exactamente eso. Si no coincide, no instala nada y avisa.
+2. **El enlace del mail funciona en instalaciones nuevas.** El instalador ahora incluye
+   `abrir-enlace.cmd`.
+3. **El reintento de conexión reintenta de verdad.** Si la llamada se degrada, se renegocian
+   los caminos de red sobre la misma conexión, sin cortar el audio.
+**Por qué.** (1) La única verificación era que el archivo pesara más de 10 KB: cualquier cosa
+más grande se instalaba encima de la app. (2) El instalador registraba el esquema del enlace
+apuntando a un archivo que no instalaba (lo escribe la app en su primer arranque), así que en
+una máquina nueva, tocar el enlace del mail antes de abrir la app no hacía nada. (3) El código
+pedía un reinicio de red y acto seguido creaba una conexión nueva que lo tiraba a la basura:
+decía "reiniciar" y en realidad rehacía la llamada entera, cortando el audio.
+**Dónde.** `scripts/build-desktop.mjs`, `src/updater.js`, `installer.iss`,
+`src/network/peerManager.js`.
+**Cómo se verifica.** El manifiesto tiene que traer `sha256`. Probado el reinicio con dos
+clientes conectados: después de pedirlo, **es la misma conexión** (no se creó otra), el estado
+vuelve a "estable" y **la pista de audio remota sigue siendo la misma**, o sea que no se cortó.
+
 ### 0.17.1A · 2026-09-16 · Claude
 **Qué cambió.** Borrar una cuenta ya no se lleva puesto el contenido de los demás. Antes, si
 el dueño de un canal borraba su cuenta **se borraba el canal con los mensajes de todos**, y si

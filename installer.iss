@@ -1,6 +1,6 @@
 [Setup]
 AppName=Llama-dita
-AppVersion=0.16.2A
+AppVersion=0.17.2A
 AppPublisher=Llama-dita
 AppPublisherURL=https://llamadita.com.ar
 DefaultDirName={localappdata}\Llama-dita
@@ -20,6 +20,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Files]
 Source: "desktop\dist\Llama-dita\Llama-dita-win_x64.exe"; DestDir: "{app}"; DestName: "Llama-dita.exe"; Flags: ignoreversion
 Source: "desktop\dist\Llama-dita\resources.neu"; DestDir: "{app}"; Flags: ignoreversion
+Source: "desktop\dist\Llama-dita\abrir-enlace.cmd"; DestDir: "{app}"; Flags: ignoreversion
 
 [Registry]
 ; El enlace del mail (llamadita://) abre la app

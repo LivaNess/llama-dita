@@ -84,6 +84,17 @@ export async function installUpdate() {
   if (!r.ok) throw new Error('No pude bajar la actualización (HTTP ' + r.status + ')');
   const data = await r.arrayBuffer();
   if (data.byteLength < 10000) throw new Error('La descarga vino incompleta');
+
+  // Comprobar que bajó exactamente el paquete que anunciaba el manifiesto. Sin esto, la app
+  // se instala encima cualquier cosa que pese más de 10 KB.
+  const esperada = lastResult?.manifest?.sha256;
+  if (esperada) {
+    const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', data));
+    const bajada = [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
+    if (bajada !== esperada) {
+      throw new Error('La actualización no coincide con la publicada. No se instaló nada.');
+    }
+  }
   await nl.filesystem.writeBinaryFile(window.NL_PATH + '/resources.neu', data);
   await nl.app.restartProcess();
 }

@@ -69,6 +69,7 @@ Cronológico. Acá se lee qué significa cada área y foco (el número no es un 
 | `1.16.2A` | Claude | Interfaz / limpieza | Se saca el cartel de cumpleaños (ya pasó el día y salía en cada apertura). El agradecimiento de Martín a Juan queda en la sección de recados de este documento. |
 | `0.16.2A` | Claude | Versionado / hito | El primer número pasa de 1 a 0 por decisión de Martín: el proyecto todavía no llegó a su primer hito. Sube a 1 solo cuando Martín o Juan lo declaren. Área y foco se conservan para no romper el historial. |
 | `0.17.1A` | Claude | Base de datos / no perder lo de los demás | Borrar una cuenta ya no borra el canal ni los mensajes de otros (las dos claves pasan a quedar en nulo). `npm run verificar` falla si una tabla nueva no tiene activadas las políticas de seguridad. |
+| `0.17.2A` | Claude | Robustez / actualizador, instalador y reintento | El updater verifica la huella de lo que baja; el instalador incluye el script del enlace del mail; el reintento de conexión renegocia sobre la misma conexión en vez de rehacer la llamada. |
 ---
 
 ## ⚠️ Reglas para agentes
@@ -113,17 +114,16 @@ la base. No son hipótesis.
 3. **Las invitaciones no se pueden dar de baja.** No vencen, no tienen tope de usos, y la
    función que las canjea corre saltándose las políticas sin chequear nada más que si el código
    existe. (La entropía no es el problema: son 4.294 millones de combinaciones.)
-4. **El actualizador no verifica lo que baja.** Única comprobación: que pese más de 10 KB. No
-   compara con lo que decía el manifiesto, y no sabe volver atrás si una versión sale rota.
-5. **El enlace del mail puede no andar en instalaciones nuevas.** `installer.iss` registra el
-   esquema apuntando a `abrir-enlace.cmd`, que **no está en `[Files]`**: lo escribe la app en su
-   primer arranque.
+4. ~~El actualizador no verifica lo que baja~~ · **resuelto en la `0.17.2A`** (huella en el
+   manifiesto). Queda pendiente lo otro: **no sabe volver atrás si una versión sale rota**.
+5. ~~El enlace del mail puede no andar en instalaciones nuevas~~ · **resuelto en la `0.17.2A`**
+   (el instalador incluye el script).
 6. **El motor de audio no descansa.** `audioManager.js` usa un `ScriptProcessorNode` de 1024
    muestras: unas 47 pasadas por segundo en el hilo principal, el doble en llamada, y sigue
    corriendo silenciado, con los visualizadores apagados y con la ventana minimizada. Es el
    piso de consumo que parecía irreducible. Reemplazo: `AudioWorklet`.
-7. **Reinicio de red que no reinicia nada.** `peerManager.restartIceConnection()` llama a
-   `restartIce()` y acto seguido `initiateCall()` crea una conexión nueva que lo descarta.
+7. ~~Reinicio de red que no reinicia nada~~ · **resuelto en la `0.17.2A`**: ahora renegocia
+   sobre la misma conexión, probado con dos clientes (misma conexión, misma pista de audio).
 
 ### Lo grande sin verificar
 
