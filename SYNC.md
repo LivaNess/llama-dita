@@ -67,6 +67,7 @@ Cronológico. Acá se lee qué significa cada área y foco (el número no es un 
 | `1.15.1B` | Antigravity | Interfaz / saludo cumpleaños Martín | Cartel festivo en pantalla completa al iniciar la app celebrando los 28 años de Martín (Dev & CEO), con diseño dark studio conmemorativo y botón de entrada. |
 | `1.16.1A` | Claude | Interfaz / llamar a un amigo | Fix: la `1.15.1B` había borrado el reproductor de audio remoto y el contenedor de avisos del final de `index.html`; sin eso la llamada conectaba pero no sonaba. Además se sacó el sistema de códigos de sala: se llama desde la lista de amigos y la cabecera muestra con quién hablás. |
 | `1.16.2A` | Claude | Interfaz / limpieza | Se saca el cartel de cumpleaños (ya pasó el día y salía en cada apertura). El agradecimiento de Martín a Juan queda en la sección de recados de este documento. |
+| `0.16.2A` | Claude | Versionado / hito | El primer número pasa de 1 a 0 por decisión de Martín: el proyecto todavía no llegó a su primer hito. Sube a 1 solo cuando Martín o Juan lo declaren. Área y foco se conservan para no romper el historial. |
 ---
 
 ## ⚠️ Reglas para agentes

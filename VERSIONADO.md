@@ -11,7 +11,7 @@ Cuatro piezas: tres números y una letra → `H.A.F` + `letra`.
 
 | Pieza | Qué significa | Cuándo sube | Efecto |
 |---|---|---|---|
-| **1º — Hito (H)** | Un **cambio groso** del proyecto (marca un antes y un después). | ⚠️ **Solo con permiso de Martín o Juan.** Un agente puede *sugerirlo*, nunca subirlo por su cuenta. | +1 · resetea Área y Foco a 1 y la letra a A |
+| **1º — Hito (H)** | Un **cambio groso** del proyecto (marca un antes y un después). **Hoy estamos en 0: el proyecto todavía no llegó a su primer hito.** | ⚠️ **Solo con permiso de Martín o Juan.** Un agente puede *sugerirlo*, nunca subirlo por su cuenta. | +1 · resetea Área y Foco a 1 y la letra a A |
 | **2º — Área (A)** | El **área de trabajo** en la que se está ahora. Ej: cuentas, actualizaciones, audio. | Cuando **cambiás de área**. | +1 · resetea Foco a 1 y la letra a A |
 | **3º — Foco (F)** | La **cosa puntual** dentro del área. Ej: dentro de cuentas, las llamadas directas. | Cuando **cambiás de foco** dentro de la misma área. | +1 · resetea la letra a A |
 | **Letra — Intento** | El **intento** (commit / arreglo) sobre el mismo foco. | En **cada commit** sobre el mismo foco. | A→B→C… (después de Z sigue AA) |
@@ -41,6 +41,18 @@ Cuatro piezas: tres números y una letra → `H.A.F` + `letra`.
 - La UI lee la versión de `package.json` en el build (`__APP_VERSION__`) y la muestra en el tag del header. **No editar el tag a mano** en `index.html`.
 - `npm run build:desktop` copia la versión a `desktop/neutralino.config.json` e `installer.iss`, copia `dist/` a `desktop/resources/` y escribe `desktop/update-manifest.json`.
 - El actualizador de la app compara la versión publicada con la instalada: **si son distintas, hay actualización**. Por eso no hace falta que el número sea "mayor".
+
+---
+
+## El hito arranca en 0 (decisión de Martín, 16/09/2026)
+
+Nadie había decidido que estuviéramos en el hito 1: se arrastraba de un versionado anterior.
+**El proyecto está en hito `0` y ahí se queda hasta que Martín o Juan declaren que llegó al 1.**
+Mientras tanto, área, foco y letra funcionan igual que siempre.
+
+Al hacer el cambio se conservaron área y foco (`1.16.2A` → `0.16.2A`) para que el historial de
+`CAMBIOS.md` se siga leyendo derecho. El reseteo a `1.1.1A` va a pasar el día que se declare el
+hito 1, que es exactamente para lo que sirve ese número.
 
 ---
 

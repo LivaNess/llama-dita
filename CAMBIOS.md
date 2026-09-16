@@ -19,6 +19,15 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.16.2A · 2026-09-16 · Claude
+**Qué cambió.** El primer número de la versión pasa de 1 a 0. La app va a mostrar `V0.16.2A`.
+**Por qué.** Nadie había decidido que estuviéramos en el hito 1: venía arrastrado de un
+versionado anterior. Decisión de Martín: el proyecto está en el hito 0 y ahí se queda hasta
+que él o Juan declaren que llegó al 1.
+**Dónde.** `package.json` (la versión vive solo ahí) y `VERSIONADO.md`.
+**Ojo.** Se conservaron área y foco a propósito, para que el historial de este archivo se siga
+leyendo derecho. El reseteo a `1.1.1A` va a pasar el día que se declare el hito 1.
+
 ### 1.16.2A · 2026-09-16 · Claude
 **Qué cambió.** Se sacó el cartel de cumpleaños que aparecía al abrir la app. El
 agradecimiento de Martín a Juan quedó escrito en `SYNC.md`, en la sección de recados.
