@@ -133,7 +133,9 @@ export async function abrirChatDirecto(otroId) {
 }
 
 // ---------- Mensajes ----------
-const CAMPOS_MENSAJE = 'id, body, created_at, updated_at, edited_at, author_id, client_id, author:profiles(username, display_name)';
+// Los adjuntos viajan pegados al mensaje: una consulta en vez de dos.
+const CAMPOS_ADJUNTO = 'id, object_key, nombre, mime, bytes, ancho, alto';
+const CAMPOS_MENSAJE = `id, body, created_at, updated_at, edited_at, author_id, client_id, author:profiles(username, display_name), adjuntos:attachments(${CAMPOS_ADJUNTO})`;
 
 // Primera vez en un canal: se baja un pedazo de historial y listo. De ahí en adelante manda
 // `sincronizarCanal`, que pide solo lo que cambió.
@@ -179,6 +181,30 @@ export async function sendMessage(channelId, myId, body, clientId) {
   const { error } = await supabase.from('messages').insert(fila);
   if (error && (error.message || '').toLowerCase().includes('duplicate')) return; // ya había entrado
   fail(error);
+}
+
+// Mandar un mensaje con archivos. Va por una función del servidor y no por dos altas sueltas
+// porque tiene que ser todo o nada: si el archivo no queda anotado, tampoco queda el mensaje.
+export async function enviarConArchivos(channelId, body, archivos, clientId) {
+  const { data, error } = await supabase.rpc('enviar_con_archivos', {
+    canal: channelId,
+    texto: (body || '').trim(),
+    id_cliente: clientId || crearId(),
+    archivos
+  });
+  fail(error);
+  return data;
+}
+
+// Los adjuntos de un mensaje que llegó en vivo: el aviso de tiempo real trae la fila del
+// mensaje pelada, sin lo que cuelga de ella.
+export async function adjuntosDe(messageId) {
+  const { data, error } = await supabase
+    .from('attachments')
+    .select(CAMPOS_ADJUNTO)
+    .eq('message_id', messageId);
+  fail(error);
+  return data || [];
 }
 
 export async function editMessage(id, body) {

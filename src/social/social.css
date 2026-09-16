@@ -103,3 +103,77 @@
 /* Un renglón de amigo se puede tocar entero: abre el chat privado. */
 .sidebar-friend-item.sc-clickable { cursor: pointer; }
 .sidebar-friend-item.sc-clickable:hover { background: rgba(255,255,255,.06); }
+
+/* ---- Adjuntos del chat ---- */
+
+/* Lo que está por mandarse, arriba de la barra de escribir. */
+.chat-adjuntos { display: flex; flex-wrap: wrap; gap: .5rem; padding: .6rem .9rem 0; }
+.sc-pendiente {
+  display: flex; align-items: center; gap: .5rem; padding: .4rem .5rem; max-width: 260px;
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: 8px;
+  font-size: .76rem; position: relative;
+}
+.sc-pendiente img { width: 34px; height: 34px; object-fit: cover; border-radius: 5px; flex: none; }
+.sc-pendiente-icono { width: 34px; height: 34px; display: grid; place-items: center; flex: none; font-size: 1.1rem; }
+.sc-pendiente-texto { min-width: 0; display: flex; flex-direction: column; }
+.sc-pendiente-texto strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #e2e8f0; font-weight: 600; }
+.sc-pendiente-texto small { color: var(--text-muted, #64748b); font-size: .68rem; }
+.sc-pendiente-sacar {
+  background: none; border: none; color: var(--text-secondary, #94a3b8); cursor: pointer;
+  font-size: .8rem; padding: .15rem .25rem; border-radius: 4px; font-family: inherit; flex: none;
+}
+.sc-pendiente-sacar:hover { color: #fff; background: rgba(239,68,68,.35); }
+.sc-barra { position: absolute; left: .5rem; right: .5rem; bottom: .25rem; height: 3px; background: rgba(255,255,255,.12); border-radius: 2px; overflow: hidden; }
+.sc-barra i { display: block; height: 100%; background: #a855f7; transition: width .15s linear; }
+.sc-pendiente.subiendo { opacity: .75; }
+
+/* El clip, al lado del botón de enviar. */
+.chat-clip-btn {
+  background: none; border: none; color: var(--text-secondary, #94a3b8); cursor: pointer;
+  padding: .45rem; border-radius: 7px; display: inline-flex; align-items: center; font-family: inherit;
+}
+.chat-clip-btn:hover { color: #fff; background: rgba(255,255,255,.08); }
+
+/* Lo adjuntado, adentro de un mensaje. */
+.sc-msg-adjuntos { display: flex; flex-direction: column; gap: .35rem; margin-top: .3rem; }
+.sc-adj-foto {
+  padding: 0; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; overflow: hidden;
+  background: rgba(255,255,255,.04); cursor: zoom-in; display: block; max-width: 100%;
+}
+.sc-adj-foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sc-adj-foto.rota { display: grid; place-items: center; cursor: default; }
+.sc-adj-error { color: var(--text-muted, #64748b); font-size: .72rem; padding: .5rem; }
+.sc-adj-archivo {
+  display: flex; align-items: center; gap: .5rem; padding: .45rem .6rem; cursor: pointer;
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: 8px;
+  color: inherit; font-family: inherit; text-align: left; max-width: 300px;
+}
+.sc-adj-archivo:hover { background: rgba(168,85,247,.2); }
+.sc-adj-icono { font-size: 1rem; flex: none; }
+.sc-adj-texto { min-width: 0; display: flex; flex-direction: column; font-size: .76rem; }
+.sc-adj-texto strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sc-adj-texto small { color: var(--text-muted, #64748b); font-size: .68rem; }
+
+/* El cartel de arrastrar y soltar. */
+.chat-soltar {
+  position: absolute; inset: 0; z-index: 40; display: grid; place-items: center;
+  background: rgba(10,14,26,.8); border: 2px dashed rgba(168,85,247,.7); border-radius: 12px;
+  font-weight: 600; color: #fff; pointer-events: none;
+}
+.chat-soltar[hidden] { display: none; }
+.channel-chat-view { position: relative; }
+
+/* El visor de imágenes. */
+.visor {
+  position: fixed; inset: 0; z-index: 300; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: .8rem; padding: 2.5rem;
+  background: rgba(5,8,16,.92);
+}
+.visor[hidden] { display: none; }
+.visor img { max-width: 100%; max-height: calc(100vh - 8rem); object-fit: contain; border-radius: 8px; }
+.visor-cerrar {
+  position: absolute; top: 1rem; right: 1.2rem; background: rgba(255,255,255,.08); border: none;
+  color: #fff; font-size: 1.1rem; cursor: pointer; border-radius: 8px; padding: .35rem .6rem; font-family: inherit;
+}
+.visor-cerrar:hover { background: rgba(239,68,68,.5); }
+.visor-pie { display: flex; align-items: center; gap: .8rem; color: #cbd5e1; font-size: .82rem; }

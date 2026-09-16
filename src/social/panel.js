@@ -10,6 +10,7 @@ import { getSession, onAuthChange, sendCode, verifyCode, signOut } from './auth.
 import { guardarSesion, recuperarSesion } from './sesionGuardada.js';
 import * as api from './api.js';
 import * as cache from './cacheLocal.js';
+import * as archivos from './adjuntos.js';
 
 const RING_TIMEOUT_MS = 45000;
 
@@ -24,6 +25,8 @@ const state = {
   messages: [],
   currentChannel: null,
   directos: new Map(), // id de canal -> chat privado abierto (no salen en la lista de canales)
+  porMandar: [],       // archivos elegidos que todavia no se enviaron
+  mandando: false,     // hay una subida en curso: no dejar mandar dos veces
   incomingCall: null,
   outgoingCall: null,
   unsub: [],
@@ -493,6 +496,27 @@ function autorDe(m) {
   return vivo?.display_name || vivo?.username || m.author?.display_name || m.author?.username || 'cuenta borrada';
 }
 
+// Una imagen se dibuja adentro de la conversacion; cualquier otra cosa, como un renglon con
+// su nombre y su peso. La direccion real se pide despues (vence en una hora), asi que aca solo
+// queda anotada la llave y `pintarAdjuntos` la completa.
+function adjuntoItem(a) {
+  const esFoto = archivos.esImagen(a.mime);
+  const peso = archivos.pesoLegible(a.bytes);
+  if (esFoto) {
+    // El alto se reserva de entrada con las medidas guardadas: sin esto, la conversacion
+    // pega un salto cada vez que termina de cargar una imagen.
+    const ancho = Math.min(360, a.ancho || 360);
+    const alto = a.ancho && a.alto ? Math.round((ancho * a.alto) / a.ancho) : 200;
+    return `<button type="button" class="sc-adj-foto" data-ver="${esc(a.object_key)}" data-nombre="${esc(a.nombre)}" style="width:${ancho}px;height:${alto}px" title="${esc(a.nombre)} · ${peso}">
+      <img data-key="${esc(a.object_key)}" alt="${esc(a.nombre)}" loading="lazy" />
+    </button>`;
+  }
+  return `<button type="button" class="sc-adj-archivo" data-bajar="${esc(a.object_key)}" data-nombre="${esc(a.nombre)}">
+    <span class="sc-adj-icono">⬇</span>
+    <span class="sc-adj-texto"><strong>${esc(a.nombre)}</strong><small>${peso}</small></span>
+  </button>`;
+}
+
 function msgItem(m) {
   const mine = m.author_id === state.me.id;
   // Lo tuyo lo borrás siempre. Lo ajeno, solo el dueño de un canal, y nunca en un chat
@@ -502,7 +526,8 @@ function msgItem(m) {
   const hora = `${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}`;
   return `<div class="sc-msg ${mine ? 'mine' : ''}" data-msg="${esc(m.id)}">
     <small>${esc(autorDe(m))} · ${hora}${m.edited_at ? ' · editado' : ''}</small>
-    <div class="sc-msg-body">${esc(m.body)}</div>
+    ${m.body ? `<div class="sc-msg-body">${esc(m.body)}</div>` : ''}
+    ${(m.adjuntos || []).length ? `<div class="sc-msg-adjuntos">${m.adjuntos.map(adjuntoItem).join('')}</div>` : ''}
     ${puedoBorrar ? `<div class="sc-msg-acciones">${mine ? `<button type="button" class="sc-msg-accion" data-editar="${esc(m.id)}" title="Editar">✎</button>` : ''}<button type="button" class="sc-msg-accion" data-borrar="${esc(m.id)}" title="Borrar para todos">✕</button></div>` : ''}
   </div>`;
 }
@@ -569,10 +594,27 @@ async function sincronizar(channelId) {
 async function llegoMensaje(channelId, fila) {
   const perfil = state.members.find((m) => m.user_id === fila.author_id)?.profile;
   const m = { ...fila, author: perfil ? { username: perfil.username, display_name: perfil.display_name } : null };
+  // Si no trae texto, es un mensaje de puro archivo: sin esto quedaria un globo vacio hasta
+  // que llegue el aviso del adjunto, que puede perderse si la conexion parpadea.
+  if (!m.body) {
+    try { m.adjuntos = await api.adjuntosDe(m.id); } catch (_) {}
+  }
   await cache.guardarMensajes([m]);
   await cache.guardarMarca(channelId, marcaMasNueva([m], []));
   if (state.currentChannel?.id !== channelId) return;
   state.messages = mezclar(state.messages, [m]);
+  render();
+}
+
+// El aviso de un mensaje nuevo trae la fila pelada, sin lo que cuelga de ella. El adjunto
+// llega por separado (se inserta en la misma transaccion, asi que es casi al mismo tiempo) y
+// se pega al mensaje que ya esta en pantalla.
+async function llegoAdjunto(channelId, fila) {
+  const m = state.messages.find((x) => String(x.id) === String(fila.message_id));
+  if (!m) return; // todavia no llego el mensaje: al llegar se trae sus adjuntos solo
+  m.adjuntos = [...(m.adjuntos || []).filter((a) => a.id !== fila.id), fila];
+  await cache.guardarMensajes([m]);
+  if (state.currentChannel?.id !== channelId) return;
   render();
 }
 
@@ -593,6 +635,7 @@ function suscribirCanal(id) {
     { table: 'messages', event: 'INSERT', filter: `channel_id=eq.${id}`, cb: (p) => llegoMensaje(id, p.new) },
     { table: 'messages', event: 'UPDATE', filter: `channel_id=eq.${id}`, cb: (p) => llegoMensaje(id, p.new) },
     { table: 'message_tombstones', event: 'INSERT', filter: `channel_id=eq.${id}`, cb: (p) => llegoBorrado(id, p.new) },
+    { table: 'attachments', event: 'INSERT', filter: `channel_id=eq.${id}`, cb: (p) => llegoAdjunto(id, p.new) },
     { table: 'channel_members', filter: `channel_id=eq.${id}`, cb: async () => { if (state.currentChannel?.id === id) { state.members = await api.listMembers(id); render(); } } }
   ]);
 }
@@ -600,6 +643,7 @@ function suscribirCanal(id) {
 async function openChannel(id) {
   const c = buscarCanal(id);
   if (!c) return;
+  if (c.id !== state.currentChannel?.id) vaciarBandeja();
   state.currentChannel = c;
   toggleDrawer(false);
   state.members = [];
@@ -636,6 +680,8 @@ async function abrirChatPrivado(p) {
 function closeChannel() {
   if (state.channelUnsub) { state.channelUnsub(); state.channelUnsub = null; }
   state.currentChannel = null;
+  vaciarBandeja();
+  cerrarVisor();
   render();
 }
 
@@ -679,6 +725,148 @@ async function borrarParaLosDos(channelId) {
     render();
     hooks.toast?.('Borrado para los dos.');
   } catch (e) { hooks.toast?.(e.message); }
+}
+
+// Las imagenes se dibujan vacias y despues se les pone la direccion firmada. Se hace asi y no
+// al reves porque el permiso de lectura hay que pedirlo, y pedirlo para cada imagen en cada
+// redibujado seria un pedido por imagen por render.
+async function pintarAdjuntos(contenedor) {
+  if (!contenedor) return;
+  for (const img of contenedor.querySelectorAll('img[data-key]:not([src])')) {
+    const key = img.dataset.key;
+    try {
+      img.src = await archivos.urlParaVer(key);
+    } catch (e) {
+      img.closest('.sc-adj-foto')?.classList.add('rota');
+      img.replaceWith(Object.assign(document.createElement('span'), {
+        className: 'sc-adj-error', textContent: 'No se pudo cargar'
+      }));
+    }
+  }
+
+  contenedor.querySelectorAll('[data-ver]').forEach((b) => {
+    b.onclick = () => abrirVisor(b.dataset.ver, b.dataset.nombre);
+  });
+  contenedor.querySelectorAll('[data-bajar]').forEach((b) => {
+    b.onclick = async () => {
+      try { await archivos.descargar(b.dataset.bajar, b.dataset.nombre); }
+      catch (e) { hooks.toast?.(e.message); }
+    };
+  });
+}
+
+// ------------------------------------------------------------------
+// Lo que esta por mandarse
+// ------------------------------------------------------------------
+function sumarArchivos(lista) {
+  const nuevos = [...(lista || [])].filter(Boolean);
+  if (!nuevos.length) return;
+  if (!state.currentChannel) { hooks.toast?.('Abrí un chat antes de adjuntar.'); return; }
+
+  for (const file of nuevos) {
+    if (state.porMandar.length >= 10) { hooks.toast?.('Hasta diez archivos por mensaje.'); break; }
+    if (file.size > archivos.TOPE_POR_ARCHIVO) {
+      hooks.toast?.(`"${file.name}" pesa ${archivos.pesoLegible(file.size)} y el tope es 100 MB.`);
+      continue;
+    }
+    const item = { file, avance: 0, vista: null };
+    // La miniatura sale del archivo que ya está en memoria: no hace falta subir nada para verla.
+    if (archivos.esImagen(file.type)) item.vista = URL.createObjectURL(file);
+    state.porMandar.push(item);
+  }
+  renderBandeja();
+}
+
+function sacarArchivo(i) {
+  const [fuera] = state.porMandar.splice(i, 1);
+  if (fuera?.vista) URL.revokeObjectURL(fuera.vista);
+  renderBandeja();
+}
+
+function vaciarBandeja() {
+  for (const p of state.porMandar) if (p.vista) URL.revokeObjectURL(p.vista);
+  state.porMandar = [];
+  renderBandeja();
+}
+
+function renderBandeja() {
+  const caja = document.getElementById('chatAdjuntos');
+  if (!caja) return;
+  if (!state.porMandar.length) { caja.style.display = 'none'; caja.innerHTML = ''; return; }
+
+  caja.style.display = 'flex';
+  caja.innerHTML = state.porMandar.map((p, i) => `
+    <div class="sc-pendiente ${state.mandando ? 'subiendo' : ''}">
+      ${p.vista ? `<img src="${p.vista}" alt="" />` : `<span class="sc-pendiente-icono">📄</span>`}
+      <div class="sc-pendiente-texto">
+        <strong title="${esc(p.file.name)}">${esc(p.file.name)}</strong>
+        <small>${archivos.pesoLegible(p.file.size)}</small>
+      </div>
+      ${state.mandando
+        ? `<div class="sc-barra"><i style="width:${Math.round((p.avance || 0) * 100)}%"></i></div>`
+        : `<button type="button" class="sc-pendiente-sacar" data-sacar="${i}" title="Sacar">✕</button>`}
+    </div>`).join('');
+
+  caja.querySelectorAll('[data-sacar]').forEach((b) => {
+    b.onclick = () => sacarArchivo(Number(b.dataset.sacar));
+  });
+}
+
+// El unico camino de salida de un mensaje, lo use el cajon o la pantalla grande.
+async function mandarMensaje(texto, devolverTexto) {
+  const c = state.currentChannel;
+  if (!c || !state.me || state.mandando) return;
+
+  const pendientes = state.porMandar;
+  if (!texto.trim() && !pendientes.length) return;
+
+  if (!pendientes.length) {
+    try { await api.sendMessage(c.id, state.me.id, texto); }
+    catch (e) { hooks.toast?.(e.message); devolverTexto?.(texto); }
+    return;
+  }
+
+  state.mandando = true;
+  renderBandeja();
+  try {
+    // Se suben de a uno: con varios a la vez, la barra no dice nada útil y una conexión
+    // hogareña de subida se satura igual.
+    const fichas = [];
+    for (const p of pendientes) {
+      fichas.push(await archivos.subir(p.file, c.id, {
+        alAvanzar: (v) => { p.avance = v; renderBandeja(); }
+      }));
+    }
+    await api.enviarConArchivos(c.id, texto, fichas);
+    state.mandando = false;
+    vaciarBandeja();
+  } catch (e) {
+    state.mandando = false;
+    renderBandeja();
+    hooks.toast?.(e.message);
+    devolverTexto?.(texto);
+  }
+}
+
+// ------------------------------------------------------------------
+// El visor de imagenes
+// ------------------------------------------------------------------
+async function abrirVisor(key, nombre) {
+  const visor = document.getElementById('visorImagen');
+  const img = document.getElementById('visorImg');
+  if (!visor || !img) return;
+  document.getElementById('visorNombre').textContent = nombre || '';
+  visor.hidden = false;
+  try { img.src = await archivos.urlParaVer(key); }
+  catch (e) { hooks.toast?.(e.message); visor.hidden = true; return; }
+  document.getElementById('visorBajar').onclick = () => archivos.descargar(key, nombre).catch((e) => hooks.toast?.(e.message));
+}
+
+function cerrarVisor() {
+  const visor = document.getElementById('visorImagen');
+  if (!visor || visor.hidden) return;
+  visor.hidden = true;
+  document.getElementById('visorImg').removeAttribute('src'); // soltar la imagen grande
 }
 
 // Los botones de cada mensaje, que aparecen tanto en el cajón como en la pantalla grande.
@@ -746,10 +934,10 @@ function bindMain() {
   q('#scMsgForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const input = q('#scMsg'); const text = input.value; input.value = '';
-    try { await api.sendMessage(state.currentChannel.id, state.me.id, text); } catch (err) { hooks.toast?.(err.message); }
+    await mandarMensaje(text, (t) => { input.value = t; });
   });
   const msgs = q('#scMessages');
-  if (msgs) { bindAccionesMensaje(msgs); msgs.scrollTop = msgs.scrollHeight; }
+  if (msgs) { bindAccionesMensaje(msgs); pintarAdjuntos(msgs); msgs.scrollTop = msgs.scrollHeight; }
   drawer.querySelectorAll('[data-kick]').forEach((b) => b.addEventListener('click', () => act(() => api.leaveChannel(state.currentChannel.id, b.dataset.kick))));
   q('#scAddFriendBtn')?.addEventListener('click', () => act(() => api.addFriendToChannel(state.currentChannel.id, q('#scAddFriend').value), 'Amigo sumado'));
   q('#scDeleteChannel')?.addEventListener('click', () => { if (confirm(`¿Borrar el canal "${state.currentChannel.name}"?`)) act(async () => { await api.deleteChannel(state.currentChannel.id); closeChannel(); }); });
@@ -1127,6 +1315,8 @@ function renderChat() {
     closeBtn.onclick = () => closeChannel();
   }
 
+  renderBandeja();
+
   if (messagesBox) {
     if (c.kind === 'voice') {
       messagesBox.innerHTML = `<p class="sc-empty">Es un canal de voz. Entrá a la sala con el botón de arriba.</p>`;
@@ -1135,6 +1325,7 @@ function renderChat() {
     } else {
       messagesBox.innerHTML = state.messages.map(msgItem).join('');
       bindAccionesMensaje(messagesBox);
+      pintarAdjuntos(messagesBox);
       messagesBox.scrollTop = messagesBox.scrollHeight;
     }
   }
@@ -1241,15 +1432,84 @@ function bindSidebarForms() {
     chatMsgForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!state.currentChannel || !state.me) return;
-      const text = chatMsgInput.value.trim();
-      if (!text) return;
+      const text = chatMsgInput.value;
+      // Ya no se exige texto: un mensaje puede ser solo una imagen.
+      if (!text.trim() && !state.porMandar.length) return;
       chatMsgInput.value = '';
-      try {
-        await api.sendMessage(state.currentChannel.id, state.me.id, text);
-      } catch (err) {
-        hooks.toast?.(err.message);
-      }
+      await mandarMensaje(text, (t) => { chatMsgInput.value = t; });
     });
+  }
+
+  // ---- El clip ----
+  const clip = document.getElementById('btnChatAdjuntar');
+  const fileInput = document.getElementById('chatFileInput');
+  if (clip && fileInput && !clip._bound) {
+    clip._bound = true;
+    clip.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', () => {
+      sumarArchivos(fileInput.files);
+      fileInput.value = ''; // si no, elegir dos veces el mismo archivo no dispara nada
+    });
+  }
+
+  // ---- Pegar una captura con Ctrl+V ----
+  // Es la forma en que esto se usa de verdad: apretar Impr Pant y pegar. El navegador entrega
+  // la captura como un archivo sin nombre, asi que se le pone uno legible.
+  if (chatMsgInput && !chatMsgInput._pegar) {
+    chatMsgInput._pegar = true;
+    chatMsgInput.addEventListener('paste', (e) => {
+      const items = [...(e.clipboardData?.items || [])].filter((i) => i.kind === 'file');
+      if (!items.length) return;
+      e.preventDefault();
+      const ahora = new Date();
+      const sello = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}-${String(ahora.getDate()).padStart(2, '0')} ${String(ahora.getHours()).padStart(2, '0')}.${String(ahora.getMinutes()).padStart(2, '0')}.${String(ahora.getSeconds()).padStart(2, '0')}`;
+      const pegados = items.map((i) => {
+        const f = i.getAsFile();
+        if (!f) return null;
+        if (f.name && f.name !== 'image.png') return f;
+        const ext = (f.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
+        return new File([f], `captura ${sello}.${ext}`, { type: f.type });
+      });
+      sumarArchivos(pegados);
+    });
+  }
+
+  // ---- Arrastrar y soltar sobre la conversacion ----
+  const vistaChat = document.getElementById('channelChatView');
+  const cartel = document.getElementById('chatSoltar');
+  if (vistaChat && !vistaChat._soltar) {
+    vistaChat._soltar = true;
+    let encima = 0; // los eventos de entrar/salir tambien saltan al pasar sobre los hijos
+    const traeArchivos = (e) => [...(e.dataTransfer?.types || [])].includes('Files');
+
+    vistaChat.addEventListener('dragenter', (e) => {
+      if (!traeArchivos(e) || !state.currentChannel) return;
+      e.preventDefault();
+      encima++;
+      if (cartel) cartel.hidden = false;
+    });
+    vistaChat.addEventListener('dragover', (e) => { if (traeArchivos(e)) e.preventDefault(); });
+    vistaChat.addEventListener('dragleave', () => {
+      encima = Math.max(0, encima - 1);
+      if (!encima && cartel) cartel.hidden = true;
+    });
+    vistaChat.addEventListener('drop', (e) => {
+      if (!traeArchivos(e)) return;
+      e.preventDefault();
+      encima = 0;
+      if (cartel) cartel.hidden = true;
+      sumarArchivos(e.dataTransfer.files);
+    });
+  }
+
+  // ---- El visor ----
+  const visorCerrarBtn = document.getElementById('visorCerrar');
+  const visor = document.getElementById('visorImagen');
+  if (visorCerrarBtn && !visorCerrarBtn._bound) {
+    visorCerrarBtn._bound = true;
+    visorCerrarBtn.addEventListener('click', cerrarVisor);
+    visor?.addEventListener('click', (e) => { if (e.target === visor) cerrarVisor(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrarVisor(); });
   }
 }
 

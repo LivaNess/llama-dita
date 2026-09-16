@@ -76,7 +76,10 @@ export async function achicar(file) {
   // que el PNG comprime mejor), nos quedamos con el original.
   if (!chica || chica.size >= file.size) return { ...salida, ancho: anchoOriginal, alto: altoOriginal };
 
-  return { blob: chica, mime: 'image/webp', ancho, alto, original: false };
+  // El tipo se lee del resultado y no se da por sentado: cuando el motor no sabe escribir el
+  // formato que le pediste, `toBlob` NO avisa, te devuelve un PNG con cara de lo que pediste.
+  // Medido: pedirle AVIF a este motor devuelve PNG, y de 63 KB pasa a 850 KB.
+  return { blob: chica, mime: chica.type || 'image/webp', ancho, alto, original: false };
 }
 
 // ------------------------------------------------------------------
