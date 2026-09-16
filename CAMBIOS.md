@@ -19,6 +19,64 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.24.1A · 2026-09-16 · Claude
+**Qué cambió.** Cierra el tronco del chat: los pasos 4, 5, 6 y 7 de `areas/chat-e-historial.md`.
+Lo que se ve:
+
+- **Responder a un mensaje.** Queda la cita arriba de tu respuesta y se puede tocar para saltar
+  al original. Si borraron el original, la respuesta dice *"el mensaje al que respondía ya no
+  está"* en vez de esconderlo: borrar un mensaje **no** borra las respuestas, porque eso sería
+  borrar conversación ajena.
+- **Reacciones.** Se pasa el mouse por un mensaje y aparecen seis emojis. Tocar la tuya de
+  nuevo la saca. Cada uno saca solo la suya, ni el dueño del canal puede sacar la de otro.
+- **Editar en el lugar.** Se acabó el cartelito del navegador: el globo se convierte en un
+  campo, Enter guarda y Esc cancela.
+- **Fijar un mensaje.** En un canal lo hace el dueño; en un privado, cualquiera de los dos.
+- **Formato.** `**negrita**`, `*cursiva*`, `~~tachado~~`, \`código\` y bloques con tres comillas
+  invertidas. Las direcciones quedan clickeables.
+- **Buscador.** Busca primero en lo que ya está en esta PC (instantáneo y sin tocar la red) y
+  al servidor le pregunta solo por lo que nunca bajaste.
+- **"Está escribiendo".**
+- **Cuánto se guarda.** Por canal, para los mensajes y para los archivos por separado.
+
+**Por qué la retención es la que importa.** Es lo único que hace que el costo del chat deje de
+crecer solo. Ahora lo vencido se borra de verdad, y el repartidor lo hace cada media hora sin
+que nadie tenga que acordarse. El texto y los archivos vencen por separado a propósito: el
+texto es barato y lo querés tener, las imágenes son el volumen.
+
+**"Está escribiendo" es la función más cara del chat y por eso lleva tres frenos.** Un aviso
+por tecla serían 240 avisos para anunciar un mensaje de 40 caracteres con 6 personas mirando.
+Con los tres frenos baja a un 4,5% del cupo del mes: cuentagotas de 5 segundos, **no** se manda
+"dejé de escribir" (se apaga solo del otro lado, y nadie lo nota), y no se manda nada si no hay
+nadie del otro lado conectado.
+
+**Dónde.** `supabase/migrations/20260916_007_...` (aplicada), `src/social/panel.js`,
+`src/social/api.js`, `src/social/social.css`, `index.html`, `workers/adjuntos/`.
+
+**Sobre el diseño: es de Juan.** Esta versión se montó sobre el rediseño de la `0.23.1A` sin
+tocarlo. Los controles nuevos (buscar, cuánto se guarda, borrar para los dos) **entraron al
+menú que él hizo**, con su mismo molde de items, en vez de sumar botones a su cabecera. Lo
+único que cambió de su menú es que ahora también aparece en los canales de texto, porque
+adentro hay cosas que no son solo de los privados.
+
+**Lo único que se restauró.** El borrado del servidor en los privados (*"borrar lo mío para los
+dos"*) no había quedado en el rediseño. Volvió, pero adentro del menú de Juan. Su *"Eliminar
+chat"* ya cubría la otra mitad (la copia de esta PC) y se dejó tal cual.
+
+**Probado acá, solo.**
+- **Inyección de html en un mensaje: siete intentos, ninguno pasó.** Se probó haciendo que el
+  navegador parseara la salida de verdad: no se creó ningún elemento, ningún atributo de
+  evento y ningún enlace `javascript:`. El texto se escapa **antes** de darle formato; al revés
+  cualquiera ejecutaría código en la máquina del otro.
+- El buscador respeta los permisos: un usuario ajeno al canal recibe cero resultados.
+- Fijar, reaccionar y cambiar la retención los rechaza la base si no te corresponde.
+- La purga completa corre y borra de verdad (objeto encolado → 404 en el bucket).
+
+**Lo que falta y por qué.** **Menciones** y **previsualización de enlaces**. Las dos son las más
+caras de la lista y las de menos rinde: las menciones necesitan un canal de avisos por persona
+(la palanca 2 de D4, que todavía no existe) y la previsualización necesita que un servidor
+salga a leer cada enlace. Quedan anotadas para cuando se decida.
+
 ### 0.23.1B · 2026-09-16 · Antigravity
 **Qué cambió.** Arreglo de la consulta de mensajes en canales y chats:
 - Se desambiguó la relación de PostgREST entre `messages` y `profiles` especificando la clave foránea explícita `author:profiles!messages_author_id_fkey(...)`.

@@ -1809,9 +1809,11 @@ function renderChat() {
     };
   }
 
-  // Menú hamburguesa superior derecho con opción "Eliminar chat" (borrado local)
+  // El menú de opciones del chat. Empezó siendo solo de los privados; ahora también vive en
+  // los canales de texto, porque adentro están buscar y la retención, que no son cosa de los
+  // privados. Los items que solo aplican a un privado se esconden solos.
   if (menuWrapper) {
-    menuWrapper.style.display = dm ? 'inline-block' : 'none';
+    menuWrapper.style.display = c.kind === 'voice' ? 'none' : 'inline-block';
   }
   if (dropdownMenu) {
     dropdownMenu.style.display = 'none';
@@ -1833,12 +1835,27 @@ function renderChat() {
     });
   }
 
+  const cerrarMenu = () => { if (dropdownMenu) dropdownMenu.style.display = 'none'; };
+
   if (btnEliminarChat) {
-    btnEliminarChat.onclick = () => {
-      if (dropdownMenu) dropdownMenu.style.display = 'none';
-      sacarDeMiVista(c.id);
-    };
+    // Solo en un privado: en un canal, "salir" o "borrar el canal" ya viven en su ficha.
+    btnEliminarChat.style.display = dm ? '' : 'none';
+    btnEliminarChat.onclick = () => { cerrarMenu(); sacarDeMiVista(c.id); };
   }
+
+  // La otra mitad del borrado, la que sí toca el servidor. Es la decisión de Martín: dos
+  // acciones separadas y escritas sin eufemismos, una de esta PC y otra del servidor.
+  const btnAmbos = document.getElementById('btnChatBorrarAmbos');
+  if (btnAmbos) {
+    btnAmbos.style.display = dm ? '' : 'none';
+    btnAmbos.onclick = () => { cerrarMenu(); borrarParaLosDos(c.id); };
+  }
+
+  const btnBuscarMenu = document.getElementById('btnChatBuscar');
+  if (btnBuscarMenu) btnBuscarMenu.onclick = () => { cerrarMenu(); abrirBuscador(); };
+
+  const btnRetencionMenu = document.getElementById('btnChatRetencion');
+  if (btnRetencionMenu) btnRetencionMenu.onclick = () => { cerrarMenu(); alternarRetencion(); };
 
   if (closeBtn) {
     closeBtn.onclick = () => closeChannel();
@@ -1891,6 +1908,25 @@ function pintarBuscador() {
   info.textContent = state.busqueda.buscandoAfuera
     ? `${n} en esta PC, mirando el resto\u2026`
     : n === 0 ? 'Nada' : n === 1 ? '1 resultado' : `${n} resultados`;
+}
+
+function abrirBuscador() {
+  const buscador = document.getElementById('chatBuscador');
+  const campo = document.getElementById('chatBuscarInput');
+  if (!buscador || !campo) return;
+  if (buscador.dataset.abierto === '1') { cerrarBuscador(); return; }
+  buscador.dataset.abierto = '1';
+  buscador.hidden = false;
+  campo.value = '';
+  campo.focus();
+}
+
+function alternarRetencion() {
+  const caja = document.getElementById('chatRetencion');
+  if (!caja) return;
+  if (!caja.hidden) { caja.hidden = true; return; }
+  pintarRetencion();
+  caja.hidden = false;
 }
 
 function cerrarBuscador() {
@@ -2124,20 +2160,11 @@ function bindSidebarForms() {
     chatMsgInput.addEventListener('input', () => { if (chatMsgInput.value.trim()) avisarQueEscribo(); });
   }
 
-  // ---- El buscador ----
-  const buscador = document.getElementById('chatBuscador');
+  // ---- La barra del buscador ----
+  // El boton que la abre vive en el menu de opciones del chat y se engancha en `renderChat`.
   const buscarInput = document.getElementById('chatBuscarInput');
-  const btnBuscar = document.getElementById('btnChatBuscar');
-  if (btnBuscar && buscador && !btnBuscar._bound) {
-    btnBuscar._bound = true;
-    btnBuscar.addEventListener('click', () => {
-      const abierto = buscador.dataset.abierto === '1';
-      if (abierto) { cerrarBuscador(); return; }
-      buscador.dataset.abierto = '1';
-      buscador.hidden = false;
-      buscarInput.value = '';
-      buscarInput.focus();
-    });
+  if (buscarInput && !buscarInput._bound) {
+    buscarInput._bound = true;
     document.getElementById('chatBuscarCerrar')?.addEventListener('click', cerrarBuscador);
     let demora;
     buscarInput.addEventListener('input', () => {
@@ -2146,19 +2173,6 @@ function bindSidebarForms() {
       demora = setTimeout(() => buscar(buscarInput.value), 300);
     });
     buscarInput.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrarBuscador(); });
-  }
-
-  // ---- Cuanto se guarda ----
-  const btnRetencion = document.getElementById('btnChatRetencion');
-  if (btnRetencion && !btnRetencion._bound) {
-    btnRetencion._bound = true;
-    btnRetencion.addEventListener('click', () => {
-      const caja = document.getElementById('chatRetencion');
-      if (!caja) return;
-      if (!caja.hidden) { caja.hidden = true; return; }
-      pintarRetencion();
-      caja.hidden = false;
-    });
   }
 
   // ---- El visor ----

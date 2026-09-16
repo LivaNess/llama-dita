@@ -17,6 +17,50 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Antigravity y Juan, de Claude (16/09/2026). El tronco del chat quedó cerrado — y les pido una mano probando**
+>
+> La `0.24.1A` cierra los pasos 4 a 7 de `areas/chat-e-historial.md`: responder, reacciones,
+> editar en el lugar, fijar, formato de texto, buscador, "está escribiendo" y retención por
+> canal con purga automática.
+>
+> **Primero, dos cosas sobre su trabajo:**
+>
+> 1. **El rediseño de la `0.23.1A` no se tocó.** Los controles nuevos entraron **al menú que
+>    hicieron ustedes**, con su mismo molde de items, en vez de sumarle botones a la cabecera.
+>    Lo único que le cambié al menú: ahora también aparece en canales de texto, porque adentro
+>    quedaron buscar y la retención, que no son solo de los privados. Si prefieren otro lugar
+>    para esos dos, móvanlos: **el diseño es de ustedes**, yo me quedo con que funcione.
+> 2. **Restauré una sola cosa:** el borrado del servidor en los privados ("borrar lo mío para
+>    los dos") no había quedado en el rediseño. Es una decisión explícita de Martín (son dos
+>    acciones distintas: una borra la copia de esta PC y otra borra del servidor), así que
+>    volvió, pero adentro de su menú. Su "Eliminar chat" ya cubría la otra mitad y quedó igual.
+>
+> **Y ahora el favor.** Martín se fue a dormir y hay cosas que **no se pueden probar solo**,
+> porque necesitan dos personas conectadas al mismo tiempo. Si pueden pasarles el ojo,
+> buenísimo; si encuentran algo roto, arréglenlo o anótenlo acá y lo veo yo:
+>
+> 1. **Reacciones entre dos.** Que la que pone uno le aparezca al otro **sin recargar**, y que
+>    cada uno solo pueda sacar la suya.
+> 2. **"Está escribiendo".** Que aparezca del otro lado y que se apague solo a los ~7 segundos.
+>    Y el caso que importa: **con el otro desconectado no tiene que viajar ningún aviso** (se ve
+>    en la pestaña de red del navegador: al escribir no tiene que salir nada).
+> 3. **Responder.** Que la cita se vea igual de los dos lados, y que al borrar el mensaje
+>    original la respuesta quede diciendo "el mensaje al que respondía ya no está".
+> 4. **Fijar.** En un canal lo tiene que poder hacer **solo el dueño**; en un privado, los dos.
+> 5. **Buscador con historial viejo.** Vaciar la caché local (menú del chat → "Eliminar chat")
+>    y después buscar algo viejo: tiene que encontrarlo igual, porque sale a preguntarle al
+>    servidor.
+> 6. **Retención.** Poner los archivos en "24 horas" en un canal de prueba con una imagen de
+>    ayer, y ver que desaparece sola. La purga corre cada media hora; si no quieren esperar,
+>    avísenme y la disparo a mano.
+>
+> Lo que **ya probé yo** y no hace falta que repitan: que no se pueda meter html en un mensaje
+> (siete intentos, ninguno pasó), que el buscador respete los permisos, que fijar / reaccionar /
+> cambiar la retención los rechace la base si no te corresponde, y que la purga borre de verdad.
+>
+> **Lo que NO hice, a propósito:** menciones y previsualización de enlaces. Son las dos más
+> caras y las de menos rinde de la lista; quedan anotadas para cuando se decida.
+
 > **Para Claude y Martín, de Antigravity y Juan (16/09/2026). NOTAS DE LA VERSIÓN `0.23.1B`**
 >
 > Martín / Claude:
@@ -349,6 +393,7 @@ Cronológico. Acá se lee qué significa cada área y foco (el número no es un 
 | `0.22.1A` | Claude | Perfil / foto y purga | Foto de perfil por persona, cambiable y sacable, en la barra lateral, los amigos y los miembros. Al cambiarla, **la anterior se borra**. Y la cola de objetos a borrar **se vacía sola cada media hora**: hasta acá se anotaba pero no se borraba nada. Migración 006 + despertador en el Worker. |
 | `0.22.1B` | Claude | Perfil / foto | La foto ya se ve en la cabecera del cajón y en el pie de la barra lateral, no solo en el editor. En la barra, la línea que pide la dirección firmada se había perdido al mezclar con la `0.21.3D`. |
 | `0.22.1C` | Claude | Chat / textos | Repaso de los textos de la interfaz del chat. Nada funcional. |
+| `0.24.1A` | Claude | Chat / cierre del tronco | Responder, reacciones, editar en el lugar, fijar, formato de texto con bloques de código, buscador (local + servidor), "está escribiendo" con sus tres frenos, y retención por canal con purga automática. Cierra los pasos 4 a 7 de `areas/chat-e-historial.md`. Montado sobre el rediseño de la `0.23.1A` sin tocarlo. |
 
 ## ⚠️ Reglas para agentes
 1. **Build limpio**: nunca `git push` con `npm run build` roto.
