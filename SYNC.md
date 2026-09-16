@@ -66,8 +66,9 @@ Cronológico. Acá se lee qué significa cada área y foco (el número no es un 
   cabina, y al cortarse vuelve a "Participante".
 - **Escritorio**: la ventana y la bandeja muestran el logo. El paquete `resources.neu` del
   repositorio ya es `1.13.1A`.
-- **Sin publicar**: la versión está commiteada pero **no** deployada. Hasta correr
-  `npm run deploy:web`, las apps instaladas siguen viendo la `1.11.2B`.
+- **Sin publicar**: la `1.13.1A` está commiteada pero **no** deployada. Lo que hoy baja
+  de `llamadita.com.ar` es la `1.11.2C` que publicó Antigravity; hasta correr
+  `npm run deploy:web`, las apps instaladas se quedan ahí.
 - **Infraestructura** (sin cambios desde la `1.11.2B`): dominio propio `llamadita.com.ar`
   con web, actualizaciones y descargas; Resend mandando los códigos desde
   `acceso@llamadita.com.ar`; Juan con accesos de Owner/Admin en Supabase, Cloudflare y
