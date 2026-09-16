@@ -150,6 +150,16 @@ prueba y con qué hay que tener cuidado.
 
 ---
 
+### M. Verificación del protocolo
+- **Archivos:** `AGENTS.md`, `scripts/verificar-protocolo.mjs`, `.github/workflows/protocolo.yml`
+- **Qué hace:** controla que cada versión esté registrada en `CAMBIOS.md`, que cada área de
+  `src/` figure en este documento y que nadie deje un bloqueo abierto en `SYNC.md`.
+- **Depende de:** los cuatro documentos.
+- **Cómo se prueba:** `npm run verificar`.
+- **Cuidado:** corre solo en cada push a `main`. Si queda en rojo, algo del protocolo falta.
+
+---
+
 ## 3. Servicios de afuera
 
 | Servicio | Para qué | Dónde se configura |

@@ -1,0 +1,29 @@
+name: Protocolo del proyecto
+
+# Corre en cada push y cada pull request a main. Si alguien (persona o agente) no
+# registró la versión en CAMBIOS.md, no mapeó un área nueva en ESQUELETO.md o se
+# olvidó de liberar su bloqueo en SYNC.md, esto queda en rojo.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Documentos y registro de versión
+        run: node scripts/verificar-protocolo.mjs
+
+      - name: La app compila
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build

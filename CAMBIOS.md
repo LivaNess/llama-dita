@@ -19,6 +19,16 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 1.11.2B · 2026-09-15 · Claude
+**Qué cambió.** El protocolo dejó de depender de la buena voluntad: `AGENTS.md` es la
+puerta de entrada para cualquier agente y `npm run verificar` controla que la versión esté
+registrada, que las áreas estén mapeadas y que no queden bloqueos abiertos. Lo mismo corre
+solo en cada push a `main`.
+**Por qué.** Los documentos solo sirven si alguien los mira; ahora el repositorio avisa.
+**Dónde.** `AGENTS.md`, `scripts/verificar-protocolo.mjs`, `.github/workflows/protocolo.yml`.
+**Cómo se verifica.** Correr `npm run verificar`: pasa. Borrar la ficha de la versión en
+`CAMBIOS.md` y volver a correrlo: falla.
+
 ### 1.11.2A · 2026-09-15 · Claude
 **Qué cambió.** El proyecto tiene dos documentos nuevos: `ESQUELETO.md` (mapa de áreas y
 conexiones) y `CAMBIOS.md` (este registro).
