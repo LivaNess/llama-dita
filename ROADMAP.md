@@ -58,6 +58,70 @@ haber un número a la vista. Por eso el medidor de consumo es el primer hito y n
 
 ---
 
+## 2b. Cómo está construida la competencia, y qué copiamos achicado
+
+No hay nada que inventar. Las dos familias de apps publicaron cómo funcionan por dentro. La
+grande son ocho piezas, y la mayor parte de su complejidad existe **por tener millones de
+usuarios**, no por las funciones.
+
+| Pieza | Cómo la hace la grande | Qué necesita un grupo de 100 |
+|---|---|---|
+| Señalización (quién está conectado) | Gateway propio, partido en pedazos por carga | Supabase Realtime. **Ya está** |
+| Repartidor de voz y video | Repartidor propio en C++, **850 servidores en 13 regiones**, te asigna el más cercano | **Uno solo**, en São Paulo, porque están todos en Argentina |
+| Mezcla del audio | **No mezcla**: reparte y mezcla cada PC | igual, y es gratis |
+| Base de mensajes | Base gigante especializada, después de cambiarla dos veces | Postgres común. **Ya está** |
+| Cliente | Navegador empaquetado adentro | El WebView del sistema + ayudante nativo. **Ya está y medido** |
+| Permisos | Máscara de 64 bits + excepciones por canal, documentado público | copiar tal cual |
+| Archivos | Red de distribución propia | R2, salida gratis |
+| Bots y API | Gateway + REST + comandos | después, y chico |
+
+**Lo que nos salteamos entero por no tener escala:** 850 servidores, 13 regiones, asignación
+por latencia, redundancia anti-ataques, partir el gateway, base de datos especializada, red de
+distribución global, moderación automática, verificación de identidad, descubrimiento público
+y toda la monetización.
+
+Y del otro lado, la familia liviana probó lo contrario: **un servidor por comunidad**, chico,
+que atiende a tu grupo y nada más. Funciona hace veinte años.
+
+> **La tesis del proyecto:** el modelo de un servidor para tu grupo, con la tecnología y la
+> facilidad de entrar de la grande.
+
+**De las ocho piezas, infraestructura falta una: el repartidor. Y no hay que escribirlo.**
+mediasoup y LiveKit son exactamente eso, abiertos y hechos. Se instala, no se programa.
+
+---
+
+## 2c. El repartidor: cómo tiene que estar hecho
+
+Esto define si el sistema aguanta o se cae con seis personas. **Son cuatro condiciones y las
+cuatro vienen de fábrica** en mediasoup, LiveKit y el servicio de Cloudflare. Hay que usarlas,
+no inventarlas.
+
+1. **Suscripción selectiva.** Te llega solo lo que estás mirando. Es lo que hace que 30
+   personas compartiendo pantalla cueste lo mismo que una: las otras 29 no te llegan.
+2. **Capas de calidad.** Cada uno publica su video en dos o tres tamaños a la vez, y el
+   repartidor elige cuál mandarle a cada quien. Así una grilla de caritas en miniatura
+   funciona: cada cámara viaja del tamaño en que se ve.
+3. **Solo viaja el audio de quien habla.** En una sala de 20 no viajan 20 voces.
+4. **Comprimir una sola vez, por hardware.** Sin repartidor tendrías que comprimir tu pantalla
+   una vez por cada persona. Con repartidor, una sola vez, sean 3 o 30. **El repartidor no es
+   lo que cuesta: es lo que salva la PC.**
+
+Con las cuatro, **el costo en tu máquina deja de depender de cuánta gente haya**.
+
+### Dónde vive el repartidor
+
+| Etapa | Dónde | Aguanta | Trabajo |
+|---|---|---|---|
+| **Primero** | Cloudflare (1.000 GB/mes) | ~100 h/mes de pantalla compartida en grupo | 10 minutos, nada que mantener |
+| **Si algún día aprieta** | Máquina gratis de Oracle en São Paulo (10.000 GB/mes) | 10 veces más | montar y mantener un Linux |
+
+La mudanza es **cambiar una dirección**: el código de la app no cambia. Por eso no es una
+decisión que haya que tomar hoy. Y por eso el contador de consumo del mes adentro de la app
+no es un chiche: es el que avisa cuándo tocar la mudanza.
+
+---
+
 ## 3. Los cuatro presets
 
 Todo lo que consume recursos se agrupa en cuatro perfiles. Se elige uno y listo, pero cada
@@ -75,11 +139,17 @@ ajuste se puede tocar a mano por separado.
 | Supresión de ruido | apagada | la del sistema | la del sistema | filtro propio |
 | Medidor de consumo | visible | oculto | oculto | visible |
 
-Dos aclaraciones sobre la tabla:
+**Techos duros, por encima de cualquier preset:** máximo 1080p, cámara hasta 30 cuadros por
+segundo, pantalla hasta 60. Una cámara a 60 no le sirve a nadie.
+
+Tres aclaraciones sobre la tabla:
 
 - **"Lo que suena hoy"** no es un número inventado: el primer paso del hito 2 es medir con
   qué bitrate y qué codec está saliendo la voz ahora mismo, y recién ahí se escribe el
   número en esta tabla. Hoy lo elige el navegador solo.
+- **Cada cámara viaja del tamaño en que se muestra.** Ocho caras en miniatura se dibujan en
+  recuadros de 200 píxeles: mandarles 1280 es tirar el 80 % a la basura. Bien hecho, ese caso
+  pasa de 34 a 126 horas gratis por mes, y nadie ve ninguna diferencia.
 - **Los visualizadores de audio son nuestros.** Los canvas que dibujan el espectro corren a
   60 cuadros por segundo. Son lindos y consumen. En modo tostadora se apagan: es el ejemplo
   más claro de que el preset también nos aprieta a nosotros, no solo a la red.
