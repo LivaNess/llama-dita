@@ -10,7 +10,7 @@ rompa algo por no saber quién dependía de eso.
 
 Documentos hermanos: `CLAUDE.md` (cómo trabajamos), `SYNC.md` (quién está tocando qué
 ahora), `VERSIONADO.md` (cómo se numeran las versiones), `CAMBIOS.md` (qué se hizo en
-cada versión).
+cada versión), `ROADMAP.md` (a dónde va y en qué orden).
 
 ---
 

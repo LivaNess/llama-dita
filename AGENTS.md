@@ -1,7 +1,7 @@
 # Instrucciones para agentes (Antigravity, Claude, el que venga)
 
 Este archivo es la puerta de entrada. Si sos un agente trabajando en este repositorio,
-**leé estos cuatro documentos antes de tocar una línea**:
+**leé estos documentos antes de tocar una línea**:
 
 | Documento | Qué te dice |
 |---|---|
@@ -9,6 +9,7 @@ Este archivo es la puerta de entrada. Si sos un agente trabajando en este reposi
 | `ESQUELETO.md` | qué es cada parte, dónde vive y con qué se conecta |
 | `SYNC.md` | quién está tocando qué en este momento |
 | `CAMBIOS.md` | qué se hizo en cada versión y cómo verificarlo |
+| `ROADMAP.md` | a dónde va el proyecto, en qué orden y qué decidimos no hacer |
 
 ## Lo mínimo, sin vueltas
 
