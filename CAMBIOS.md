@@ -19,6 +19,16 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 1.14.1A · 2026-09-15 · Claude
+**Qué cambió.** El botón de llamar a un amigo ahora se ve verde de verdad, en la barra
+lateral y en el panel de amigos. Lo mismo el telefonito que suena en el aviso de llamada.
+**Por qué.** El botón ya era verde, pero el dibujito era el emoji del teléfono, que en
+Windows se pinta rosa: de un vistazo parecía el botón de cortar, no el de llamar.
+**Dónde.** `src/social/panel.js` (un solo ícono vectorial reutilizado en los tres lugares),
+`src/social/social.css`, `src/style.css` (áreas F y A).
+**Cómo se verifica.** Abrir la app con un amigo en la lista: el teléfono del botón se ve
+verde, del mismo color que el borde del botón.
+
 ### 1.13.1A · 2026-09-15 · Claude
 **Qué cambió.** La ventana de la app de escritorio (y su lugar en la barra de tareas) deja
 de mostrar el ícono de fábrica de Neutralino y muestra el logo: la llama con auriculares

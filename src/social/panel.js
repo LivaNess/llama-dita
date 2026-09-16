@@ -32,6 +32,10 @@ const state = {
 let hooks = {};
 let root, drawer, overlay, headerBtn;
 
+// El emoji de telefono en Windows se dibuja rosa: el boton de llamar parecia de colgar.
+// Icono vectorial que toma el color del boton (verde) en vez de traer el suyo.
+const ICONO_TELEFONO = `<svg class="sc-icono-tel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`;
+
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const randomRoom = () => 'llamadita-' + Math.random().toString(36).substring(2, 8);
 
@@ -381,7 +385,7 @@ function friendsView() {
     <h4>Amigos ${friends.length ? `<span class="sc-muted">(${friends.filter((x) => isOnline(x.p)).length} conectados)</span>` : ''}</h4>
     ${friends.length ? friends.map(({ f, p }) => `
       <div class="sc-item">${statusDot(p)}<div class="sc-item-text"><strong>${esc(p.display_name || p.username)}</strong><small>@${esc(p.username)}</small></div>
-        <button class="sc-call sc-small" data-call="${p.id}" title="Llamar" ${isOnline(p) ? '' : 'disabled'}>📞</button>
+        <button class="sc-call sc-small" data-call="${p.id}" title="Llamar" ${isOnline(p) ? '' : 'disabled'}>${ICONO_TELEFONO}</button>
         <button class="sc-ghost sc-small" data-remove="${f.id}" title="Quitar amigo">✕</button></div>`).join('')
       : `<p class="sc-empty">Todavía no tenés amigos agregados. Buscá a alguien por su nombre de usuario.</p>`}
     ${sent.length ? `<h4>Solicitudes enviadas</h4>${sent.map((f) => `
@@ -554,13 +558,13 @@ function renderCallBanner() {
   if (!el) { el = document.createElement('div'); el.id = 'scCallBanner'; el.className = 'sc-call-banner'; root.appendChild(el); }
   if (state.incomingCall) {
     const c = state.incomingCall;
-    el.innerHTML = `<span class="sc-ring">📞</span><div><strong>${esc(c.from.display_name || c.from.username)}</strong> te está llamando</div>
+    el.innerHTML = `<span class="sc-ring">${ICONO_TELEFONO}</span><div><strong>${esc(c.from.display_name || c.from.username)}</strong> te está llamando</div>
       <button class="sc-primary sc-small" id="scAccept">Atender</button><button class="sc-danger sc-small" id="scDecline">Rechazar</button>`;
     el.querySelector('#scAccept').onclick = () => answerCall('accepted');
     el.querySelector('#scDecline').onclick = () => answerCall('declined');
   } else {
     const c = state.outgoingCall;
-    el.innerHTML = `<span class="sc-ring">📞</span><div>Llamando a <strong>${esc(c.profile?.display_name || c.profile?.username || '')}</strong>…</div>
+    el.innerHTML = `<span class="sc-ring">${ICONO_TELEFONO}</span><div>Llamando a <strong>${esc(c.profile?.display_name || c.profile?.username || '')}</strong>…</div>
       <button class="sc-danger sc-small" id="scCancel">Cancelar</button>`;
     el.querySelector('#scCancel').onclick = cancelOutgoing;
   }
@@ -669,7 +673,7 @@ function renderSidebar() {
               <span class="friend-name">${esc(p.display_name || p.username)}</span>
               <span class="friend-handle">@${esc(p.username)}</span>
             </div>
-            <button class="btn-friend-call" data-sidebar-call="${p.id}" title="Llamar" ${isOnline(p) ? '' : 'disabled'}>📞</button>
+            <button class="btn-friend-call" data-sidebar-call="${p.id}" title="Llamar" ${isOnline(p) ? '' : 'disabled'}>${ICONO_TELEFONO}</button>
           </div>
         `).join('');
 

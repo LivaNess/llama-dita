@@ -997,6 +997,9 @@ button.logo-tag { font: inherit; cursor: pointer; }
 }
 
 .sidebar-friend-item .btn-friend-call {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: rgba(16, 185, 129, 0.15);
   border: 1px solid rgba(16, 185, 129, 0.3);
   color: #34d399;

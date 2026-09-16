@@ -9,7 +9,7 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 | Agente | Versión objetivo | Archivos en edición | Estado |
 | :--- | :--- | :--- | :--- |
-| *Ninguno* | - | - | *Libre para tomar tareas* |
+| Claude | `1.14.1A` → `1.14.2A` | `src/social/panel.js`, `src/social/social.css`, `index.html`, `src/style.css`, `src/network/peerManager.js`, `src/main.js` | Botón de llamar con ícono verde + botón para salir de la llamada |
 
 > Para tomar una tarea, reemplazá la fila con tu agente, la versión objetivo y los archivos que vas a intervenir. Al hacer el commit final, restaurá el estado a *Libre*.
 
@@ -47,6 +47,7 @@ Cronológico. Acá se lee qué significa cada área y foco (el número no es un 
 | `1.12.1A` | Claude | Red y voz / una sola conexión | La señalización dejó de crear su propio cliente Supabase y usa `src/supabase/client.js`. Cada usuario pasa de dos conexiones en vivo a una: con el plan gratis (200 en total) el techo pasa de ~100 a ~200 personas. |
 | `1.12.2A` | Claude | Red y voz / nombre del participante | El nombre se manda cuando el canal de datos abre (no cuando la llamada pasa a "conectado", que es antes de que el otro escuche) y quien lo recibe contesta con el suyo. Al cortarse, la cabina remota vuelve a "Participante". |
 | `1.13.1A` | Claude | Escritorio / íconos | La ventana y la bandeja usan el logo (PNG de 256 y 32 sacados de `public/favicon.svg`) en vez de los íconos de fábrica de Neutralino. El ícono del `.exe` viene en el binario y no cambia. |
+| `1.14.1A` | Claude | Interfaz / botón de llamar | El emoji del teléfono (rosa en Windows) se reemplaza por un ícono vectorial que toma el verde del botón. Mismo ícono en la barra lateral, el panel de amigos y el aviso de llamada entrante. |
 ---
 
 ## ⚠️ Reglas para agentes
