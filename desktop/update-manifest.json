@@ -1,15 +1,8 @@
 {
   "applicationId": "com.llamadita.app",
-<<<<<<< HEAD
-  "version": "1.11.2C",
-  "resourcesURL": "https://llamadita.com.ar/descargas/resources.neu?v=1.11.2C",
-  "data": {
-    "releasedAt": "2026-09-16T01:33:14.289Z"
-=======
   "version": "1.13.1A",
   "resourcesURL": "https://llamadita.com.ar/descargas/resources.neu?v=1.13.1A",
   "data": {
-    "releasedAt": "2026-09-16T01:40:58.722Z"
->>>>>>> c1199eb ([1.13.1A] feat: la ventana y la bandeja del escritorio usan el logo)
+    "releasedAt": "2026-09-16T01:43:22.753Z"
   }
 }

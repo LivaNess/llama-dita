@@ -1,10 +1,6 @@
 [Setup]
 AppName=Llama-dita
-<<<<<<< HEAD
-AppVersion=1.11.2C
-=======
 AppVersion=1.13.1A
->>>>>>> c1199eb ([1.13.1A] feat: la ventana y la bandeja del escritorio usan el logo)
 AppPublisher=Llama-dita
 AppPublisherURL=https://llamadita.com.ar
 DefaultDirName={localappdata}\Llama-dita
