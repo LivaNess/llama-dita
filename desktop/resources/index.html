@@ -8,9 +8,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="/assets/index-DXzbyT26.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-BmAKNcSH.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <script type="module" crossorigin src="/assets/index-D5wEyvx5.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-DzHuO2cQ.css">
 </head>
 <body>
   <!-- Banner de permiso de audio en navegadores restrictivos -->
@@ -118,23 +118,7 @@
     <div class="app-main-area" id="appMainArea">
       <!-- Header principal -->
       <header class="app-header">
-        <div class="room-actions">
-          <div class="call-status-pill" id="callStatus">Sin llamada</div>
-
-          <!-- Cortar: aparece solo cuando hay alguien del otro lado -->
-          <button class="btn-hangup" id="btnLeaveCall" title="Cortar la llamada y volver a tu sala" hidden>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91"></path>
-              <line x1="22" y1="2" x2="2" y2="22"></line>
-            </svg>
-            <span>Salir de la llamada</span>
-          </button>
-        </div>
-
-        <div class="on-air-badge" id="onAirBadge">
-          <span class="on-air-dot"></span>
-          <span id="onAirText">STANDBY</span>
-        </div>
+        <div class="room-actions"></div>
       </header>
 
       <!-- Vistas principales -->
@@ -212,159 +196,105 @@
           <div class="chat-soltar" id="chatSoltar" hidden><span>Soltala acá</span></div>
         </section>
 
-        <!-- VISTA 2: CABINAS DE AUDIO (CUANDO HAY SESIÓN CONECTADA) -->
+        <!-- VISTA 2: CABINAS DE AUDIO (CUANDO HAY LLAMADA ACTIVA) -->
         <main class="main-view studio-container" id="studioBoothsView" style="display: none;">
-    
-    <!-- LEFT SIDE: LOCAL PARTICIPANT -->
-    <section class="studio-booth booth-host" id="hostBooth">
-      <div class="booth-header">
-        <div class="speaker-role">
-          <span class="role-badge" id="hostRoleBadge">Tú</span>
-          <input type="text" id="hostNameInput" class="speaker-name-input" value="Usuario Local" maxlength="20" title="Editar nombre" />
-        </div>
-        <div class="speaking-indicator" id="hostSpeakingIndicator">
-          <span>●</span> <span id="hostSpeakingText">Silencio</span>
-        </div>
-      </div>
+          <div class="studio-booths-row">
+            <!-- PARTICIPANTE LOCAL (TÚ) -->
+            <section class="studio-booth booth-host" id="hostBooth">
+              <div class="booth-visual-center">
+                <div class="avatar-wrapper">
+                  <div class="vocal-aura" id="hostVocalAura"></div>
+                  <div class="avatar-disc" id="hostAvatarDisc">
+                    <span id="hostAvatarContent" class="booth-avatar-content">YO</span>
+                  </div>
+                </div>
+                <div class="booth-user-name" id="hostUserName">Usuario Local</div>
+              </div>
 
-      <div class="booth-visual-center">
-        <div class="avatar-wrapper">
-          <div class="vocal-aura" id="hostVocalAura"></div>
-          <div class="avatar-disc" id="hostAvatarDisc">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-              <line x1="12" x2="12" y1="19" y2="22"></line>
-            </svg>
+              <!-- Controles estéticos inferiores -->
+              <div class="booth-controls-section">
+                <div class="booth-slider-row">
+                  <div class="booth-slider-header">
+                    <span class="booth-slider-title">Sensibilidad / Ganancia</span>
+                    <span id="sensitivityVal" class="booth-slider-val">160%</span>
+                  </div>
+                  <input type="range" id="micSensitivityRange" min="50" max="350" value="160" class="custom-range" />
+                </div>
+
+                <div class="booth-controls-row">
+                  <button class="btn-control btn-secondary" id="btnLoopback" title="Monitoreo local para comprobar entrada de audio">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
+                      <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path>
+                    </svg>
+                    <span id="btnLoopbackText">Monitorear</span>
+                  </button>
+
+                  <div class="device-select-wrapper">
+                    <svg class="device-select-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                      <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                      <line x1="12" x2="12" y1="19" y2="22"></line>
+                    </svg>
+                    <select id="micDeviceSelect" class="device-select" title="Seleccionar Micrófono">
+                      <option value="">Cargando dispositivos...</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- PARTICIPANTE REMOTO (AMIGO) -->
+            <section class="studio-booth booth-guest" id="guestBooth">
+              <div class="booth-visual-center">
+                <div class="avatar-wrapper">
+                  <div class="vocal-aura" id="guestVocalAura"></div>
+                  <div class="avatar-disc" id="guestAvatarDisc">
+                    <span id="guestAvatarContent" class="booth-avatar-content">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                      </svg>
+                    </span>
+                  </div>
+                </div>
+                <div class="booth-user-name" id="guestUserName">Participante</div>
+              </div>
+
+              <!-- Controles estéticos inferiores con regulador de volumen del amigo -->
+              <div class="booth-controls-section">
+                <div class="booth-slider-row">
+                  <div class="booth-slider-header">
+                    <span class="booth-slider-title">Volumen de tu amigo</span>
+                    <span id="remoteVolumeVal" class="booth-slider-val">100%</span>
+                  </div>
+                  <input type="range" id="remoteVolumeRange" min="0" max="100" value="100" class="custom-range" />
+                </div>
+
+                <div class="booth-controls-row">
+                  <button class="btn-control" id="btnToggleRemoteAudio" title="Silenciar audio de tu amigo">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                      <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    </svg>
+                    <span id="btnToggleRemoteAudioText">Silenciar audio remoto</span>
+                  </button>
+                </div>
+              </div>
+            </section>
           </div>
-        </div>
-        <div class="connection-status-pill" id="hostStatusPill">
-          <span>🎤 Conectando dispositivo...</span>
-        </div>
-      </div>
 
-      <!-- Metering & Volume -->
-      <div class="meter-container">
-        <div class="meter-header">
-          <span class="meter-title">Nivel de Audio Local</span>
-          <span class="meter-readout" id="hostMeterReadout">-∞ dB · 0%</span>
-        </div>
-        <div class="vu-bar-wrapper">
-          <div class="vu-bar-fill" id="hostVuFill"></div>
-          <div class="vu-bar-peak" id="hostVuPeak" style="left: 0%;"></div>
-        </div>
-        <div class="vu-ticks">
-          <span>-60dB</span>
-          <span>-24dB</span>
-          <span>-12dB</span>
-          <span>-6dB</span>
-          <span>0dB</span>
-        </div>
-
-        <div class="canvas-wrapper">
-          <canvas id="hostCanvas"></canvas>
-        </div>
-      </div>
-
-      <!-- Sensitivity & Monitor Controls -->
-      <div class="extra-controls">
-        <div class="control-row">
-          <label for="micSensitivityRange" class="control-label">
-            <span>Sensibilidad / Ganancia:</span>
-            <span id="sensitivityVal" class="label-val">160%</span>
-          </label>
-          <input type="range" id="micSensitivityRange" min="50" max="350" value="160" class="custom-range" />
-        </div>
-      </div>
-
-      <!-- Main Controls -->
-      <div class="booth-controls">
-        <button class="btn-control active" id="btnToggleMic">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
-            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-            <line x1="12" x2="12" y1="19" y2="22"></line>
-          </svg>
-          <span id="btnToggleMicText">Silenciar</span>
-        </button>
-
-        <button class="btn-control btn-secondary" id="btnLoopback" title="Monitoreo local para comprobar entrada de audio">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
-            <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path>
-          </svg>
-          <span id="btnLoopbackText">Monitorear</span>
-        </button>
-
-        <select id="micDeviceSelect" class="device-select" title="Seleccionar Micrófono">
-          <option value="">Cargando dispositivos...</option>
-        </select>
-      </div>
-    </section>
-
-    <!-- RIGHT SIDE: REMOTE PARTICIPANT -->
-    <section class="studio-booth booth-guest" id="guestBooth">
-      <div class="booth-header">
-        <div class="speaker-role">
-          <span class="role-badge" id="guestRoleBadge">Remoto</span>
-          <input type="text" id="guestNameInput" class="speaker-name-input" value="Participante Remoto" readonly maxlength="20" />
-        </div>
-        <div class="speaking-indicator" id="guestSpeakingIndicator">
-          <span>●</span> <span id="guestSpeakingText">Desconectado</span>
-        </div>
-      </div>
-
-      <div class="booth-visual-center">
-        <div class="avatar-wrapper">
-          <div class="vocal-aura" id="guestVocalAura"></div>
-          <div class="avatar-disc" id="guestAvatarDisc">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
-              <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path>
-            </svg>
+          <!-- BARRA DE LLAMADA: DEBAJO Y EN MEDIO DE LAS DOS TARJETAS -->
+          <div class="studio-call-bar" id="studioCallBar">
+            <div class="call-status-pill" id="callStatus">Sin llamada</div>
+            <button class="btn-hangup" id="btnLeaveCall" title="Cortar la llamada" hidden>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91"></path>
+                <line x1="22" y1="2" x2="2" y2="22"></line>
+              </svg>
+              <span>Salir de la llamada</span>
+            </button>
           </div>
-        </div>
-        <div class="connection-status-pill" id="guestStatusPill">
-          <span>Esperando conexión...</span>
-        </div>
-      </div>
-
-      <!-- Metering & Volume -->
-      <div class="meter-container">
-        <div class="meter-header">
-          <span class="meter-title">Nivel de Audio Remoto</span>
-          <span class="meter-readout" id="guestMeterReadout">-∞ dB · 0%</span>
-        </div>
-        <div class="vu-bar-wrapper">
-          <div class="vu-bar-fill" id="guestVuFill"></div>
-          <div class="vu-bar-peak" id="guestVuPeak" style="left: 0%;"></div>
-        </div>
-        <div class="vu-ticks">
-          <span>-60dB</span>
-          <span>-24dB</span>
-          <span>-12dB</span>
-          <span>-6dB</span>
-          <span>0dB</span>
-        </div>
-
-        <div class="canvas-wrapper">
-          <canvas id="guestCanvas"></canvas>
-        </div>
-      </div>
-
-      <!-- Controls -->
-      <div class="booth-controls">
-        <button class="btn-control" id="btnToggleRemoteAudio">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-          </svg>
-          <span id="btnToggleRemoteAudioText">Silenciar audio remoto</span>
-        </button>
-      </div>
-    </section>
-
-  </main>
+        </main>
 
         <!-- VISTA 3: STANDBY LIMPIO (CUANDO NO HAY CHAT Y NO HAY SESIÓN CONECTADA) -->
         <section class="main-view standby-view" id="standbyView">
@@ -385,7 +315,7 @@
   <!-- El audio del otro lado sale por acá. Sin este elemento no se escucha nada. -->
   <audio id="remoteAudioElement" autoplay playsinline></audio>
   <div class="toast-container" id="toastContainer"></div>
-
+
     <!-- Visor de imágenes: se abre al tocar una del chat. Vive fuera de las vistas para que
          quede por encima de todo. -->
     <div class="visor" id="visorImagen" hidden>

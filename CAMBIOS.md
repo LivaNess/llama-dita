@@ -19,6 +19,27 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.23.1A · 2026-09-16 · Antigravity
+**Qué cambió.** Rediseño visual de las cabinas de llamada según las indicaciones anotadas:
+1. **Eliminación completa de medidores y visualizadores:** Se removieron los vúmetros, lecturas de dB/porcentaje y lienzos de espectro canvas en ambas cabinas, eliminando el cómputo FFT y bucles de dibujo continuos a 60 cuadros por segundo para optimizar CPU y batería.
+2. **Cabeceras de cabinas simplificadas y avatares centrados:**
+   - Se removieron los badges "LOCAL" / "REMOTO", inputs de texto de nombre y estados redundantes ("SILENCIADO" / "HABLANDO").
+   - Cabina local (Host): Avatar circular centrado con imagen de perfil o iniciales del usuario y su nombre debajo ("Tú" / display name).
+   - Cabina remota (Amigo): Avatar circular centrado con imagen o iniciales del amigo conectado y su nombre debajo.
+3. **Controles estéticos inferiores:**
+   - Cabina local: Slider de ganancia / sensibilidad, botón de monitoreo local y selector de micrófono. El botón de silenciar micrófono se mantiene accesible en el pie de usuario de la barra lateral.
+   - Cabina remota: Slider de "Volumen de tu amigo" (0% - 100%) conectado directamente al elemento de audio WebRTC (`remoteAudioElement.volume`), y botón para silenciar audio remoto.
+4. **Barra de llamada centrada abajo:**
+   - La barra con el estado ("En llamada...") y el botón de colgar se ubica debajo y en el medio de las dos tarjetas de cabina, quitando el badge "CONECTADO" de la barra superior.
+**Por qué.** Pedido directo del usuario a partir de captura anotada en rojo para limpiar la vista de cabinas, eliminar elementos sobrecargados innecesarios y agregar control de volumen individual del amigo.
+**Dónde.** `index.html`, `src/style.css`, `src/main.js`, `package.json`.
+**Cómo se verifica.**
+1. Ejecutar `npm run verificar`.
+2. Al iniciar o entrar en llamada, las dos cabinas muestran avatares circulares centrados con el nombre del usuario y del amigo.
+3. Mover el slider "Volumen de tu amigo" regula el volumen de salida.
+4. Debajo y centrado entre las dos tarjetas se ubica la barra de llamada con el botón de colgar.
+5. No hay medidores de audio ni vúmetros consumiendo CPU.
+
 ### 0.22.1C · 2026-09-16 · Claude
 **Qué cambió.** Repaso de los textos de la interfaz del chat: el cartel de arrastrar, la ayuda
 del clip y el mensaje de un canal vacío. Nada funcional.

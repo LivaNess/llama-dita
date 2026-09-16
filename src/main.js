@@ -1,7 +1,6 @@
 import { audioManager } from './audio/audioManager.js';
 import { PeerManager } from './network/peerManager.js';
-import { AudioVisualizer } from './components/visualizer.js';
-import { initSocial, updateSocialCallState } from './social/panel.js';
+import { initSocial, updateSocialCallState, getSocialState } from './social/panel.js';
 import { initUpdater } from './updater.js';
 import { initDeepLink } from './social/deeplink.js';
 
@@ -9,10 +8,9 @@ import { initDeepLink } from './social/deeplink.js';
 const audioPermissionBanner = document.getElementById('audioPermissionBanner');
 const btnActivateAudio = document.getElementById('btnActivateAudio');
 
-const onAirBadge = document.getElementById('onAirBadge');
-const onAirText = document.getElementById('onAirText');
 const callStatus = document.getElementById('callStatus');
 const btnLeaveCall = document.getElementById('btnLeaveCall');
+const studioCallBar = document.getElementById('studioCallBar');
 
 // La cabecera dice con quién estás hablando, no en qué sala técnica estás.
 let conQuien = null;
@@ -20,19 +18,10 @@ function setCallStatus(texto) { if (callStatus) callStatus.textContent = texto; 
 
 // Local Booth DOM
 const hostBooth = document.getElementById('hostBooth');
-const hostRoleBadge = document.getElementById('hostRoleBadge');
-const hostNameInput = document.getElementById('hostNameInput');
-const hostSpeakingIndicator = document.getElementById('hostSpeakingIndicator');
-const hostSpeakingText = document.getElementById('hostSpeakingText');
+const hostUserName = document.getElementById('hostUserName');
+const hostAvatarContent = document.getElementById('hostAvatarContent');
 const hostVocalAura = document.getElementById('hostVocalAura');
 const hostAvatarDisc = document.getElementById('hostAvatarDisc');
-const hostStatusPill = document.getElementById('hostStatusPill');
-const hostMeterReadout = document.getElementById('hostMeterReadout');
-const hostVuFill = document.getElementById('hostVuFill');
-const hostVuPeak = document.getElementById('hostVuPeak');
-const hostCanvas = document.getElementById('hostCanvas');
-const btnToggleMic = document.getElementById('btnToggleMic');
-const btnToggleMicText = document.getElementById('btnToggleMicText');
 const btnLoopback = document.getElementById('btnLoopback');
 const btnLoopbackText = document.getElementById('btnLoopbackText');
 const micSensitivityRange = document.getElementById('micSensitivityRange');
@@ -41,17 +30,12 @@ const micDeviceSelect = document.getElementById('micDeviceSelect');
 
 // Remote Booth DOM
 const guestBooth = document.getElementById('guestBooth');
-const guestRoleBadge = document.getElementById('guestRoleBadge');
-const guestNameInput = document.getElementById('guestNameInput');
-const guestSpeakingIndicator = document.getElementById('guestSpeakingIndicator');
-const guestSpeakingText = document.getElementById('guestSpeakingText');
+const guestUserName = document.getElementById('guestUserName');
+const guestAvatarContent = document.getElementById('guestAvatarContent');
 const guestVocalAura = document.getElementById('guestVocalAura');
 const guestAvatarDisc = document.getElementById('guestAvatarDisc');
-const guestStatusPill = document.getElementById('guestStatusPill');
-const guestMeterReadout = document.getElementById('guestMeterReadout');
-const guestVuFill = document.getElementById('guestVuFill');
-const guestVuPeak = document.getElementById('guestVuPeak');
-const guestCanvas = document.getElementById('guestCanvas');
+const remoteVolumeRange = document.getElementById('remoteVolumeRange');
+const remoteVolumeVal = document.getElementById('remoteVolumeVal');
 const btnToggleRemoteAudio = document.getElementById('btnToggleRemoteAudio');
 const btnToggleRemoteAudioText = document.getElementById('btnToggleRemoteAudioText');
 const remoteAudioElement = document.getElementById('remoteAudioElement');
@@ -65,6 +49,50 @@ const btnSidebarMic = document.getElementById('btnSidebarMic');
 let currentActiveChannel = null;
 let isUserLoggedIn = false;
 
+function updateBoothProfiles() {
+  const social = typeof getSocialState === 'function' ? getSocialState() : null;
+
+  // 1. Host (Local)
+  const localName = social?.me?.display_name || social?.me?.username || 'Tú';
+  if (hostUserName) hostUserName.textContent = localName;
+  if (hostAvatarContent) {
+    if (social?.me?.avatar_url) {
+      hostAvatarContent.innerHTML = `<img src="${social.me.avatar_url}" class="booth-avatar-img" alt="${localName}" />`;
+    } else {
+      const initials = (localName || 'YO').substring(0, 2).toUpperCase();
+      hostAvatarContent.textContent = initials;
+    }
+  }
+
+  // 2. Guest (Remote)
+  const remoteName = conQuien || 'Participante';
+  if (guestUserName) guestUserName.textContent = remoteName;
+  if (guestAvatarContent) {
+    let friendAvatarUrl = null;
+    if (social?.friendships && conQuien) {
+      const item = social.friendships.find(f => {
+        const friend = f.friend;
+        return friend && (friend.display_name === conQuien || friend.username === conQuien);
+      });
+      if (item?.friend?.avatar_url) {
+        friendAvatarUrl = item.friend.avatar_url;
+      }
+    }
+
+    if (friendAvatarUrl) {
+      guestAvatarContent.innerHTML = `<img src="${friendAvatarUrl}" class="booth-avatar-img" alt="${remoteName}" />`;
+    } else if (conQuien && conQuien !== 'Participante') {
+      guestAvatarContent.textContent = conQuien.substring(0, 2).toUpperCase();
+    } else {
+      guestAvatarContent.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+        </svg>
+      `;
+    }
+  }
+}
+
 function updateMainViews() {
   if (!isUserLoggedIn) {
     if (btnLeaveCall) btnLeaveCall.hidden = true;
@@ -74,7 +102,7 @@ function updateMainViews() {
     return;
   }
 
-  // El botón de cortar solo tiene sentido si hay alguien del otro lado.
+  // El botón de cortar solo tiene sentido si hay llamada activa
   if (btnLeaveCall) btnLeaveCall.hidden = !(isConnected || peerManager.remotePeerId);
 
   if (currentActiveChannel) {
@@ -83,18 +111,15 @@ function updateMainViews() {
     if (standbyView) standbyView.style.display = 'none';
   } else if (isConnected) {
     if (channelChatView) channelChatView.style.display = 'none';
-    if (studioBoothsView) studioBoothsView.style.display = 'grid';
+    if (studioBoothsView) studioBoothsView.style.display = 'flex';
     if (standbyView) standbyView.style.display = 'none';
+    updateBoothProfiles();
   } else {
     if (channelChatView) channelChatView.style.display = 'none';
     if (studioBoothsView) studioBoothsView.style.display = 'none';
     if (standbyView) standbyView.style.display = 'flex';
   }
 }
-
-// Visualizer Instances
-const hostVisualizer = new AudioVisualizer(hostCanvas, { theme: 'host' });
-const guestVisualizer = new AudioVisualizer(guestCanvas, { theme: 'guest' });
 
 // State
 let localStream = null;
@@ -104,14 +129,9 @@ let isRemoteMuted = false;
 let isConnected = false;
 let peerManager = new PeerManager();
 
-// Peak hold values
-let hostPeakHold = 0;
-let hostPeakTimer = 0;
-let guestPeakHold = 0;
-let guestPeakTimer = 0;
-
 // Toast helper
 function showToast(message, duration = 3000) {
+  if (!toastContainer) return;
   const toast = document.createElement('div');
   toast.className = 'toast';
   toast.innerHTML = `
@@ -151,13 +171,7 @@ document.addEventListener('click', () => {
 // Start or reconnect microphone
 async function startMicrophone(deviceId = null) {
   try {
-    hostStatusPill.innerHTML = '<span>Inicializando dispositivo...</span>';
     localStream = await audioManager.initLocalStream(deviceId);
-    
-    const track = localStream.getAudioTracks()[0];
-    const trackLabel = track && track.label ? track.label : 'Dispositivo activo';
-    hostStatusPill.innerHTML = `<span>🎤 ${trackLabel.substring(0, 24)}</span>`;
-    
     peerManager.updateLocalStream(localStream);
     await loadAudioDevices();
     if (audioPermissionBanner) {
@@ -166,7 +180,6 @@ async function startMicrophone(deviceId = null) {
     return true;
   } catch (err) {
     console.error('Error de acceso a micrófono:', err);
-    hostStatusPill.innerHTML = '<span style="color:#ef4444">Permiso de micrófono requerido</span>';
     if (audioPermissionBanner) {
       audioPermissionBanner.style.display = 'flex';
     }
@@ -179,12 +192,8 @@ async function startMicrophone(deviceId = null) {
 async function init() {
   peerManager.detectRoom();
   setCallStatus('Sin llamada');
-
-  hostNameInput.value = 'Usuario Local';
-  peerManager.setLocalProfile(hostNameInput.value);
-  guestNameInput.value = 'Participante';
-  hostRoleBadge.textContent = 'Local';
-  guestRoleBadge.textContent = 'Remoto';
+  peerManager.setLocalProfile('Usuario Local');
+  updateBoothProfiles();
 
   await startMicrophone();
   setupNetworking();
@@ -194,6 +203,7 @@ async function init() {
 
 // Load audio devices into selector
 async function loadAudioDevices() {
+  if (!micDeviceSelect) return;
   try {
     const devices = await audioManager.getAudioInputDevices();
     micDeviceSelect.innerHTML = '';
@@ -221,7 +231,7 @@ async function loadAudioDevices() {
 }
 
 // Handle device switch
-micDeviceSelect.addEventListener('change', async (e) => {
+micDeviceSelect?.addEventListener('change', async (e) => {
   const deviceId = e.target.value;
   if (!deviceId) return;
   const ok = await startMicrophone(deviceId);
@@ -231,22 +241,29 @@ micDeviceSelect.addEventListener('change', async (e) => {
 });
 
 // Microphone sensitivity range slider
-micSensitivityRange.addEventListener('input', (e) => {
+micSensitivityRange?.addEventListener('input', (e) => {
   const val = parseInt(e.target.value, 10);
-  sensitivityVal.textContent = `${val}%`;
+  if (sensitivityVal) sensitivityVal.textContent = `${val}%`;
   audioManager.setMicSensitivity(val / 100);
 });
 
+// Remote friend volume slider
+remoteVolumeRange?.addEventListener('input', (e) => {
+  const val = parseInt(e.target.value, 10);
+  if (remoteVolumeVal) remoteVolumeVal.textContent = `${val}%`;
+  if (remoteAudioElement) remoteAudioElement.volume = val / 100;
+});
+
 // Monitor toggle
-btnLoopback.addEventListener('click', () => {
+btnLoopback?.addEventListener('click', () => {
   const isEnabled = audioManager.toggleLoopback();
   if (isEnabled) {
     btnLoopback.className = 'btn-control btn-secondary active';
-    btnLoopbackText.textContent = 'Detener monitoreo';
+    if (btnLoopbackText) btnLoopbackText.textContent = 'Detener monitoreo';
     showToast('Monitoreo local activo');
   } else {
     btnLoopback.className = 'btn-control btn-secondary';
-    btnLoopbackText.textContent = 'Monitorear';
+    if (btnLoopbackText) btnLoopbackText.textContent = 'Monitorear';
     showToast('Monitoreo local desactivado');
   }
 });
@@ -256,54 +273,44 @@ function setupNetworking() {
   peerManager.onConnectionStatusChange = (status, msg) => {
     if (status === 'connected') {
       isConnected = true;
-      onAirBadge.classList.add('live');
-      onAirText.textContent = 'CONECTADO';
-      guestStatusPill.innerHTML = '<span style="color:#34d399">Conectado</span>';
-      guestSpeakingIndicator.className = 'speaking-indicator';
-      guestSpeakingText.textContent = 'Activo';
       setCallStatus(conQuien ? `En llamada con ${conQuien}` : 'En llamada');
       showToast('Participante conectado a la sala');
       updateSocialCallState();
-
-      // Por si la llamada quedó andando sin canal de datos: el nombre sale igual por
-      // señalización. Cuando el canal abre, peerManager lo vuelve a mandar solo.
+      updateBoothProfiles();
       peerManager.sendProfile();
     } else if (status === 'waiting') {
       isConnected = false;
-      onAirBadge.classList.remove('live');
-      onAirText.textContent = 'ESPERANDO';
-      guestStatusPill.innerHTML = `<span>${msg || 'Esperando participante...'}</span>`;
+      setCallStatus(conQuien ? `Llamando a ${conQuien}…` : 'Esperando participante…');
     } else if (status === 'connecting') {
       isConnected = false;
-      onAirBadge.classList.remove('live');
-      onAirText.textContent = 'CONECTANDO';
-      guestStatusPill.innerHTML = `<span>${msg || 'Conectando...'}</span>`;
+      setCallStatus('Conectando…');
     } else if (status === 'disconnected') {
       isConnected = false;
-      onAirBadge.classList.remove('live');
-      onAirText.textContent = 'STANDBY';
-      guestStatusPill.innerHTML = '<span style="color:#f87171">Desconectado</span>';
-      guestSpeakingIndicator.classList.remove('active');
-      guestSpeakingText.textContent = 'Desconectado';
-      guestNameInput.value = 'Participante';
+      guestAvatarDisc?.classList.remove('active');
+      if (guestVocalAura) {
+        guestVocalAura.style.transform = 'scale(1)';
+        guestVocalAura.style.opacity = '0.05';
+      }
       setCallStatus('Sin llamada');
       conQuien = null;
+      updateBoothProfiles();
       showToast('Participante desconectado');
     } else if (status === 'error') {
-      guestStatusPill.innerHTML = `<span style="color:#f87171">${msg}</span>`;
+      showToast(msg || 'Error de conexión', 4000);
     }
     updateMainViews();
   };
 
   peerManager.onRemoteStream = (stream) => {
     remoteStream = stream;
-    remoteAudioElement.srcObject = stream;
-    
-    remoteAudioElement.play().catch(() => {
-      if (audioPermissionBanner) {
-        audioPermissionBanner.style.display = 'flex';
-      }
-    });
+    if (remoteAudioElement) {
+      remoteAudioElement.srcObject = stream;
+      remoteAudioElement.play().catch(() => {
+        if (audioPermissionBanner) {
+          audioPermissionBanner.style.display = 'flex';
+        }
+      });
+    }
 
     if (remoteAudioProcessor) {
       remoteAudioProcessor.destroy();
@@ -313,17 +320,9 @@ function setupNetworking() {
 
   peerManager.onRemoteData = (data) => {
     if (data.type === 'profile' && data.name) {
-      guestNameInput.value = data.name;
       conQuien = data.name;
       if (isConnected) setCallStatus(`En llamada con ${data.name}`);
-    } else if (data.type === 'mute') {
-      if (data.muted) {
-        guestSpeakingIndicator.className = 'speaking-indicator muted';
-        guestSpeakingText.textContent = 'Silenciado';
-      } else {
-        guestSpeakingIndicator.className = 'speaking-indicator';
-        guestSpeakingText.textContent = 'Activo';
-      }
+      updateBoothProfiles();
     }
   };
 
@@ -334,13 +333,7 @@ function setupNetworking() {
   peerManager.initPeer(localStream);
 }
 
-// Bucle de dibujo.
-//
-// Medido en la app instalada (2026-09-15): con la ventana a la vista gastaba 6,5% de CPU
-// sin llamada ni nada, y minimizada 0,55%. O sea que todo ese gasto era dibujar medidores
-// y espectros a 60 cuadros por segundo aunque las cabinas no estuvieran en pantalla.
-// Regla: se dibuja solo cuando hay cabinas a la vista, y a la mitad de cuadros cuando la
-// ventana quedo atras (que es justo cuando estas jugando).
+// Bucle liviano de animación vocal: solo actualiza el aura y disco cuando las cabinas están a la vista
 let ultimoCuadro = 0;
 
 function renderAudioMetrics(ahora = 0) {
@@ -357,135 +350,76 @@ function renderAudioMetrics(ahora = 0) {
 
   const isSuspended = audioManager.audioCtx && audioManager.audioCtx.state === 'suspended';
 
-  // 1. Local Microphone Metrics
+  // 1. Aura vocal del usuario local
   if (isSuspended) {
-    hostMeterReadout.textContent = 'INICIAR AUDIO';
     if (audioPermissionBanner) audioPermissionBanner.style.display = 'flex';
   } else if (audioManager.isMuted) {
-    hostVuFill.style.width = '0%';
-    hostVuPeak.style.left = '0%';
-    hostMeterReadout.textContent = 'SILENCIADO · 0%';
-    hostSpeakingIndicator.className = 'speaking-indicator muted';
-    hostSpeakingText.textContent = 'Silenciado';
-    hostAvatarDisc.classList.remove('active');
-    hostVocalAura.style.transform = 'scale(1)';
-    hostVocalAura.style.opacity = '0.08';
-    hostVisualizer.draw(null, false);
-  } else {
-    const { volume, db, isSpeaking } = audioManager.localMetrics;
-
-    hostVuFill.style.width = `${volume}%`;
-
-    if (volume > hostPeakHold) {
-      hostPeakHold = volume;
-      hostPeakTimer = 25;
-    } else if (hostPeakTimer > 0) {
-      hostPeakTimer--;
-    } else {
-      hostPeakHold = Math.max(0, hostPeakHold - 2.5);
-    }
-    hostVuPeak.style.left = `${hostPeakHold}%`;
-
-    hostMeterReadout.textContent = `${db} dB · ${volume}%`;
-
-    if (isSpeaking) {
-      hostSpeakingIndicator.className = 'speaking-indicator active';
-      hostSpeakingText.textContent = 'Hablando';
-      hostAvatarDisc.classList.add('active');
-      const scale = 1 + (volume / 100) * 0.9;
-      hostVocalAura.style.transform = `scale(${scale})`;
-      hostVocalAura.style.opacity = `${0.35 + (volume / 100) * 0.65}`;
-    } else {
-      hostSpeakingIndicator.className = 'speaking-indicator';
-      hostSpeakingText.textContent = 'Silencio';
-      hostAvatarDisc.classList.remove('active');
+    hostAvatarDisc?.classList.remove('active');
+    if (hostVocalAura) {
       hostVocalAura.style.transform = 'scale(1)';
-      hostVocalAura.style.opacity = '0.12';
+      hostVocalAura.style.opacity = '0.08';
     }
-
-    const freqData = audioManager.getFrequencyData(audioManager.localAnalyser);
-    const timeData = audioManager.getTimeDomainData(audioManager.localAnalyser);
-    hostVisualizer.draw({ volume, db, freqData, timeData }, true);
+  } else {
+    const { volume, isSpeaking } = audioManager.localMetrics;
+    if (isSpeaking) {
+      hostAvatarDisc?.classList.add('active');
+      const scale = 1 + (volume / 100) * 0.9;
+      if (hostVocalAura) {
+        hostVocalAura.style.transform = `scale(${scale})`;
+        hostVocalAura.style.opacity = `${0.35 + (volume / 100) * 0.65}`;
+      }
+    } else {
+      hostAvatarDisc?.classList.remove('active');
+      if (hostVocalAura) {
+        hostVocalAura.style.transform = 'scale(1)';
+        hostVocalAura.style.opacity = '0.12';
+      }
+    }
   }
 
-  // 2. Remote Audio Metrics
-  if (remoteAudioProcessor && isConnected) {
-    if (isRemoteMuted) {
-      guestVuFill.style.width = '0%';
-      guestVuPeak.style.left = '0%';
-      guestMeterReadout.textContent = 'MUTED · 0%';
-      guestSpeakingIndicator.className = 'speaking-indicator muted';
-      guestSpeakingText.textContent = 'Silenciado';
-      guestVisualizer.draw(null, false);
-    } else {
-      const { volume, db, isSpeaking } = audioManager.remoteMetrics;
-      guestVuFill.style.width = `${volume}%`;
-
-      if (volume > guestPeakHold) {
-        guestPeakHold = volume;
-        guestPeakTimer = 25;
-      } else if (guestPeakTimer > 0) {
-        guestPeakTimer--;
-      } else {
-        guestPeakHold = Math.max(0, guestPeakHold - 2.5);
-      }
-      guestVuPeak.style.left = `${guestPeakHold}%`;
-
-      guestMeterReadout.textContent = `${db} dB · ${volume}%`;
-
-      if (isSpeaking) {
-        guestSpeakingIndicator.className = 'speaking-indicator active';
-        guestSpeakingText.textContent = 'Hablando';
-        guestAvatarDisc.classList.add('active');
-        const scale = 1 + (volume / 100) * 0.9;
+  // 2. Aura vocal del participante remoto (amigo)
+  if (remoteAudioProcessor && isConnected && !isRemoteMuted) {
+    const { volume, isSpeaking } = audioManager.remoteMetrics;
+    if (isSpeaking) {
+      guestAvatarDisc?.classList.add('active');
+      const scale = 1 + (volume / 100) * 0.9;
+      if (guestVocalAura) {
         guestVocalAura.style.transform = `scale(${scale})`;
         guestVocalAura.style.opacity = `${0.35 + (volume / 100) * 0.65}`;
-      } else {
-        guestSpeakingIndicator.className = 'speaking-indicator';
-        guestSpeakingText.textContent = 'Silencio';
-        guestAvatarDisc.classList.remove('active');
+      }
+    } else {
+      guestAvatarDisc?.classList.remove('active');
+      if (guestVocalAura) {
         guestVocalAura.style.transform = 'scale(1)';
         guestVocalAura.style.opacity = '0.12';
       }
-
-      const freqData = audioManager.getFrequencyData(remoteAudioProcessor.analyser);
-      const timeData = audioManager.getTimeDomainData(remoteAudioProcessor.analyser);
-      guestVisualizer.draw({ volume, db, freqData, timeData }, true);
     }
   } else {
-    guestVuFill.style.width = '0%';
-    guestVuPeak.style.left = '0%';
-    guestMeterReadout.textContent = '-∞ dB · 0%';
-    guestVisualizer.draw(null, false);
-    guestAvatarDisc.classList.remove('active');
-    guestVocalAura.style.transform = 'scale(1)';
-    guestVocalAura.style.opacity = '0.05';
+    guestAvatarDisc?.classList.remove('active');
+    if (guestVocalAura) {
+      guestVocalAura.style.transform = 'scale(1)';
+      guestVocalAura.style.opacity = '0.05';
+    }
   }
 
   requestAnimationFrame(renderAudioMetrics);
 }
 
-// Mute UI synchronization
+// Sincronización del botón de micrófono en la barra lateral
 function syncMicUi(isMuted) {
-  if (isMuted) {
-    btnToggleMic.className = 'btn-control muted';
-    btnToggleMicText.textContent = 'Activar Mic';
-    if (btnSidebarMic) {
+  if (btnSidebarMic) {
+    if (isMuted) {
       btnSidebarMic.className = 'sidebar-mic-btn muted';
       btnSidebarMic.title = 'Activar Micrófono';
-    }
-  } else {
-    btnToggleMic.className = 'btn-control active';
-    btnToggleMicText.textContent = 'Silenciar';
-    if (btnSidebarMic) {
+    } else {
       btnSidebarMic.className = 'sidebar-mic-btn active';
       btnSidebarMic.title = 'Silenciar Micrófono';
     }
   }
 }
 
-// Mute Local Microphone Toggle
-btnToggleMic.addEventListener('click', () => {
+// Silenciar / Activar micrófono local
+function toggleMic() {
   const isMuted = audioManager.toggleMute();
   syncMicUi(isMuted);
   showToast(isMuted ? 'Micrófono silenciado' : 'Micrófono activo');
@@ -494,49 +428,40 @@ btnToggleMic.addEventListener('click', () => {
     type: 'mute',
     muted: isMuted
   });
-});
+}
 
-btnSidebarMic?.addEventListener('click', () => {
-  btnToggleMic.click();
-});
+btnSidebarMic?.addEventListener('click', toggleMic);
 
-// Mute Remote Toggle
-btnToggleRemoteAudio.addEventListener('click', () => {
+// Silenciar / Activar audio remoto (amigo)
+btnToggleRemoteAudio?.addEventListener('click', () => {
   isRemoteMuted = !isRemoteMuted;
-  remoteAudioElement.muted = isRemoteMuted;
+  if (remoteAudioElement) remoteAudioElement.muted = isRemoteMuted;
 
   if (isRemoteMuted) {
     btnToggleRemoteAudio.className = 'btn-control muted';
-    btnToggleRemoteAudioText.textContent = 'Activar audio remoto';
+    if (btnToggleRemoteAudioText) btnToggleRemoteAudioText.textContent = 'Activar audio remoto';
     showToast('Audio remoto silenciado');
   } else {
     btnToggleRemoteAudio.className = 'btn-control';
-    btnToggleRemoteAudioText.textContent = 'Silenciar audio remoto';
+    if (btnToggleRemoteAudioText) btnToggleRemoteAudioText.textContent = 'Silenciar audio remoto';
     showToast('Audio remoto activo');
   }
 });
 
 // Salir de la llamada: corta, vuelve a una sala propia vacía y deja la app en standby.
-// El otro lado se entera solo (desaparece nuestra presencia del canal de señalización).
 function leaveCall() {
   peerManager.leaveRoom();
 
   isConnected = false;
   remoteStream = null;
-  remoteAudioElement.srcObject = null;
+  if (remoteAudioElement) remoteAudioElement.srcObject = null;
   if (remoteAudioProcessor) {
     remoteAudioProcessor.destroy();
     remoteAudioProcessor = null;
   }
 
-  onAirBadge.classList.remove('live');
-  onAirText.textContent = 'STANDBY';
-  guestNameInput.value = 'Participante';
-  guestStatusPill.innerHTML = '<span>Esperando participante...</span>';
-  guestSpeakingIndicator.className = 'speaking-indicator';
-  guestSpeakingText.textContent = 'Sin conexión';
-
   conQuien = null;
+  updateBoothProfiles();
   setCallStatus('Sin llamada');
   showToast('Saliste de la llamada');
   updateMainViews();
@@ -544,11 +469,6 @@ function leaveCall() {
 }
 
 btnLeaveCall?.addEventListener('click', leaveCall);
-
-// Sync editable name changes
-hostNameInput.addEventListener('change', () => {
-  peerManager.setLocalProfile(hostNameInput.value);
-});
 
 // Start the app on load
 window.addEventListener('DOMContentLoaded', () => {
@@ -560,13 +480,14 @@ window.addEventListener('DOMContentLoaded', () => {
       if (peerManager.setRoom(code)) {
         conQuien = nombre || null;
         setCallStatus(nombre ? `Llamando a ${nombre}…` : 'Conectando…');
+        updateBoothProfiles();
         updateSocialCallState();
       }
     },
     getRoom: () => peerManager.roomId,
     setLocalName: (name) => {
-      hostNameInput.value = name;
       peerManager.setLocalProfile(name);
+      updateBoothProfiles();
     },
     toast: showToast,
     onChannelChange: (channel) => {
@@ -578,6 +499,7 @@ window.addEventListener('DOMContentLoaded', () => {
       if (!loggedIn && isConnected) {
         leaveCall();
       }
+      updateBoothProfiles();
       updateMainViews();
     },
     isCallActiveWith: (friend) => {

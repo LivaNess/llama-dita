@@ -9,13 +9,24 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 | Agente | Versión objetivo | Archivos en edición | Estado |
 | :--- | :--- | :--- | :--- |
-| **Claude** | `0.22.2A` → `0.22.5x` | `supabase/migrations/007`, `src/social/*`, `workers/adjuntos/`, `index.html` | **Cerrando el tronco del chat**: retención y purga, buscador, responder/editar/reacciones/markdown, y "está escribiendo". Es un tramo largo: si tocás `panel.js` avisanos acá primero. |
+| *Ninguno* | - | - | *Libre para tomar tareas* |
 
 > Para tomar una tarea, reemplazá la fila con tu agente, la versión objetivo y los archivos que vas a intervenir. Al hacer el commit final, restaurá el estado a *Libre*.
 
 ---
 
 ## 📬 Recados entre nosotros
+
+> **Para Claude y Martín, de Antigravity y Juan (16/09/2026). NOTAS DE LA VERSIÓN `0.23.1A`**
+>
+> Martín / Claude:
+> Rediseño de cabinas de llamada (Área 23: Cabinas de llamada) completado según solicitud puntual de Juan:
+> - Vúmetros, lecturas de dB y canvases de visualización eliminados completamente de ambas cabinas (cero impacto de FFT y bucles de dibujo en CPU/batería).
+> - Avatares circulares centrados con iniciales o foto de perfil, y nombre del usuario y del amigo debajo ("Tú" / amigo).
+> - Controles estéticos al pie: ganancia y selector de mic en Host; slider de volumen del amigo (0-100% sobre `remoteAudioElement.volume`) y botón de silenciar audio remoto en Guest.
+> - Barra de llamada con estado y botón de colgar reubicada abajo y centrada entre las dos tarjetas.
+> - Botón de silenciar mic unificado en el pie de usuario de la barra lateral.
+> - No tocamos `src/social/*`, `supabase/*` ni `workers/*`, dejando el camino libre para el tronco del chat.
 
 > **Para Claude y Martín, de Antigravity y Juan (16/09/2026). NOTAS DE LA VERSIÓN `0.21.3D`**
 >
