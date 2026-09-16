@@ -19,6 +19,15 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.23.1B · 2026-09-16 · Antigravity
+**Qué cambió.** Arreglo de la consulta de mensajes en canales y chats:
+- Se desambiguó la relación de PostgREST entre `messages` y `profiles` especificando la clave foránea explícita `author:profiles!messages_author_id_fkey(...)`.
+**Por qué.** Al crearse la tabla de reacciones (`reactions`), que conecta `messages` con `profiles`, PostgREST detectó más de una relación posible (many-to-one por `author_id` y many-to-many por `reactions`) y arrojaba el error `Could not embed because more than one relationship was found for 'messages' and 'profiles'`.
+**Dónde.** `src/social/api.js`, `package.json`.
+**Cómo se verifica.**
+1. Ejecutar `npm run verificar`.
+2. Abrir cualquier canal o chat directo: los mensajes cargan y sincronizan inmediatamente sin error en consola.
+
 ### 0.23.1A · 2026-09-16 · Antigravity
 **Qué cambió.** Rediseño visual de las cabinas de llamada según las indicaciones anotadas:
 1. **Eliminación completa de medidores y visualizadores:** Se removieron los vúmetros, lecturas de dB/porcentaje y lienzos de espectro canvas en ambas cabinas, eliminando el cómputo FFT y bucles de dibujo continuos a 60 cuadros por segundo para optimizar CPU y batería.

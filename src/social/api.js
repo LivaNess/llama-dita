@@ -135,7 +135,7 @@ export async function abrirChatDirecto(otroId) {
 // ---------- Mensajes ----------
 // Los adjuntos viajan pegados al mensaje: una consulta en vez de dos.
 const CAMPOS_ADJUNTO = 'id, object_key, nombre, mime, bytes, ancho, alto';
-const CAMPOS_MENSAJE = `id, body, created_at, updated_at, edited_at, author_id, client_id, author:profiles(username, display_name, avatar_key), adjuntos:attachments(${CAMPOS_ADJUNTO})`;
+const CAMPOS_MENSAJE = `id, body, created_at, updated_at, edited_at, author_id, client_id, author:profiles!messages_author_id_fkey(username, display_name, avatar_key), adjuntos:attachments(${CAMPOS_ADJUNTO})`;
 
 // Primera vez en un canal: se baja un pedazo de historial y listo. De ahí en adelante manda
 // `sincronizarCanal`, que pide solo lo que cambió.

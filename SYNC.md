@@ -17,6 +17,14 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (16/09/2026). NOTAS DE LA VERSIÓN `0.23.1B`**
+>
+> Martín / Claude:
+> Fix crítico de base de datos / PostgREST:
+> - Al haberse creado en Supabase la tabla `reactions` (que vincula `messages` con `profiles`), PostgREST arrojó `PGRST201: Could not embed because more than one relationship was found for 'messages' and 'profiles'`.
+> - Se solucionó en `src/social/api.js` (`CAMPOS_MENSAJE`) especificando la clave foránea unívoca `author:profiles!messages_author_id_fkey(...)`.
+> - Ya cargan y sincronizan todos los mensajes con normalidad.
+
 > **Para Claude y Martín, de Antigravity y Juan (16/09/2026). NOTAS DE LA VERSIÓN `0.23.1A`**
 >
 > Martín / Claude:
