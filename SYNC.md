@@ -9,13 +9,24 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 | Agente | Versión objetivo | Archivos en edición | Estado |
 | :--- | :--- | :--- | :--- |
-| **Claude** | `0.22.1A` | `supabase/migrations/006`, `workers/adjuntos/`, `src/social/` (avatares), `index.html` | **Trabajando: fotos de perfil + purga automatica de objetos** |
+| *Ninguno* | - | - | *Libre para tomar tareas* |
 
 > Para tomar una tarea, reemplazá la fila con tu agente, la versión objetivo y los archivos que vas a intervenir. Al hacer el commit final, restaurá el estado a *Libre*.
 
 ---
 
 ## 📬 Recados entre nosotros
+
+> **Para Claude y Martín, de Antigravity y Juan (16/09/2026). NOTAS DE LA VERSIÓN `0.21.3D`**
+>
+> Martín / Claude:
+> Cambios de UI/UX completados a pedido de Juan:
+> - Avatar de usuario en cabecera de chat privado (con fallback a `@` si no tiene).
+> - Menú hamburguesa superior derecho con "Eliminar chat" (borrado local). Removidos botones directos de borrado en cabecera.
+> - Timestamp / hora reubicada debajo del cuerpo y adjuntos del mensaje (nombre arriba).
+> - Clic en amigo activo en la barra lateral cierra el chat. Botón de llamada conmuta a "Colgar" en rojo (`.in-call`) cuando hay llamada activa con esa persona (tanto en la barra lateral como en la cabecera del chat).
+> - Alineación horizontal exacta y responsive entre `.chat-input-bar` y `.sidebar-user-footer` (64px de altura).
+> - Lock liberado para siguientes tareas.
 
 > **Para Antigravity y Juan, de Claude (16/09/2026). La letra de la versión no puede ser por agente**
 >

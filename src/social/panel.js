@@ -41,6 +41,7 @@ let root, drawer, overlay, headerBtn;
 // El emoji de telefono en Windows se dibuja rosa: el boton de llamar parecia de colgar.
 // Icono vectorial que toma el color del boton (verde) en vez de traer el suyo.
 const ICONO_TELEFONO = `<svg class="sc-icono-tel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`;
+const ICONO_COLGAR = `<svg class="sc-icono-tel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91"/><line x1="23" y1="1" x2="1" y2="23"/></svg>`;
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const randomRoom = () => 'llamadita-' + Math.random().toString(36).substring(2, 8);
@@ -525,9 +526,10 @@ function msgItem(m) {
   const t = new Date(m.created_at);
   const hora = `${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}`;
   return `<div class="sc-msg ${mine ? 'mine' : ''}" data-msg="${esc(m.id)}">
-    <small>${esc(autorDe(m))} · ${hora}${m.edited_at ? ' · editado' : ''}</small>
+    <small class="sc-msg-author">${esc(autorDe(m))}</small>
     ${m.body ? `<div class="sc-msg-body">${esc(m.body)}</div>` : ''}
     ${(m.adjuntos || []).length ? `<div class="sc-msg-adjuntos">${m.adjuntos.map(adjuntoItem).join('')}</div>` : ''}
+    <small class="sc-msg-time">${hora}${m.edited_at ? ' · editado' : ''}</small>
     ${puedoBorrar ? `<div class="sc-msg-acciones">${mine && m.body ? `<button type="button" class="sc-msg-accion" data-editar="${esc(m.id)}" title="Editar el texto">✎</button>` : ''}<button type="button" class="sc-msg-accion" data-borrar="${esc(m.id)}" title="Borrar para todos">✕</button></div>` : ''}
   </div>`;
 }
@@ -1175,16 +1177,24 @@ function renderSidebar() {
       if (!friends.length) {
         friendsList.innerHTML = `<p class="sc-muted sc-tiny" style="padding: 0.5rem 0.6rem;">Sin amigos. Agregá con +.</p>`;
       } else {
-        friendsList.innerHTML = friends.map(({ f, p }) => `
-          <div class="sidebar-friend-item sc-clickable ${esDirecto(state.currentChannel) && state.currentChannel?.otro?.id === p.id ? 'active' : ''}" data-sidebar-dm="${p.id}" role="button" tabindex="0" title="Abrir chat privado con ${esc(p.display_name || p.username)}">
-            ${statusDot(p)}
-            <div class="friend-info">
-              <span class="friend-name">${esc(p.display_name || p.username)}</span>
-              <span class="friend-handle">@${esc(p.username)}</span>
+        friendsList.innerHTML = friends.map(({ f, p }) => {
+          const isSelected = esDirecto(state.currentChannel) && state.currentChannel?.otro?.id === p.id;
+          const inCall = hooks.isCallActiveWith ? hooks.isCallActiveWith(p) : false;
+          return `
+            <div class="sidebar-friend-item sc-clickable ${isSelected ? 'active' : ''}" data-sidebar-dm="${p.id}" role="button" tabindex="0" title="${isSelected ? 'Cerrar chat' : 'Abrir chat privado'} con ${esc(p.display_name || p.username)}">
+              ${statusDot(p)}
+              <div class="friend-info">
+                <span class="friend-name">${esc(p.display_name || p.username)}</span>
+                <span class="friend-handle">@${esc(p.username)}</span>
+              </div>
+              ${inCall ? `
+                <button class="btn-friend-call in-call" data-sidebar-hangup="${p.id}" title="Colgar llamada">${ICONO_COLGAR}</button>
+              ` : `
+                <button class="btn-friend-call" data-sidebar-call="${p.id}" title="Llamar" ${isOnline(p) ? '' : 'disabled'}>${ICONO_TELEFONO}</button>
+              `}
             </div>
-            <button class="btn-friend-call" data-sidebar-call="${p.id}" title="Llamar" ${isOnline(p) ? '' : 'disabled'}>${ICONO_TELEFONO}</button>
-          </div>
-        `).join('');
+          `;
+        }).join('');
 
         friendsList.querySelectorAll('[data-sidebar-call]').forEach((b) => {
           b.addEventListener('click', (e) => {
@@ -1194,14 +1204,33 @@ function renderSidebar() {
           });
         });
 
-        // El cuerpo del renglón abre la conversación privada; el teléfono sigue llamando.
+        friendsList.querySelectorAll('[data-sidebar-hangup]').forEach((b) => {
+          b.addEventListener('click', (e) => {
+            e.stopPropagation();
+            hooks.hangup?.();
+          });
+        });
+
+        // El cuerpo del renglón abre o cierra la conversación privada si ya está abierta
         friendsList.querySelectorAll('[data-sidebar-dm]').forEach((el) => {
-          const abrir = () => {
-            const friend = friends.find((x) => x.p.id === el.dataset.sidebarDm)?.p;
-            if (friend) abrirChatPrivado(friend);
+          const alternar = () => {
+            const friendId = el.dataset.sidebarDm;
+            if (esDirecto(state.currentChannel) && state.currentChannel?.otro?.id === friendId) {
+              closeChannel();
+            } else {
+              const friend = friends.find((x) => x.p.id === friendId)?.p;
+              if (friend) abrirChatPrivado(friend);
+            }
           };
-          el.addEventListener('click', (e) => { if (!e.target.closest('[data-sidebar-call]')) abrir(); });
-          el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); abrir(); } });
+          el.addEventListener('click', (e) => {
+            if (!e.target.closest('[data-sidebar-call]') && !e.target.closest('[data-sidebar-hangup]')) alternar();
+          });
+          el.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              alternar();
+            }
+          });
         });
       }
     }
@@ -1307,12 +1336,27 @@ function renderChat() {
   const callBtn = document.getElementById('btnChatCall');
   const copyBtn = document.getElementById('btnChatCopyInvite');
   const closeBtn = document.getElementById('btnChatClose');
-  const vistaBtn = document.getElementById('btnChatVaciarLocal');
-  const ambosBtn = document.getElementById('btnChatBorrarAmbos');
+  const menuWrapper = document.getElementById('chatMenuWrapper');
+  const menuBtn = document.getElementById('btnChatMenu');
+  const dropdownMenu = document.getElementById('chatDropdownMenu');
+  const btnEliminarChat = document.getElementById('btnChatEliminarChat');
   const messagesBox = document.getElementById('chatMessages');
   const input = document.getElementById('chatMessageInput');
 
-  if (icon) icon.textContent = dm ? '@' : c.kind === 'voice' ? '🔊' : '#';
+  const otro = dm ? c.otro || state.members.find((m) => m.user_id !== state.me?.id)?.profile : null;
+
+  if (icon) {
+    if (dm) {
+      if (otro?.avatar_url) {
+        icon.innerHTML = `<img src="${esc(otro.avatar_url)}" alt="${esc(nombreCanal(c))}" class="chat-channel-avatar" />`;
+      } else {
+        icon.textContent = '@';
+      }
+    } else {
+      icon.textContent = c.kind === 'voice' ? '🔊' : '#';
+    }
+  }
+
   if (title) title.textContent = nombreCanal(c);
   const arroba = dm ? (c.otro?.username || state.members.find((m) => m.user_id !== state.me?.id)?.profile?.username) : null;
   if (type) type.textContent = dm ? (arroba ? `@${arroba} · Chat privado` : 'Chat privado') : c.kind === 'voice' ? 'Canal de voz' : 'Canal de texto';
@@ -1326,13 +1370,23 @@ function renderChat() {
     };
   }
 
-  // En un chat privado, llamar a la persona sale de la misma cabecera.
-  const otro = dm ? c.otro || state.members.find((m) => m.user_id !== state.me?.id)?.profile : null;
+  // En un chat privado: botón de llamada que conmuta a "Colgar" si ya se está en llamada con él.
+  const inCall = dm && otro && hooks.isCallActiveWith ? hooks.isCallActiveWith(otro) : false;
   if (callBtn) {
     callBtn.style.display = dm ? 'inline-flex' : 'none';
-    callBtn.disabled = !otro || !isOnline(otro);
-    callBtn.title = otro && isOnline(otro) ? `Llamar a ${nombreCanal(c)}` : 'No está conectado';
-    callBtn.onclick = () => { if (otro) callFriend(otro); };
+    if (inCall) {
+      callBtn.classList.add('in-call');
+      callBtn.disabled = false;
+      callBtn.title = 'Colgar llamada';
+      callBtn.innerHTML = `${ICONO_COLGAR}<span>Colgar</span>`;
+      callBtn.onclick = () => { hooks.hangup?.(); };
+    } else {
+      callBtn.classList.remove('in-call');
+      callBtn.disabled = !otro || !isOnline(otro);
+      callBtn.title = otro && isOnline(otro) ? `Llamar a ${nombreCanal(c)}` : 'No está conectado';
+      callBtn.innerHTML = `${ICONO_TELEFONO}<span>Llamar</span>`;
+      callBtn.onclick = () => { if (otro) callFriend(otro); };
+    }
   }
 
   // Un chat privado no se comparte con un código: es de a dos y punto.
@@ -1345,15 +1399,35 @@ function renderChat() {
     };
   }
 
-  // Los dos borrados del chat privado, escritos sin eufemismos: uno es de esta PC y el otro
-  // es del servidor.
-  if (vistaBtn) {
-    vistaBtn.style.display = dm ? 'inline-block' : 'none';
-    vistaBtn.onclick = () => sacarDeMiVista(c.id);
+  // Menú hamburguesa superior derecho con opción "Eliminar chat" (borrado local)
+  if (menuWrapper) {
+    menuWrapper.style.display = dm ? 'inline-block' : 'none';
   }
-  if (ambosBtn) {
-    ambosBtn.style.display = dm ? 'inline-block' : 'none';
-    ambosBtn.onclick = () => borrarParaLosDos(c.id);
+  if (dropdownMenu) {
+    dropdownMenu.style.display = 'none';
+  }
+  if (menuBtn && !menuBtn._bound) {
+    menuBtn._bound = true;
+    menuBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isHidden = dropdownMenu.style.display === 'none' || !dropdownMenu.style.display;
+      dropdownMenu.style.display = isHidden ? 'block' : 'none';
+      menuBtn.setAttribute('aria-expanded', String(isHidden));
+    });
+
+    document.addEventListener('click', (e) => {
+      if (dropdownMenu && !menuWrapper.contains(e.target)) {
+        dropdownMenu.style.display = 'none';
+        menuBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+
+  if (btnEliminarChat) {
+    btnEliminarChat.onclick = () => {
+      if (dropdownMenu) dropdownMenu.style.display = 'none';
+      sacarDeMiVista(c.id);
+    };
   }
 
   if (closeBtn) {
@@ -1560,4 +1634,9 @@ function bindSidebarForms() {
 
 export function getSocialState() {
   return state;
+}
+
+export function updateSocialCallState() {
+  renderSidebar();
+  renderChat();
 }

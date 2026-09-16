@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="/assets/index-CPVftkN7.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-RIb8hxHP.css">
+  <script type="module" crossorigin src="/assets/index-Cz-yCEhO.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-BcaSS2Bt.css">
 </head>
 <body>
   <!-- Banner de permiso de audio en navegadores restrictivos -->
@@ -150,15 +150,32 @@
             </div>
             <div class="chat-header-actions">
               <button class="sc-ghost sc-small" id="btnChatCopyInvite" title="Copiar código de invitación">Copiar código</button>
-              <!-- Solo en chats privados. Dos acciones distintas, escritas sin eufemismos. -->
-              <button class="sc-ghost sc-small" id="btnChatVaciarLocal" style="display: none;" title="Borra la copia guardada en esta computadora. No toca el servidor y se puede deshacer.">Sacar de mi vista</button>
-              <button class="sc-danger sc-small" id="btnChatBorrarAmbos" style="display: none;" title="Borra del servidor los mensajes que escribiste vos. Desaparecen también de la pantalla del otro.">Borrar lo mío para los dos</button>
               <button class="sc-primary sc-small" id="btnChatVoice" style="display: none;">Entrar a voz</button>
               <button class="btn-chat-call" id="btnChatCall" style="display: none;" title="Llamar">
                 <svg class="sc-icono-tel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
                 <span>Llamar</span>
               </button>
               <button class="chat-close-btn" id="btnChatClose" title="Cerrar chat">✕ Salir del chat</button>
+
+              <!-- Menú hamburguesa esquina superior derecha -->
+              <div class="chat-menu-wrapper" id="chatMenuWrapper">
+                <button type="button" class="chat-menu-btn" id="btnChatMenu" title="Opciones del chat" aria-haspopup="true" aria-expanded="false">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                  </svg>
+                </button>
+                <div class="chat-dropdown-menu" id="chatDropdownMenu" style="display: none;">
+                  <button type="button" class="chat-dropdown-item text-danger" id="btnChatEliminarChat" title="Eliminar chat y borrar los mensajes solo para mí">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    <span>Eliminar chat</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 

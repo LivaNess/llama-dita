@@ -67,9 +67,11 @@
 
 .sc-channel-head { display: flex; flex-direction: column; gap: .3rem; align-items: flex-start; }
 .sc-messages { display: flex; flex-direction: column; gap: .4rem; max-height: 40vh; overflow-y: auto; padding: .4rem; background: rgba(0,0,0,.25); border-radius: 8px; }
-.sc-msg { background: rgba(255,255,255,.05); border-radius: 8px; padding: .4rem .6rem; font-size: .84rem; max-width: 92%; align-self: flex-start; word-break: break-word; }
+.sc-msg { background: rgba(255,255,255,.05); border-radius: 8px; padding: .5rem .7rem .4rem .7rem; font-size: .84rem; max-width: 92%; align-self: flex-start; word-break: break-word; }
 .sc-msg.mine { align-self: flex-end; background: rgba(124, 58, 237, .3); }
-.sc-msg small { display: block; color: var(--text-muted, #64748b); font-size: .68rem; margin-bottom: .15rem; }
+.sc-msg .sc-msg-author { display: block; color: #c084fc; font-size: .72rem; font-weight: 700; margin-bottom: .25rem; }
+.sc-msg.mine .sc-msg-author { color: #93c5fd; }
+.sc-msg .sc-msg-time { display: block; color: var(--text-muted, #64748b); font-size: .66rem; margin-top: .3rem; margin-bottom: 0; text-align: right; opacity: .85; }
 .sc-danger-row { margin-top: .8rem; }
 
 .sc-call-banner {

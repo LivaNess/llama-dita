@@ -1,7 +1,7 @@
 import { audioManager } from './audio/audioManager.js';
 import { PeerManager } from './network/peerManager.js';
 import { AudioVisualizer } from './components/visualizer.js';
-import { initSocial } from './social/panel.js';
+import { initSocial, updateSocialCallState } from './social/panel.js';
 import { initUpdater } from './updater.js';
 import { initDeepLink } from './social/deeplink.js';
 
@@ -263,6 +263,7 @@ function setupNetworking() {
       guestSpeakingText.textContent = 'Activo';
       setCallStatus(conQuien ? `En llamada con ${conQuien}` : 'En llamada');
       showToast('Participante conectado a la sala');
+      updateSocialCallState();
 
       // Por si la llamada quedó andando sin canal de datos: el nombre sale igual por
       // señalización. Cuando el canal abre, peerManager lo vuelve a mandar solo.
@@ -539,6 +540,7 @@ function leaveCall() {
   setCallStatus('Sin llamada');
   showToast('Saliste de la llamada');
   updateMainViews();
+  updateSocialCallState();
 }
 
 btnLeaveCall?.addEventListener('click', leaveCall);
@@ -558,6 +560,7 @@ window.addEventListener('DOMContentLoaded', () => {
       if (peerManager.setRoom(code)) {
         conQuien = nombre || null;
         setCallStatus(nombre ? `Llamando a ${nombre}…` : 'Conectando…');
+        updateSocialCallState();
       }
     },
     getRoom: () => peerManager.roomId,
@@ -576,7 +579,13 @@ window.addEventListener('DOMContentLoaded', () => {
         leaveCall();
       }
       updateMainViews();
-    }
+    },
+    isCallActiveWith: (friend) => {
+      if (!isConnected || !conQuien || !friend) return false;
+      const fn = friend.display_name || friend.username;
+      return conQuien === fn || conQuien === friend.username || conQuien === friend.display_name;
+    },
+    hangup: () => leaveCall()
   });
   // Buscar actualizaciones al abrir (opcional) + popover en el tag de versión del header.
   initUpdater({ toast: showToast });

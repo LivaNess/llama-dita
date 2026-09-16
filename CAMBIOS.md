@@ -19,6 +19,28 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.21.3D · 2026-09-16 · Antigravity
+**Qué cambió.** Mejoras estéticas y de UX en chat, lista de amigos y llamadas:
+1. **Avatar en cabecera de chat:** Si el amigo tiene `avatar_url`, se muestra su foto de perfil circular; en caso contrario, muestra el `@`.
+2. **Menú contextual superior derecho:** Se reemplazaron los botones "Sacar de mi vista" y "Borrar lo mío para los dos" por un menú hamburguesa (`☰`) en la esquina superior derecha con la opción "Eliminar chat" (borrado local en esta PC, sin alterar el servidor).
+3. **Ubicación de hora en mensajes:** La hora y estado (`hora · editado`) ahora se muestran debajo del contenido del mensaje y archivos adjuntos, manteniendo el nombre del autor arriba.
+4. **Interacción con amigos y llamadas en barra lateral:**
+   - Al hacer clic en un amigo cuyo chat ya está abierto, se cierra la conversación (`closeChannel`).
+   - Si se está en llamada activa con ese amigo, el botón telefónico se muestra en rojo con icono y texto de colgar (`.in-call`), y al presionarlo cuelga la llamada (`hooks.hangup()`).
+   - El botón de llamada dentro de la cabecera del chat privado también conmuta dinámicamente a "Colgar" en rojo cuando hay llamada activa con esa persona.
+5. **Alineación horizontal y diseño responsive:**
+   - La barra inferior de escritura del chat (`.chat-input-bar`) y el pie de usuario de la barra lateral (`.sidebar-user-footer`) comparten altura (64px) y línea superior continua sin desfasajes.
+   - La cabecera del chat se sincroniza con el ritmo visual de 64px de las cabeceras del sistema.
+**Por qué.** Pedido puntual de Juan para pulir la experiencia visual, la jerarquía de los mensajes y el control de llamadas directas.
+**Dónde.** `index.html`, `src/social/panel.js`, `src/social/social.css`, `src/style.css`, `src/main.js`, `package.json`.
+**Cómo se verifica.**
+1. Ejecutar `npm run verificar`.
+2. Al abrir un chat privado con un amigo: se visualiza su avatar si lo tiene o `@`. En la esquina superior derecha aparece el botón hamburguesa con "Eliminar chat".
+3. Enviar mensajes: el nombre del autor aparece arriba y la hora abajo a la derecha del globo.
+4. Tocar el amigo activo en la barra lateral cierra el chat.
+5. Al llamar al amigo o recibir llamada de él, el botón de llamada en la barra lateral y en el chat pasa a rojo "Colgar" y permite finalizar la llamada.
+6. La barra inferior de texto y el pie de usuario lateral quedan perfectamente alineados.
+
 ### 0.21.3C · 2026-09-16 · Claude
 **Qué cambió.** Dos cosas que Martín encontró probando los adjuntos:
 
