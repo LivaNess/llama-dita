@@ -132,7 +132,7 @@ sigue costando cero.
 ### Hito 5: el chat como corresponde
 1. **Imágenes y archivos**, guardados en el almacenamiento de objetos que ya usamos en otro
    proyecto (10 GB gratis y salida de datos sin cargo). Límite por archivo cómodamente por
-   arriba de los 8 MB del plan gratis ajeno.
+   arriba de los 20 MB del plan gratis ajeno.
 2. **Previsualización de enlaces**, formato básico, respuestas, editar, reacciones.
 3. **Historial que se conserva y se puede borrar**: por mensaje, por conversación y por
    canal, con la opción de definir cuánto tiempo se guarda.
