@@ -19,6 +19,29 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.18.1A · 2026-09-16 · Claude
+**Qué cambió.** La app dejó de medir el micrófono todo el tiempo. Ahora el nivel se calcula
+**solo cuando hay una cabina en pantalla mostrándolo**. Las barritas se mueven igual, con un
+poquito menos de precisión que nadie puede notar.
+**Por qué.** Había un nodo de audio que analizaba el sonido del micrófono unas 47 veces por
+segundo, en el mismo hilo que dibuja la interfaz, y **seguía corriendo con el micrófono
+silenciado, con los visualizadores apagados y con la ventana minimizada**. O sea que la app
+medía un micrófono que nadie estaba mirando, siempre. Para mover unas barritas de nivel no
+hace falta esa precisión: decisión de Martín.
+**Dónde.** `src/audio/audioManager.js`. El nodo que medía se reemplaza por una lectura del
+analizador que ya existía, hecha en el momento en que alguien pregunta. En su lugar queda un
+"tapón" con el volumen en cero, que es lo que evita que el micrófono salga por los parlantes.
+**Cómo se verifica.** Medido en la máquina de Martín, prueba A/B con las dos versiones
+compiladas y medidas en minutos consecutivos, cuatro muestras cada una, app abierta sin llamada:
+
+| | Muestras de CPU | Mediana |
+|---|---|---|
+| Antes | 3,28 · 1,73 · 1,76 · 3,46 | **2,5 %** |
+| Después | 1,18 · 0,88 · 0,64 · 0,47 | **0,76 %** |
+
+La memoria no se movió (213 MB). **Aviso honesto:** los números absolutos se mueven bastante
+según qué más esté haciendo la máquina; lo que vale es la comparación lado a lado.
+
 ### 0.17.2A · 2026-09-16 · Claude
 **Qué cambió.** Tres arreglos que no se ven pero evitan problemas feos.
 1. **La actualización ahora se verifica.** El manifiesto publica la huella del paquete y la app

@@ -1,4 +1,49 @@
-// Robust Audio manager for Llama-dita with ScriptProcessor raw PCM engine
+// Manejo del audio de Llama-dita.
+//
+// El nivel del micrófono (lo que mueve las barritas y decide si estás hablando) se mide
+// SOLO cuando alguien lo pregunta, o sea cuando hay una cabina en pantalla dibujándose.
+//
+// Antes lo calculaba un nodo que corría unas 47 veces por segundo en el mismo hilo que la
+// interfaz, y seguía corriendo con el micrófono silenciado, con los visualizadores apagados y
+// con la ventana minimizada: la app medía un micrófono que nadie estaba mirando, siempre. Para
+// mover unas barritas no hace falta esa precisión.
+
+const SILENCIO = { rms: 0, peak: 0, db: -60, volume: 0, isSpeaking: false, rawLevel: 0 };
+
+// Lee el nivel actual del analizador. Cuesta solo cuando se la llama.
+function medirNivel(analyser) {
+  if (!analyser) return SILENCIO;
+
+  const datos = new Uint8Array(analyser.fftSize);
+  analyser.getByteTimeDomainData(datos);
+
+  let suma = 0;
+  let pico = 0;
+  for (let i = 0; i < datos.length; i++) {
+    const muestra = (datos[i] - 128) / 128;
+    const abs = Math.abs(muestra);
+    if (abs > pico) pico = abs;
+    suma += muestra * muestra;
+  }
+  const rms = Math.sqrt(suma / datos.length);
+
+  let db = -60;
+  if (rms > 0.00005) db = Math.round(20 * Math.log10(rms));
+  db = Math.max(-60, Math.min(0, db));
+
+  // Misma escala de siempre: -55 dB es 0% y 0 dB es 100%.
+  let vol = 0;
+  if (db > -55) vol = Math.max(0, Math.min(100, Math.round(((db + 55) / 52) * 100)));
+
+  return {
+    rms,
+    peak: pico,
+    db,
+    volume: vol,
+    isSpeaking: vol > 8 || pico > 0.05,
+    rawLevel: Math.round(pico * 100)
+  };
+}
 
 class AudioManager {
   constructor() {
@@ -7,31 +52,24 @@ class AudioManager {
     this.localSource = null;
     this.localGain = null;
     this.localAnalyser = null;
-    this.localProcessor = null;
+    this.localSink = null;
+    this.remoteAnalyser = null;
     this.monitorGain = null;
     this.currentDeviceId = null;
     this.isMuted = false;
     this.micSensitivity = 1.8;
     this.isLoopbackEnabled = false;
 
-    // Real-time metrics updated via direct PCM audio frames
-    this.localMetrics = {
-      rms: 0,
-      peak: 0,
-      db: -60,
-      volume: 0,
-      isSpeaking: false,
-      rawLevel: 0
-    };
+  }
 
-    this.remoteMetrics = {
-      rms: 0,
-      peak: 0,
-      db: -60,
-      volume: 0,
-      isSpeaking: false,
-      rawLevel: 0
-    };
+  // El nivel se calcula en el momento en que se lee, no todo el tiempo.
+  get localMetrics() {
+    if (this.isMuted) return SILENCIO;
+    return medirNivel(this.localAnalyser);
+  }
+
+  get remoteMetrics() {
+    return medirNivel(this.remoteAnalyser);
   }
 
   // Get or initialize AudioContext
@@ -83,7 +121,7 @@ class AudioManager {
       this.cleanupLocalNodes();
 
       // Audio Graph:
-      // MediaStreamSource -> GainNode -> AnalyserNode -> ScriptProcessorNode -> destination (silent)
+      // Micrófono -> volumen -> analizador -> tapón mudo -> salida
       this.localSource = ctx.createMediaStreamSource(this.localStream);
       
       this.localGain = ctx.createGain();
@@ -93,63 +131,16 @@ class AudioManager {
       this.localAnalyser.fftSize = 256;
       this.localAnalyser.smoothingTimeConstant = 0.4;
 
-      // ScriptProcessor processes raw PCM float samples directly from audio driver
-      // bufferSize 1024 = ~21ms at 48kHz (smooth 45fps updates)
-      this.localProcessor = ctx.createScriptProcessor(1024, 1, 1);
-      
-      this.localProcessor.onaudioprocess = (e) => {
-        if (this.isMuted) {
-          this.localMetrics.rms = 0;
-          this.localMetrics.peak = 0;
-          this.localMetrics.db = -60;
-          this.localMetrics.volume = 0;
-          this.localMetrics.isSpeaking = false;
-          return;
-        }
-
-        const input = e.inputBuffer.getChannelData(0);
-        const output = e.outputBuffer.getChannelData(0);
-
-        let sum = 0;
-        let peak = 0;
-        for (let i = 0; i < input.length; i++) {
-          const sample = input[i];
-          const abs = Math.abs(sample);
-          if (abs > peak) peak = abs;
-          sum += sample * sample;
-          // Zero out output to prevent feedback through default speakers
-          output[i] = 0;
-        }
-
-        const rms = Math.sqrt(sum / input.length);
-        this.localMetrics.rms = rms;
-        this.localMetrics.peak = peak;
-        this.localMetrics.rawLevel = Math.round(peak * 100);
-
-        // Convert to dB (-60 dB to 0 dB)
-        let db = -60;
-        if (rms > 0.00005) {
-          db = Math.round(20 * Math.log10(rms));
-        }
-        db = Math.max(-60, Math.min(0, db));
-        this.localMetrics.db = db;
-
-        // Map dB to responsive 0-100% volume
-        // -55dB = 0%, -40dB = 25%, -25dB = 60%, -10dB = 85%, 0dB = 100%
-        let vol = 0;
-        if (db > -55) {
-          vol = Math.round(((db + 55) / 52) * 100);
-          vol = Math.max(0, Math.min(100, vol));
-        }
-        this.localMetrics.volume = vol;
-        this.localMetrics.isSpeaking = vol > 8 || peak > 0.05;
-      };
+      // Tapón: el grafo necesita terminar en la salida para que el analizador reciba audio,
+      // pero con volumen en cero, así el micrófono no sale por los parlantes.
+      this.localSink = ctx.createGain();
+      this.localSink.gain.value = 0;
 
       // Connect graph
       this.localSource.connect(this.localGain);
       this.localGain.connect(this.localAnalyser);
-      this.localAnalyser.connect(this.localProcessor);
-      this.localProcessor.connect(ctx.destination);
+      this.localAnalyser.connect(this.localSink);
+      this.localSink.connect(ctx.destination);
 
       return this.localStream;
     } catch (err) {
@@ -160,10 +151,7 @@ class AudioManager {
 
   cleanupLocalNodes() {
     try {
-      if (this.localProcessor) {
-        this.localProcessor.onaudioprocess = null;
-        this.localProcessor.disconnect();
-      }
+      if (this.localSink) this.localSink.disconnect();
       if (this.localAnalyser) this.localAnalyser.disconnect();
       if (this.localGain) this.localGain.disconnect();
       if (this.localSource) this.localSource.disconnect();
@@ -215,55 +203,24 @@ class AudioManager {
     analyser.fftSize = 256;
     analyser.smoothingTimeConstant = 0.4;
 
-    const processor = ctx.createScriptProcessor(1024, 1, 1);
-    processor.onaudioprocess = (e) => {
-      const input = e.inputBuffer.getChannelData(0);
-      const output = e.outputBuffer.getChannelData(0);
-
-      let sum = 0;
-      let peak = 0;
-      for (let i = 0; i < input.length; i++) {
-        const s = input[i];
-        const abs = Math.abs(s);
-        if (abs > peak) peak = abs;
-        sum += s * s;
-        // Output zero so audio element handles sound playback
-        output[i] = 0;
-      }
-
-      const rms = Math.sqrt(sum / input.length);
-      this.remoteMetrics.rms = rms;
-      this.remoteMetrics.peak = peak;
-      this.remoteMetrics.rawLevel = Math.round(peak * 100);
-
-      let db = -60;
-      if (rms > 0.00005) {
-        db = Math.round(20 * Math.log10(rms));
-      }
-      db = Math.max(-60, Math.min(0, db));
-      this.remoteMetrics.db = db;
-
-      let vol = 0;
-      if (db > -55) {
-        vol = Math.round(((db + 55) / 52) * 100);
-        vol = Math.max(0, Math.min(100, vol));
-      }
-      this.remoteMetrics.volume = vol;
-      this.remoteMetrics.isSpeaking = vol > 8 || peak > 0.05;
-    };
+    // Mismo tapón que en el micrófono: termina el grafo sin sacar sonido por los parlantes
+    // (el sonido del otro lo reproduce el elemento de audio, no este grafo).
+    const sink = ctx.createGain();
+    sink.gain.value = 0;
 
     source.connect(analyser);
-    analyser.connect(processor);
-    processor.connect(ctx.destination);
+    analyser.connect(sink);
+    sink.connect(ctx.destination);
+
+    this.remoteAnalyser = analyser;
 
     return {
       source,
       analyser,
-      processor,
       destroy: () => {
         try {
-          processor.onaudioprocess = null;
-          processor.disconnect();
+          if (this.remoteAnalyser === analyser) this.remoteAnalyser = null;
+          sink.disconnect();
           analyser.disconnect();
           source.disconnect();
         } catch (e) {}
