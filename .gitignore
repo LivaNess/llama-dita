@@ -4,3 +4,7 @@ node_modules/
 .wrangler/
 /dist/
 /site-dist/
+
+# El Worker de adjuntos tiene sus propias dependencias
+workers/*/node_modules/
+workers/*/.wrangler/

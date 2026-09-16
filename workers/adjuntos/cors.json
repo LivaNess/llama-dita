@@ -1,0 +1,18 @@
+{
+  "rules": [
+    {
+      "allowed": {
+        "origins": [
+          "http://localhost:24024",
+          "http://127.0.0.1:24024",
+          "http://localhost:3000",
+          "https://llamadita.pages.dev"
+        ],
+        "methods": ["GET", "PUT", "HEAD"],
+        "headers": ["content-type"]
+      },
+      "exposeHeaders": ["etag"],
+      "maxAgeSeconds": 3600
+    }
+  ]
+}
