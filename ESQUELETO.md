@@ -98,7 +98,7 @@ prueba y con qué hay que tener cuidado.
 
 ### F. Cuentas y panel social
 - **Archivos:** `src/social/auth.js`, `src/social/api.js`, `src/social/panel.js`,
-  `src/social/social.css`
+  `src/social/sesionGuardada.js`, `src/social/social.css`
 - **Qué hace:** entrar sin contraseña (código por mail), perfil, amigos con presencia,
   canales de texto y de voz, mensajes y llamadas directas.
 - **Depende de:** cliente Supabase, base de datos, red (para la llamada).

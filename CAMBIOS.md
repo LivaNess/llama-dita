@@ -19,6 +19,24 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.20.1A · 2026-09-16 · Claude
+**Qué cambió.** La sesión ya no se pierde al reinstalar la app. Si el navegador interno se
+quedó sin sesión pero la copia de respaldo existe, la app entra sola en vez de pedirte el
+código de nuevo.
+**Por qué.** La sesión vivía solo en el almacenamiento del navegador interno, que está atado a
+dos cosas frágiles: el puerto con el que se sirve la app (fijo en 24024 desde la `1.5.1A`, así
+que eso ya estaba resuelto) y la carpeta de datos del navegador, que **se borra al
+desinstalar**. Por eso al reinstalar había que volver a pedir el código.
+**Dónde.** `src/social/sesionGuardada.js` (nuevo) y `src/social/panel.js` (área F). La copia se
+guarda en `%LOCALAPPDATA%\Llamadita\sesion.json`, **fuera de la carpeta de la instalación**,
+que es lo que hace que sobreviva.
+**Cómo se verifica.** Entrar con el mail, cerrar la app, borrar la carpeta de la instalación y
+reinstalar: tiene que abrir con la sesión puesta. El archivo tiene que existir después de
+entrar.
+**Sobre el archivo.** Guarda el mismo dato que ya guardaba el navegador en disco: quien tenga
+acceso a tu usuario de Windows llega a los dos por igual. Si el token venció o se revocó, se
+borra solo y se pide el código.
+
 ### 0.19.1A · 2026-09-16 · Claude
 **Qué cambió.** El ícono que se ve en el escritorio, en la barra de tareas y en el Explorador
 ahora es el logo. El instalador y el desinstalador también.

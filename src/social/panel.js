@@ -7,6 +7,7 @@
 import './social.css';
 import { supabase } from '../supabase/client.js';
 import { getSession, onAuthChange, sendCode, verifyCode, signOut } from './auth.js';
+import { guardarSesion, recuperarSesion } from './sesionGuardada.js';
 import * as api from './api.js';
 
 const RING_TIMEOUT_MS = 45000;
@@ -57,13 +58,22 @@ export async function initSocial(h) {
   hooks = h;
   mount();
   state.session = await getSession();
+
+  // Si el navegador interno perdió la sesión (pasa al reinstalar, porque se borra su carpeta
+  // de datos), se recupera de la copia que guardamos aparte en vez de pedir el código otra vez.
+  if (!state.session) state.session = await recuperarSesion();
+
   onAuthChange(async (session) => {
     const wasLogged = !!state.session;
     state.session = session;
+    guardarSesion(session); // copia de respaldo, fuera de la carpeta de la instalación
     if (session && !wasLogged) await onLogin();
     if (!session && wasLogged) onLogout();
     render();
   });
+
+  // Y se refresca la copia con la sesión que haya ahora mismo.
+  if (state.session) guardarSesion(state.session);
   if (state.session) await onLogin();
   render();
   // Primera vez / sin sesión: abrir el panel para que cree la cuenta con su mail.
