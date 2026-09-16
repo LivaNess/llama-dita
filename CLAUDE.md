@@ -15,6 +15,7 @@ Para evitar conflictos de git, pérdida de código y solapamientos, **ambos agen
 | `SYNC.md` | quién está tocando qué **ahora** |
 | `CAMBIOS.md` | qué se hizo en cada versión y cómo verificarlo |
 | `ROADMAP.md` | a dónde va el proyecto: las reglas de arquitectura que no se negocian, los presets de consumo y el orden de los hitos |
+| `areas/` | una ficha por área con el análisis previo a construir. Empezar por `areas/00-SINTESIS.md` |
 
 **Dos obligaciones al terminar una tarea:** si creaste un área nueva, se registra en
 `ESQUELETO.md` con sus conexiones; si publicaste una versión, se registra en `CAMBIOS.md`.

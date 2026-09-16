@@ -17,6 +17,19 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Antigravity, de Martín (16/09/2026):**
+>
+> Hicimos seis análisis de área antes de empezar a construir, uno por cada parte del proyecto,
+> más una síntesis que los reconcilia. Están en `areas/`, arrancá por `areas/00-SINTESIS.md`.
+>
+> **Pegales una leída y decinos qué te parece**, sobre todo si ves algo que nos estemos
+> comiendo o alguna decisión que tomamos mal. Hay una contradicción abierta a propósito (si la
+> voz y el video van por la misma conexión o por dos separadas) y cuatro cosas esperando
+> decisión, están listadas al final de la síntesis.
+>
+> Lo que **no** hace falta: revisar redacción, discutir nombres de archivos, ni buscarle el pelo
+> al huevo. Es un plan para trabajar, no un documento para auditar.
+
 > **Para Juan, de Martín (16/09/2026):**
 >
 > **gracias BREODER**
@@ -84,26 +97,36 @@ Cronológico. Acá se lee qué significa cada área y foco (el número no es un 
 
 ---
 
-## 📍 Dónde estamos (cierre 2026-09-15, versión `1.13.1A`)
+## 📍 Dónde estamos (cierre 2026-09-16, versión `0.20.1A`)
 
-- **Red y voz**: la llamada dejó de abrir su propia conexión a Supabase; usa la del resto
-  de la app. Cada usuario pasa de dos conexiones en vivo a una, así que el techo del plan
-  gratis (200) pasa de ~100 personas a ~200. El nombre del otro ya llega siempre a su
-  cabina, y al cortarse vuelve a "Participante".
-- **Escritorio**: la ventana y la bandeja muestran el logo. El paquete `resources.neu` del
-  repositorio ya es `1.13.1A`.
-- **Publicada**: la `1.13.1A` está deployada en `llamadita.com.ar` (manifiesto, paquete de
-  actualización e instalador nuevo en `/descargas/`). Las apps instaladas la reciben al abrir.
-- **Instalador**: `installer/Llama-dita-Setup.exe` regenerado con la `1.13.1A`, ya con el
-  registro del esquema `llamadita://`. Inno Setup 6.7.3 quedó instalado en la PC de Martín
-  (`%LOCALAPPDATA%\Programs\Inno Setup 6`), así que `crear-instalador.bat` ahora corre acá
-  y no depende de Juan.
-- **Infraestructura** (sin cambios desde la `1.11.2B`): dominio propio `llamadita.com.ar`
-  con web, actualizaciones y descargas; Resend mandando los códigos desde
-  `acceso@llamadita.com.ar`; Juan con accesos de Owner/Admin en Supabase, Cloudflare y
-  Resend; `AGENTS.md` + `npm run verificar` corriendo solos en cada push.
+**El hito arranca en 0** por decisión de Martín: el proyecto todavía no llegó a su primer hito,
+y sube a 1 solo cuando él o Juan lo digan.
 
----
+Lo que se hizo en esta tanda:
+
+- **Llamadas arregladas.** La `1.15.1B` había borrado sin querer el reproductor del audio
+  remoto: la llamada conectaba pero no se escuchaba nada. Volvió.
+- **Fuera el sistema de códigos de sala.** Se llama al amigo desde la lista y la sala se abre
+  sola. La cabecera dice con quién estás hablando en vez de mostrar un código técnico.
+- **Consumo medido y bajado.** La app gastaba entre dos y tres veces más procesador del
+  necesario por dos cosas nuestras: dibujar medidores contra pantallas que nadie miraba, y
+  analizar el micrófono todo el tiempo aunque estuviera silenciado y minimizado. Medición A/B
+  en la máquina de Martín: mediana de 2,5% a 0,76% de CPU. Memoria: 213 MB, contra 1.217 MB de
+  la aplicación pesada que queremos reemplazar, medidas en la misma máquina y al mismo momento.
+- **Cinco bugs verificados y arreglados**: borrar una cuenta ya no borra el contenido de los
+  demás; las tablas nuevas sin políticas de seguridad ahora las caza `npm run verificar`; la
+  actualización comprueba la huella de lo que baja; el enlace del mail funciona en
+  instalaciones nuevas; y el reintento de conexión renegocia de verdad en vez de rehacer la
+  llamada.
+- **El logo también adentro del ejecutable** (antes solo estaba el de la ventana).
+- **La sesión sobrevive a reinstalar**, con una copia fuera de la carpeta de la instalación.
+- **El roadmap tiene ahora tres capas**: las reglas que no se negocian, el mapa de cómo está
+  construida la competencia y qué nos salteamos por escala, y la separación entre el tallo del
+  árbol y las ramas.
+- **Seis fichas de área** en `areas/`, con lo que hay que decidir antes de escribir código.
+
+**Lo primero que tiene que andar bien, decidido por Martín y Juan: el chat.** Y arrastra cuatro
+de los siete cimientos, así que es buen punto de entrada.
 
 ## 📌 Pendientes conocidos
 

@@ -10,6 +10,7 @@ Este archivo es la puerta de entrada. Si sos un agente trabajando en este reposi
 | `SYNC.md` | quién está tocando qué en este momento |
 | `CAMBIOS.md` | qué se hizo en cada versión y cómo verificarlo |
 | `ROADMAP.md` | a dónde va el proyecto, en qué orden y qué decidimos no hacer |
+| `areas/` | el análisis a fondo de cada área: qué decidir antes de codear y qué se nos olvida |
 
 ## Lo mínimo, sin vueltas
 
