@@ -437,7 +437,7 @@ function channelDetail() {
 function msgItem(m) {
   const mine = m.author_id === state.me.id;
   const t = new Date(m.created_at);
-  return `<div class="sc-msg ${mine ? 'mine' : ''}"><small>${esc(m.author?.display_name || m.author?.username || '')} · ${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}</small><div>${esc(m.body)}</div></div>`;
+  return `<div class="sc-msg ${mine ? 'mine' : ''}"><small>${esc(m.author?.display_name || m.author?.username || 'cuenta borrada')} · ${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}</small><div>${esc(m.body)}</div></div>`;
 }
 
 async function openChannel(id) {

@@ -68,6 +68,7 @@ Cronológico. Acá se lee qué significa cada área y foco (el número no es un 
 | `1.16.1A` | Claude | Interfaz / llamar a un amigo | Fix: la `1.15.1B` había borrado el reproductor de audio remoto y el contenedor de avisos del final de `index.html`; sin eso la llamada conectaba pero no sonaba. Además se sacó el sistema de códigos de sala: se llama desde la lista de amigos y la cabecera muestra con quién hablás. |
 | `1.16.2A` | Claude | Interfaz / limpieza | Se saca el cartel de cumpleaños (ya pasó el día y salía en cada apertura). El agradecimiento de Martín a Juan queda en la sección de recados de este documento. |
 | `0.16.2A` | Claude | Versionado / hito | El primer número pasa de 1 a 0 por decisión de Martín: el proyecto todavía no llegó a su primer hito. Sube a 1 solo cuando Martín o Juan lo declaren. Área y foco se conservan para no romper el historial. |
+| `0.17.1A` | Claude | Base de datos / no perder lo de los demás | Borrar una cuenta ya no borra el canal ni los mensajes de otros (las dos claves pasan a quedar en nulo). `npm run verificar` falla si una tabla nueva no tiene activadas las políticas de seguridad. |
 ---
 
 ## ⚠️ Reglas para agentes
@@ -107,14 +108,8 @@ Cronológico. Acá se lee qué significa cada área y foco (el número no es un 
 Salieron de la revisión por áreas y están confirmados uno por uno leyendo el repositorio y
 la base. No son hipótesis.
 
-1. **Se puede perder el chat de todos.** `channels.owner_id` y `messages.author_id` están con
-   borrado en cascada. Si el dueño de un canal borra su cuenta se borra el canal y con él los
-   mensajes de todos; si cualquiera borra la suya, desaparecen todos sus mensajes de todos
-   lados. Arreglo: cambiar la cascada por "queda sin dueño" o "autor borrado". Migración chica.
-2. **Mina para las tablas que vengan.** La migración 001 termina con un permiso amplio sobre
-   **todas** las tablas del esquema para cualquiera con cuenta. Hoy está tapado porque cada
-   tabla tiene sus políticas, pero la próxima tabla que se cree sin activarlas queda abierta.
-   Arreglo: control automático en `npm run verificar` que falle si hay una tabla sin RLS.
+1. ~~Se puede perder el chat de todos~~ · **resuelto en la `0.17.1A`** (migración 003).
+2. ~~Mina para las tablas que vengan~~ · **resuelto en la `0.17.1A`** (control en `npm run verificar`).
 3. **Las invitaciones no se pueden dar de baja.** No vencen, no tienen tope de usos, y la
    función que las canjea corre saltándose las políticas sin chequear nada más que si el código
    existe. (La entropía no es el problema: son 4.294 millones de combinaciones.)

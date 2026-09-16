@@ -19,6 +19,28 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.17.1A · 2026-09-16 · Claude
+**Qué cambió.** Borrar una cuenta ya no se lleva puesto el contenido de los demás. Antes, si
+el dueño de un canal borraba su cuenta **se borraba el canal con los mensajes de todos**, y si
+cualquiera borraba la suya desaparecían todos sus mensajes de todas las conversaciones. Ahora
+el canal sobrevive sin dueño y los mensajes sobreviven sin autor: la app los muestra como
+"cuenta borrada".
+**Por qué.** Las dos columnas tenían borrado en cascada contra el perfil. Nadie lo decidió:
+salió así al escribir la migración 001. Se revisaron las nueve claves foráneas del esquema:
+las otras siete están bien (amistades, membresías e invitaciones de llamada **sí** tienen que
+irse con la cuenta).
+**Además.** `npm run verificar` ahora falla si alguna tabla de las migraciones no tiene
+activadas las políticas de seguridad. Hace falta porque la migración 001 termina dando permiso
+de lectura y escritura sobre todas las tablas del esquema a cualquiera con cuenta: lo único que
+protege los datos es que cada tabla tenga RLS. La próxima tabla sin esa línea quedaba abierta.
+**Dónde.** `supabase/migrations/20260916_003_*.sql` (ya aplicada a la base),
+`src/social/panel.js`, `scripts/verificar-protocolo.mjs`.
+**Cómo se verifica.** En la base: las claves de `channels.owner_id` y `messages.author_id`
+tienen que decir `SET NULL`. En el protocolo: agregar una tabla sin RLS a una migración y
+correr `npm run verificar`, tiene que fallar.
+**Pendiente que abre esto.** Mientras un canal esté sin dueño, nadie puede renombrarlo ni
+borrarlo. El traspaso de dueño va con el trabajo de roles.
+
 ### 0.16.2A · 2026-09-16 · Claude
 **Qué cambió.** El primer número de la versión pasa de 1 a 0. La app va a mostrar `V0.16.2A`.
 **Por qué.** Nadie había decidido que estuviéramos en el hito 1: venía arrastrado de un

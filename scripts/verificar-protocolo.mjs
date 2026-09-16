@@ -48,7 +48,33 @@ if (!esqueleto) {
   }
 }
 
-// 3. No quedaron bloqueos abiertos
+// 3. Ninguna tabla sin sus políticas de seguridad activadas.
+// Motivo: la migración 001 termina dando permiso de lectura y escritura sobre TODAS las tablas
+// del esquema a cualquiera que tenga cuenta. Lo único que protege los datos es que cada tabla
+// tenga RLS activado. Una tabla nueva sin esa línea queda abierta de par en par.
+const dirMigraciones = join(root, 'supabase', 'migrations');
+if (existsSync(dirMigraciones)) {
+  const sql = readdirSync(dirMigraciones)
+    .filter((f) => f.endsWith('.sql'))
+    .map((f) => readFileSync(join(dirMigraciones, f), 'utf8'))
+    .join(String.fromCharCode(10))
+    .toLowerCase();
+
+  const tablas = [...sql.matchAll(/create table (?:if not exists )?public[.]([a-z0-9_]+)/g)].map((m) => m[1]);
+  for (const t of new Set(tablas)) {
+    if (!sql.includes('alter table public.' + t + ' enable row level security')) {
+      fallas.push(
+        'La tabla public.' + t + ' no tiene activadas las políticas de seguridad (RLS).' +
+        String.fromCharCode(10) +
+        '   Sin eso queda abierta a cualquiera con cuenta, por el permiso general de la migración 001.' +
+        String.fromCharCode(10) +
+        '   Agregá: alter table public.' + t + ' enable row level security;'
+      );
+    }
+  }
+}
+
+// 4. No quedaron bloqueos abiertos
 const sync = leer('SYNC.md');
 const tablaLocks = sync.split('## 🗺️')[0] || sync;
 if (tablaLocks && !/\*Ninguno\*/.test(tablaLocks)) {
