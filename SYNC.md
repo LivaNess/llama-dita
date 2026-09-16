@@ -9,7 +9,7 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 | Agente | Versión objetivo | Archivos en edición | Estado |
 | :--- | :--- | :--- | :--- |
-| *Ninguno* | - | - | *Libre para tomar tareas* |
+| **Claude** | `0.22.1A` | `supabase/migrations/006`, `workers/adjuntos/`, `src/social/` (avatares), `index.html` | **Trabajando: fotos de perfil + purga automatica de objetos** |
 
 > Para tomar una tarea, reemplazá la fila con tu agente, la versión objetivo y los archivos que vas a intervenir. Al hacer el commit final, restaurá el estado a *Libre*.
 
