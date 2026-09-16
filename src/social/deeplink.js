@@ -33,17 +33,25 @@ const archivoScript = () => `${rutaApp()}/abrir-enlace.cmd`;
 
 const SCRIPT = [
   '@echo off',
-  'setlocal',
+  // Expansión retrasada: sin esto el & de la dirección corta el comando y el
+  // enlace se guarda incompleto.
+  'setlocal enabledelayedexpansion',
   'set "URL=%~1"',
   'if not exist "%~dp0.tmp" mkdir "%~dp0.tmp"',
-  '> "%~dp0.tmp\\enlace.txt" echo %URL%',
+  '> "%~dp0.tmp\\enlace.txt" echo !URL!',
   'tasklist /FI "IMAGENAME eq Llama-dita.exe" | find /I "Llama-dita.exe" >nul',
   'if errorlevel 1 start "" "%~dp0Llama-dita.exe"',
   'endlocal'
 ].join('\r\n') + '\r\n';
 
 async function instalarScriptYEsquema(nl) {
-  try { await nl.filesystem.writeFile(archivoScript(), SCRIPT); } catch (_) { return; }
+  // Se reescribe solo si falta o quedó viejo (sin la expansión retrasada).
+  try {
+    const actual = await nl.filesystem.readFile(archivoScript());
+    if (!actual.includes('enabledelayedexpansion')) throw new Error('viejo');
+  } catch (_) {
+    try { await nl.filesystem.writeFile(archivoScript(), SCRIPT); } catch (_) { return; }
+  }
   const cmd = aWindows(archivoScript());
   const base = `HKCU\\Software\\Classes\\${ESQUEMA}`;
   const ordenes = [
