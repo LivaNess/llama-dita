@@ -19,6 +19,13 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 1.16.2A · 2026-09-16 · Claude
+**Qué cambió.** Se sacó el cartel de cumpleaños que aparecía al abrir la app. El
+agradecimiento de Martín a Juan quedó escrito en `SYNC.md`, en la sección de recados.
+**Por qué.** Ya pasó el día, y salía en cada apertura.
+**Dónde.** `index.html`, `src/brand.css`, `src/main.js`.
+**Cómo se verifica.** Abrir la app: entra derecho, sin ningún cartel en el medio.
+
 ### 1.16.1A · 2026-09-16 · Claude
 **Qué cambió.** Dos cosas. **Volvieron a funcionar las llamadas**: no se escuchaba al otro
 lado. Y **se fue el sistema de códigos de sala**: ya no hay que copiar ni pegar nada. Llamás

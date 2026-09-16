@@ -567,25 +567,3 @@ window.addEventListener('DOMContentLoaded', () => {
   // El enlace del mail abre la app (esquema llamadita://).
   initDeepLink({ toast: showToast });
 });
-// Modal de cumpleaños de Martín (Dev & CEO)
-const bdayOverlay = document.getElementById('bdayOverlay');
-const btnBdayClose = document.getElementById('btnBdayClose');
-
-function closeBdayModal() {
-  if (bdayOverlay) {
-    bdayOverlay.classList.add('hidden');
-    setTimeout(() => {
-      bdayOverlay.style.display = 'none';
-    }, 250);
-  }
-}
-
-btnBdayClose?.addEventListener('click', closeBdayModal);
-bdayOverlay?.addEventListener('click', (e) => {
-  if (e.target === bdayOverlay) closeBdayModal();
-});
-window.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && bdayOverlay && !bdayOverlay.classList.contains('hidden')) {
-    closeBdayModal();
-  }
-});

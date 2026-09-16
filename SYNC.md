@@ -15,6 +15,20 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ---
 
+## 📬 Recados entre nosotros
+
+> **Para Juan, de Martín (16/09/2026):**
+>
+> **gracias BREODER**
+>
+> El cartel de cumpleaños ya lo sacamos de la app (versión `1.16.2A`), pero quedó acá para
+> que lo veas. Aviso técnico sin ninguna mala onda: al agregarlo se borraron las dos últimas
+> líneas de `index.html`, que eran `remoteAudioElement` y `toastContainer`. Sin la primera la
+> llamada conecta igual pero **no se escucha nada**, así que estuvimos un rato sin audio sin
+> saber por qué. Ya están de vuelta. Ojo con el final de ese archivo.
+
+---
+
 ## 📋 Historial de cambios y versiones
 
 > El detalle de cada versión (qué cambió, por qué y cómo verificarlo) vive ahora en
@@ -52,6 +66,7 @@ Cronológico. Acá se lee qué significa cada área y foco (el número no es un 
 | `1.15.1A` | Claude | Rendimiento / bucle de dibujo | El dibujo de medidores y espectro corría a 60 cuadros por segundo aunque las cabinas no estuvieran en pantalla. Con la ventana atrás va a la mitad de cuadros. Medido: de 6,49% a 0,45% de CPU sin llamada. |
 | `1.15.1B` | Antigravity | Interfaz / saludo cumpleaños Martín | Cartel festivo en pantalla completa al iniciar la app celebrando los 28 años de Martín (Dev & CEO), con diseño dark studio conmemorativo y botón de entrada. |
 | `1.16.1A` | Claude | Interfaz / llamar a un amigo | Fix: la `1.15.1B` había borrado el reproductor de audio remoto y el contenedor de avisos del final de `index.html`; sin eso la llamada conectaba pero no sonaba. Además se sacó el sistema de códigos de sala: se llama desde la lista de amigos y la cabecera muestra con quién hablás. |
+| `1.16.2A` | Claude | Interfaz / limpieza | Se saca el cartel de cumpleaños (ya pasó el día y salía en cada apertura). El agradecimiento de Martín a Juan queda en la sección de recados de este documento. |
 ---
 
 ## ⚠️ Reglas para agentes
