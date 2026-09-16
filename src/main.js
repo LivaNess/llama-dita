@@ -3,6 +3,7 @@ import { PeerManager } from './network/peerManager.js';
 import { AudioVisualizer } from './components/visualizer.js';
 import { initSocial } from './social/panel.js';
 import { initUpdater } from './updater.js';
+import { initDeepLink } from './social/deeplink.js';
 
 // DOM Elements
 const audioPermissionBanner = document.getElementById('audioPermissionBanner');
@@ -519,6 +520,8 @@ window.addEventListener('DOMContentLoaded', () => {
   });
   // Buscar actualizaciones al abrir (opcional) + popover en el tag de versión del header.
   initUpdater({ toast: showToast });
+  // El enlace del mail abre la app (esquema llamadita://).
+  initDeepLink({ toast: showToast });
 });
 // Room Join Controls
 const inputJoinRoom = document.getElementById('inputJoinRoom');

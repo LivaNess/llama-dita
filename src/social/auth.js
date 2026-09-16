@@ -1,4 +1,5 @@
 import { supabase } from '../supabase/client.js';
+import { esEscritorio, REDIRECT_APP } from './deeplink.js';
 
 // Sesión actual (null si no hay)
 export async function getSession() {
@@ -19,7 +20,8 @@ export async function sendCode(email, { createUser = true } = {}) {
     email: clean,
     options: {
       shouldCreateUser: createUser,
-      emailRedirectTo: window.location.origin + window.location.pathname
+      // En la app el enlace del mail abre la app; en el navegador, vuelve a la página.
+      emailRedirectTo: esEscritorio() ? REDIRECT_APP : window.location.origin + window.location.pathname
     }
   });
   if (error) throw translate(error);
