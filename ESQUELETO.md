@@ -175,6 +175,22 @@ prueba y con qué hay que tener cuidado.
   los mensajes del otro. La política de borrado lo excluye a propósito; en un canal normal el
   dueño sí modera.
 
+### J.1 El repartidor de archivos (`workers/adjuntos/`)
+- **Archivos:** `workers/adjuntos/src/index.js`, `wrangler.toml`, `cors.json`, y del lado de la
+  app `src/social/adjuntos.js`.
+- **Qué hace:** reparte permisos firmados para subir un archivo al bucket y para mirarlo. Los
+  bytes van de la máquina del que sube al bucket **directo**: nunca pasan por acá.
+- **Depende de:** el bucket `llamadita-adjuntos` en Cloudflare R2, y de la base (a la que le
+  pregunta con la sesión de la persona, nunca con una llave propia).
+- **Dependen de él:** el chat, para las imágenes y los archivos.
+- **Cómo se prueba:** `curl .../salud`; y de punta a punta, pegar una captura en el chat.
+- **Cuidado:** la clave de R2 es la llave del candado entero (R2 no tiene políticas como la
+  base). Vive como **secreto del Worker** y no va nunca al repositorio ni a la app.
+- **Cuidado 2:** el plan gratis da 10 milisegundos de procesador y 100 MB de cuerpo por pedido.
+  Por eso los archivos no pueden pasar por el Worker: con el tope de 100 MB, no entrarían.
+- **Cuidado 3:** el bucket tiene su propia lista de orígenes permitidos (CORS). Si la app se
+  sirviera desde otro puerto, las subidas empezarían a fallar sin mensaje claro.
+
 ### K. Empaquetado e instalador
 - **Archivos:** `desktop/`, `installer.iss`, `crear-instalador.bat`
 - **Qué hace:** convierte la web en app de Windows y arma el instalador.

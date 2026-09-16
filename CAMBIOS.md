@@ -19,6 +19,51 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.21.2A · 2026-09-16 · Claude
+**Qué cambió.** Todavía nada que se vea: es la mitad de abajo de los adjuntos, la que hay que
+tener antes de poner el clip en la pantalla. Queda armado el lugar donde van a vivir las
+imágenes y el servicio que reparte los permisos para subirlas y mirarlas.
+
+**Por qué.** Las imágenes no pueden ir a la base: el plan gratis da 1 GB y **cobra la salida**,
+o sea que una foto que se mira veinte veces se paga veinte veces. Van a un bucket de objetos
+(Cloudflare R2), que da 10 GB y la salida **nunca** se paga. Pero para escribir en R2 hace falta
+una clave secreta, y una clave secreta adentro de la app es una clave publicada: cualquiera abre
+el ejecutable, la saca, y te llena el bucket o te lo vacía.
+
+**Dónde.**
+- `supabase/migrations/20260916_005_adjuntos.sql` (aplicada): la ficha de cada archivo, el
+  permiso de que un mensaje sea **solo** una imagen (pero nunca vacío del todo), el cupo por
+  persona, la función que manda mensaje y archivo de una sola vez, y la **cola de objetos a
+  borrar** que se llena sola cuando se borra un mensaje, una conversación o un canal entero.
+- `workers/adjuntos/` (nuevo): el repartidor de permisos. La clave de R2 vive ahí como secreto
+  y no sale nunca. Los bytes van de tu máquina al bucket **directo**, sin pasar por él.
+- `src/social/adjuntos.js` (nuevo): achica las imágenes antes de subir, sube con barra de
+  progreso, y pide permisos de lectura de una hora que se guardan en memoria.
+
+**La decisión que más plata ahorra, ya implementada.** Una captura de pantalla pesa entre 2 y
+5 MB. Antes de subir se lleva a 1600 píxeles de lado mayor y a un formato moderno, y queda
+entre 200 y 400 KB. En una ventana de chat no se nota. Eso convierte "el cupo se llena en 3
+meses" en "se llena en dos años", y se hace en la máquina del que sube, sin costo. Si alguien
+quiere mandar el original tal cual, puede marcarlo.
+
+**Cómo sabe quién sos el repartidor, sin tener ninguna llave de la base.** La app le manda su
+sesión. La firma se comprueba contra la clave **pública** del proyecto. Y para saber si podés
+subir a un canal o mirar un archivo, el repartidor le pregunta a la base **con tu propia
+sesión**: si las políticas te devuelven la fila, es que podés. Nunca decide él.
+
+**Por qué los bytes no pasan por el repartidor.** El plan gratis de Workers da **10
+milisegundos de procesador** y **100 MB de cuerpo** por pedido. Con un tope de 100 MB por
+archivo, pasarlos por arriba no sería solo caro: no entraría. Verificado en la documentación,
+no de memoria.
+
+**Lo que falta para que ande.** La credencial de R2, que se crea en el panel de Cloudflare y
+solo la puede hacer Martín. Hasta que esté, el repartidor responde pero no puede firmar nada.
+Después va la mitad de arriba: el clip, pegar con Ctrl+V, arrastrar, y dibujar la imagen en la
+conversación.
+
+**Cómo se verifica (cuando esté la credencial).** Pegar una captura en el chat, verla del otro
+lado, borrarla, y comprobar que el objeto desapareció del bucket.
+
 ### 0.21.1B · 2026-09-16 · Antigravity
 **Qué cambió.** Bloqueo completo del programa para usuarios sin sesión activa y pantalla de login/registro integrada permanentemente en la barra lateral izquierda:
 1. **Acceso bloqueado sin sesión:** Si no estás logueado o verificado, el programa no permite interactuar con cabinas, canales de chat ni realizar llamadas. En el centro se muestra la tarjeta de "Acceso restringido" y en la cabecera el estado queda en "Sin sesión" con indicador "BLOQUEADO".

@@ -9,7 +9,7 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 | Agente | Versión objetivo | Archivos en edición | Estado |
 | :--- | :--- | :--- | :--- |
-| **Claude** | `0.21.2A` | `src/social/` (adjuntos), `workers/` (nuevo), `supabase/migrations/005`, `index.html` | **Trabajando: imágenes y archivos en el chat** (paso 3 de `areas/chat-e-historial.md`) |
+| *Ninguno* | - | - | *Libre para tomar tareas* |
 
 > Para tomar una tarea, reemplazá la fila con tu agente, la versión objetivo y los archivos que vas a intervenir. Al hacer el commit final, restaurá el estado a *Libre*.
 
@@ -36,6 +36,20 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 > 3. **Renombre:** La sección de amigos ahora dice "AMIGOS -" tanto en la app como en la landing web.
 >
 > Queda el lock liberado para cualquier tarea siguiente.
+
+> **Para Antigravity, de Claude (16/09/2026). Los adjuntos están a medio hacer**
+>
+> La `0.21.2A` dejó armada la mitad de abajo de las imágenes y archivos: la tabla de fichas, la
+> cola de objetos a borrar, y un servicio nuevo en `workers/adjuntos/` que reparte permisos
+> firmados para subir y mirar. **Falta la credencial de R2**, que la tiene que crear Martín en
+> el panel de Cloudflare, así que hasta entonces no se puede probar de punta a punta.
+>
+> Lo que sigue cuando esté: el clip en la barra de escribir, pegar con Ctrl+V, arrastrar y
+> soltar, y dibujar la imagen adentro de la conversación. **Eso toca `panel.js`.**
+>
+> Si vas a agarrar algo de `src/social/panel.js` en el medio, avisanos acá primero: es el
+> tercer cruce del día en ese archivo y los dos venimos arreglando merges en vez de escribir
+> código.
 
 > **Para Antigravity y Juan, de Claude y Martín (16/09/2026). Nos cruzamos en los chats privados**
 >
@@ -223,6 +237,7 @@ Cronológico. Acá se lee qué significa cada área y foco (el número no es un 
 | `0.20.1A` | Claude | Cuentas / la sesión sobrevive a reinstalar | Copia de la sesión en `%LOCALAPPDATA%\Llamadita\`, fuera de la carpeta de la instalación. Si el navegador interno se quedó sin sesión, la app la restaura sola. |
 ---
 | `0.21.1A` | Claude | Chat / esqueleto e historial | Migración 004: espacios, chats privados de a dos (`kind='dm'` + `dm_key`), identificador de mensaje puesto por el cliente, edición, lápidas y retención. Caché local del historial en `src/social/cacheLocal.js` con sincronización por diferencia (se terminó el techo de 60 mensajes y el bajar todo cada vez). Borrado duro con lápida que viaja en vivo. Tocar a un amigo abre su chat privado. **Absorbe la `0.20.1B` de Antigravity**, que hizo lo mismo con otro modelo: se conservó su trabajo de pantalla y se descartó el modelo del `room_code` (ver recado). |
+| `0.21.2A` | Claude | Chat / adjuntos | Migración 005: ficha de cada archivo, un mensaje puede ser solo una imagen, cupo por persona, `enviar_con_archivos()` atómico y la cola de objetos a borrar. `workers/adjuntos/`: reparte permisos firmados contra R2, validando la sesión con la clave pública del proyecto. `src/social/adjuntos.js`: achica las imágenes antes de subir. **Falta la credencial de R2 y la pantalla.** |
 
 ## ⚠️ Reglas para agentes
 1. **Build limpio**: nunca `git push` con `npm run build` roto.
