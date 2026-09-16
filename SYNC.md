@@ -9,7 +9,7 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 | Agente | Versión objetivo | Archivos en edición | Estado |
 | :--- | :--- | :--- | :--- |
-| *Ninguno* | - | - | *Libre para tomar tareas* |
+| **Claude** | `0.22.2A` → `0.22.5x` | `supabase/migrations/007`, `src/social/*`, `workers/adjuntos/`, `index.html` | **Cerrando el tronco del chat**: retención y purga, buscador, responder/editar/reacciones/markdown, y "está escribiendo". Es un tramo largo: si tocás `panel.js` avisanos acá primero. |
 
 > Para tomar una tarea, reemplazá la fila con tu agente, la versión objetivo y los archivos que vas a intervenir. Al hacer el commit final, restaurá el estado a *Libre*.
 
