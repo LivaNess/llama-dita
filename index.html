@@ -132,6 +132,8 @@
               <span class="chat-channel-badge" id="chatChannelType">Canal de texto</span>
             </div>
             <div class="chat-header-actions">
+              <button class="sc-ghost sc-small" id="btnChatBuscar" title="Buscar en la conversación">Buscar</button>
+              <button class="sc-ghost sc-small" id="btnChatRetencion" title="Cuánto se guarda">Cuánto se guarda</button>
               <button class="sc-ghost sc-small" id="btnChatCopyInvite" title="Copiar código de invitación">Copiar código</button>
               <button class="sc-primary sc-small" id="btnChatVoice" style="display: none;">Entrar a voz</button>
               <button class="btn-chat-call" id="btnChatCall" style="display: none;" title="Llamar">
@@ -167,6 +169,22 @@
           </div>
 
           <!-- Barra inferior según boceto: '@ escriba aquí...' -->
+          <!-- El buscador del historial. Busca primero en lo que ya está en esta PC. -->
+          <div class="chat-buscador" id="chatBuscador" hidden>
+            <input type="text" id="chatBuscarInput" placeholder="Buscar en esta conversación…" autocomplete="off" />
+            <span class="sc-muted sc-tiny" id="chatBuscarInfo"></span>
+            <button type="button" class="sc-ghost sc-small" id="chatBuscarCerrar">Listo</button>
+          </div>
+
+          <!-- Cuánto se guarda en este canal. -->
+          <div class="chat-retencion" id="chatRetencion" hidden></div>
+
+          <!-- Quién está escribiendo ahora mismo. -->
+          <div class="chat-escribiendo" id="chatEscribiendo" hidden></div>
+
+          <!-- A quién le estamos respondiendo. -->
+          <div class="chat-respondiendo" id="chatRespondiendo" hidden></div>
+
           <!-- Lo que está por mandarse: miniaturas con su peso y su barrita de subida. -->
           <div class="chat-adjuntos" id="chatAdjuntos" style="display: none;"></div>
 

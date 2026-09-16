@@ -27,6 +27,10 @@ const state = {
   directos: new Map(), // id de canal -> chat privado abierto (no salen en la lista de canales)
   porMandar: [],       // archivos elegidos que todavia no se enviaron
   mandando: false,     // hay una subida en curso: no dejar mandar dos veces
+  editando: null,      // id del mensaje que se esta editando en linea
+  respondiendoA: null, // mensaje al que le vamos a responder
+  escribiendo: new Map(), // quien esta escribiendo ahora mismo -> cuando se apaga solo
+  busqueda: null,
   incomingCall: null,
   outgoingCall: null,
   unsub: [],
@@ -533,19 +537,96 @@ function adjuntoItem(a) {
   </button>`;
 }
 
+// Formato del texto de un mensaje.
+//
+// REGLA DE ORO: se escapa PRIMERO y se da formato DESPUES. Al reves, cualquiera manda un
+// mensaje con html adentro y se lo ejecuta la app del otro. Por eso `esc()` va antes que todo
+// y de aca en adelante ya no hay texto crudo dando vueltas.
+function conFormato(texto) {
+  let t = esc(texto);
+
+  // Bloques de codigo: se sacan primero y se guardan aparte, para que nada de lo de abajo les
+  // toque el contenido (un asterisco adentro de un bloque de codigo es un asterisco).
+  const bloques = [];
+  t = t.replace(/```([\s\S]*?)```/g, (_, codigo) => {
+    bloques.push(codigo.replace(/^\n/, ''));
+    return `\u0000BLOQUE${bloques.length - 1}\u0000`;
+  });
+
+  t = t.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+  t = t.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+  t = t.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
+  t = t.replace(/~~([^~\n]+)~~/g, '<s>$1</s>');
+
+  // Las direcciones quedan clickeables. `noopener` no es decorativo: sin eso, la pagina que se
+  // abre puede manipular la que la abrio.
+  t = t.replace(/\bhttps?:\/\/[^\s<]+/g, (u) => `<a href="${u}" target="_blank" rel="noopener noreferrer">${u}</a>`);
+
+  return t.replace(/\u0000BLOQUE(\d+)\u0000/g, (_, i) => `<pre class="sc-codigo">${bloques[Number(i)]}</pre>`);
+}
+
+// Las reacciones se muestran agrupadas por emoji, con cuantos son y si vos estas adentro.
+function reaccionesItem(m) {
+  const lista = m.reacciones || [];
+  if (!lista.length) return '';
+  const porEmoji = new Map();
+  for (const r of lista) {
+    const c = porEmoji.get(r.emoji) || { cuantos: 0, mia: false };
+    c.cuantos++;
+    if (r.user_id === state.me?.id) c.mia = true;
+    porEmoji.set(r.emoji, c);
+  }
+  return `<div class="sc-reacciones">${[...porEmoji.entries()].map(([emoji, c]) =>
+    `<button type="button" class="sc-reaccion ${c.mia ? 'mia' : ''}" data-reaccion="${esc(m.id)}" data-emoji="${esc(emoji)}" title="${c.mia ? 'Sacar la tuya' : 'Sumarte'}">${esc(emoji)} ${c.cuantos}</button>`
+  ).join('')}</div>`;
+}
+
+// La cita del mensaje al que se le responde. Si ese mensaje ya no esta, se dice; no se
+// esconde. Borrar un mensaje NO borra las respuestas: seria borrar conversacion ajena.
+function citaItem(m) {
+  if (!m.reply_to) return '';
+  const al = state.messages.find((x) => String(x.id) === String(m.reply_to));
+  if (!al) return `<div class="sc-cita ausente">El mensaje al que respond\u00eda ya no est\u00e1</div>`;
+  const resumen = al.body ? al.body.slice(0, 90) : (al.adjuntos?.length ? 'un archivo' : '');
+  return `<button type="button" class="sc-cita" data-ir="${esc(al.id)}" title="Ir al mensaje">
+    <strong>${esc(autorDe(al))}</strong><span>${esc(resumen)}${al.body && al.body.length > 90 ? '\u2026' : ''}</span>
+  </button>`;
+}
+
+const EMOJIS_RAPIDOS = ['\ud83d\udc4d', '\ud83d\ude02', '\u2764\ufe0f', '\ud83d\udd25', '\ud83d\ude2e', '\ud83d\ude22'];
+
 function msgItem(m) {
   const mine = m.author_id === state.me.id;
   // Lo tuyo lo borrás siempre. Lo ajeno, solo el dueño de un canal, y nunca en un chat
   // privado: si no, el que abrió la conversación podría borrar lo que dijo el otro.
   const puedoBorrar = mine || (!esDirecto(state.currentChannel) && state.currentChannel?.owner_id === state.me.id);
+  const puedoFijar = esDirecto(state.currentChannel) || state.currentChannel?.owner_id === state.me.id;
+  const editando = String(state.editando || '') === String(m.id);
   const t = new Date(m.created_at);
   const hora = `${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}`;
-  return `<div class="sc-msg ${mine ? 'mine' : ''}" data-msg="${esc(m.id)}">
+
+  const cuerpo = editando
+    ? `<form class="sc-editor" data-editor="${esc(m.id)}">
+         <input type="text" value="${esc(m.body)}" maxlength="2000" />
+         <div class="sc-editor-pie"><button type="submit" class="sc-primary sc-small">Guardar</button><button type="button" class="sc-ghost sc-small" data-cancelar-edicion>Cancelar</button><span class="sc-muted sc-tiny">Enter guarda \u00b7 Esc cancela</span></div>
+       </form>`
+    : m.body ? `<div class="sc-msg-body">${conFormato(m.body)}</div>` : '';
+
+  return `<div class="sc-msg ${mine ? 'mine' : ''} ${m.fijado ? 'fijado' : ''}" data-msg="${esc(m.id)}">
+    ${m.fijado ? `<small class="sc-fijado-sello">\ud83d\udccc fijado</small>` : ''}
     <small class="sc-msg-author">${esc(autorDe(m))}</small>
-    ${m.body ? `<div class="sc-msg-body">${esc(m.body)}</div>` : ''}
+    ${citaItem(m)}
+    ${cuerpo}
     ${(m.adjuntos || []).length ? `<div class="sc-msg-adjuntos">${m.adjuntos.map(adjuntoItem).join('')}</div>` : ''}
+    ${reaccionesItem(m)}
     <small class="sc-msg-time">${hora}${m.edited_at ? ' · editado' : ''}</small>
-    ${puedoBorrar ? `<div class="sc-msg-acciones">${mine && m.body ? `<button type="button" class="sc-msg-accion" data-editar="${esc(m.id)}" title="Editar el texto">✎</button>` : ''}<button type="button" class="sc-msg-accion" data-borrar="${esc(m.id)}" title="Borrar para todos">✕</button></div>` : ''}
+    ${editando ? '' : `<div class="sc-msg-acciones">
+      <div class="sc-emojis">${EMOJIS_RAPIDOS.map((e) => `<button type="button" class="sc-emoji" data-reaccion="${esc(m.id)}" data-emoji="${e}" title="Reaccionar">${e}</button>`).join('')}</div>
+      <button type="button" class="sc-msg-accion" data-responder="${esc(m.id)}" title="Responder">\u21a9</button>
+      ${puedoFijar ? `<button type="button" class="sc-msg-accion" data-fijar="${esc(m.id)}" title="${m.fijado ? 'Soltarlo' : 'Fijarlo'}">\ud83d\udccc</button>` : ''}
+      ${mine && m.body ? `<button type="button" class="sc-msg-accion" data-editar="${esc(m.id)}" title="Editar el texto">✎</button>` : ''}
+      ${puedoBorrar ? `<button type="button" class="sc-msg-accion" data-borrar="${esc(m.id)}" title="Borrar para todos">✕</button>` : ''}
+    </div>`}
   </div>`;
 }
 
@@ -579,7 +660,13 @@ function mezclar(actuales, nuevos, lapidas = []) {
     // El aviso en vivo trae la fila PELADA: el mensaje sin los archivos que le cuelgan. Si se
     // reemplazara sin mirar, editar el texto de un mensaje con una imagen la hacia desaparecer.
     // Lo que llega manda, pero solo sobre lo que efectivamente trae.
-    porId.set(clave, viejo && !m.adjuntos ? { ...viejo, ...m, adjuntos: viejo.adjuntos } : m);
+    if (!viejo) { porId.set(clave, m); continue; }
+    porId.set(clave, {
+      ...viejo,
+      ...m,
+      adjuntos: m.adjuntos ?? viejo.adjuntos,
+      reacciones: m.reacciones ?? viejo.reacciones
+    });
   }
 
   for (const id of borrados) porId.delete(id);
@@ -619,6 +706,12 @@ async function sincronizar(channelId) {
 }
 
 async function llegoMensaje(channelId, fila) {
+  // Ya mando: los puntitos se apagan ahora y no a los 7 segundos.
+  if (fila.author_id && state.escribiendo.has(fila.author_id)) {
+    clearTimeout(state.escribiendo.get(fila.author_id).timer);
+    state.escribiendo.delete(fila.author_id);
+    pintarEscribiendo();
+  }
   const perfil = state.members.find((m) => m.user_id === fila.author_id)?.profile;
   const m = { ...fila, author: perfil ? { username: perfil.username, display_name: perfil.display_name } : null };
   // Lo que haya llegado antes que el mensaje.
@@ -670,6 +763,16 @@ async function llegoAdjunto(channelId, fila) {
   render();
 }
 
+async function refrescarReacciones(channelId, messageId) {
+  if (!messageId || state.currentChannel?.id !== channelId) return;
+  const m = state.messages.find((x) => String(x.id) === String(messageId));
+  if (!m) return;
+  try { m.reacciones = await api.reaccionesDe(messageId); } catch (_) { return; }
+  await cache.guardarMensajes([m]);
+  if (state.currentChannel?.id !== channelId) return;
+  render();
+}
+
 // Un borrado no viaja como "fila borrada" (ese aviso llega solo con la clave y no se puede
 // filtrar por canal): viaja como el alta de una lápida.
 async function llegoBorrado(channelId, lapida) {
@@ -688,6 +791,11 @@ function suscribirCanal(id) {
     { table: 'messages', event: 'UPDATE', filter: `channel_id=eq.${id}`, cb: (p) => llegoMensaje(id, p.new) },
     { table: 'message_tombstones', event: 'INSERT', filter: `channel_id=eq.${id}`, cb: (p) => llegoBorrado(id, p.new) },
     { table: 'attachments', event: 'INSERT', filter: `channel_id=eq.${id}`, cb: (p) => llegoAdjunto(id, p.new) },
+    // Las altas se filtran por canal. Las bajas no se pueden filtrar (el aviso de una fila
+    // borrada viaja solo con su clave), asi que llegan todas las que tenemos permiso de ver,
+    // que son poquitas, y se descartan las de mensajes que no tenemos en pantalla.
+    { table: 'reactions', event: 'INSERT', filter: `channel_id=eq.${id}`, cb: (p) => refrescarReacciones(id, p.new?.message_id) },
+    { table: 'reactions', event: 'DELETE', cb: (p) => refrescarReacciones(id, p.old?.message_id) },
     { table: 'channel_members', filter: `channel_id=eq.${id}`, cb: async () => { if (state.currentChannel?.id === id) { state.members = await api.listMembers(id); render(); } } }
   ]);
 }
@@ -695,7 +803,13 @@ function suscribirCanal(id) {
 async function openChannel(id) {
   const c = buscarCanal(id);
   if (!c) return;
-  if (c.id !== state.currentChannel?.id) vaciarBandeja();
+  if (c.id !== state.currentChannel?.id) {
+    vaciarBandeja();
+    state.respondiendoA = null;
+    state.editando = null;
+    state.busqueda = null;
+    state.escribiendo.clear();
+  }
   state.currentChannel = c;
   toggleDrawer(false);
   state.members = [];
@@ -714,6 +828,7 @@ async function openChannel(id) {
   if (state.currentChannel?.id !== id) return;
 
   suscribirCanal(id);
+  if (conTexto) abrirEscritura(id);
   render();
 }
 
@@ -731,9 +846,122 @@ async function abrirChatPrivado(p) {
 
 function closeChannel() {
   if (state.channelUnsub) { state.channelUnsub(); state.channelUnsub = null; }
+  cerrarEscritura();
   state.currentChannel = null;
+  state.respondiendoA = null;
+  state.editando = null;
+  state.busqueda = null;
+  state.escribiendo.clear();
   vaciarBandeja();
   cerrarVisor();
+  render();
+}
+
+// ------------------------------------------------------------------
+// "Esta escribiendo"
+// ------------------------------------------------------------------
+// Es la funcion con peor relacion entre lo que aporta y lo que gasta del cupo comun. Si se
+// mandara un aviso por tecla, un mensaje de 40 caracteres con 6 personas mirando serian 240
+// avisos para anunciar UN mensaje. Con las tres reglas de abajo baja a un 4,5% del cupo.
+//
+//   1. Cuentagotas de 5 segundos, sin excepcion.
+//   2. NO se manda "dejo de escribir": se apaga solo a los 7 segundos del otro lado. Eso
+//      ahorra la mitad de los avisos y nadie lo nota.
+//   3. No se manda si no hay nadie del otro lado conectado. Si escribis en un canal donde no
+//      hay nadie, los puntitos no viajan a ningun lado.
+//
+// (La regla 3 de la ficha era "nadie MIRANDO ese canal". Sin presencia por canal, lo mas
+// cercano que tenemos es "nadie del canal conectado", que ahorra el caso que importa: el canal
+// vacio. Queda anotado por si algun dia hay presencia por canal.)
+const CUENTAGOTAS_MS = 5000;
+const SE_APAGA_MS = 7000;
+
+let avisoEscritura = null;
+let ultimoAviso = 0;
+
+function abrirEscritura(channelId) {
+  cerrarEscritura();
+  const canal = api.canalDeEscritura(channelId, (p) => llegoEscribiendo(channelId, p));
+  avisoEscritura = { channelId, ...canal };
+}
+
+function cerrarEscritura() {
+  try { avisoEscritura?.cerrar(); } catch (_) {}
+  avisoEscritura = null;
+  ultimoAviso = 0;
+  for (const v of state.escribiendo.values()) clearTimeout(v.timer);
+  state.escribiendo.clear();
+}
+
+function llegoEscribiendo(channelId, payload) {
+  if (state.currentChannel?.id !== channelId) return;
+  if (!payload?.id || payload.id === state.me?.id) return;
+  clearTimeout(state.escribiendo.get(payload.id)?.timer);
+  state.escribiendo.set(payload.id, {
+    nombre: payload.nombre || 'Alguien',
+    timer: setTimeout(() => { state.escribiendo.delete(payload.id); pintarEscribiendo(); }, SE_APAGA_MS)
+  });
+  pintarEscribiendo();
+}
+
+function avisarQueEscribo() {
+  if (!avisoEscritura || !state.currentChannel || !state.me) return;
+  // Regla 3: si no hay nadie del otro lado, no viaja.
+  const hayAlguien = state.members.some((m) => m.user_id !== state.me.id && state.online.has(m.user_id));
+  if (!hayAlguien) return;
+  // Regla 1: el cuentagotas.
+  const ahora = Date.now();
+  if (ahora - ultimoAviso < CUENTAGOTAS_MS) return;
+  ultimoAviso = ahora;
+  try { avisoEscritura.avisar({ id: state.me.id, nombre: state.me.display_name || state.me.username }); } catch (_) {}
+}
+
+// Al mandar el mensaje se deja de avisar. No se manda un "ya termine" (regla 2): del otro lado
+// los puntitos se apagan solos, y ademas al llegar el mensaje se apagan al toque.
+function dejarDeAvisarQueEscribo() { ultimoAviso = 0; }
+
+function pintarEscribiendo() {
+  const caja = document.getElementById('chatEscribiendo');
+  if (!caja) return;
+  const nombres = [...state.escribiendo.values()].map((v) => v.nombre);
+  if (!nombres.length) { caja.hidden = true; caja.textContent = ''; return; }
+  caja.hidden = false;
+  caja.textContent = nombres.length === 1
+    ? `${nombres[0]} est\u00e1 escribiendo\u2026`
+    : nombres.length === 2
+      ? `${nombres[0]} y ${nombres[1]} est\u00e1n escribiendo\u2026`
+      : 'Varios est\u00e1n escribiendo\u2026';
+}
+
+// ------------------------------------------------------------------
+// Buscar en el historial
+// ------------------------------------------------------------------
+// Primero en lo que ya esta en esta PC, que es instantaneo y no cuesta nada. Al servidor se le
+// pregunta solo por lo que nunca bajaste, y los repetidos se descartan por identificador.
+async function buscar(termino) {
+  const t = (termino || '').trim();
+  const canal = state.currentChannel;
+  if (!canal) return;
+  if (t.length < 2) { state.busqueda = null; render(); return; }
+
+  const local = (await cache.leerMensajes(canal.id, 5000))
+    .filter((m) => (m.body || '').toLowerCase().includes(t.toLowerCase()));
+
+  state.busqueda = { termino: t, resultados: local, buscandoAfuera: true };
+  render();
+
+  let delServidor = [];
+  try { delServidor = await api.buscarEnElServidor(t, canal.id); } catch (_) {}
+  if (state.busqueda?.termino !== t) return; // ya escribio otra cosa
+
+  const porId = new Map(local.map((m) => [String(m.id), m]));
+  for (const m of delServidor) if (!porId.has(String(m.id))) porId.set(String(m.id), m);
+
+  state.busqueda = {
+    termino: t,
+    resultados: [...porId.values()].sort((a, b) => hora(b.created_at) - hora(a.created_at)),
+    buscandoAfuera: false
+  };
   render();
 }
 
@@ -850,6 +1078,9 @@ function sumarArchivos(lista) {
     state.porMandar.push(item);
   }
   renderBandeja();
+  pintarRespondiendo();
+  pintarEscribiendo();
+  pintarBuscador();
 }
 
 function sacarArchivo(i) {
@@ -895,9 +1126,15 @@ async function mandarMensaje(texto, devolverTexto) {
   const pendientes = state.porMandar;
   if (!texto.trim() && !pendientes.length) return;
 
+  const responde = state.respondiendoA?.id || null;
+
   if (!pendientes.length) {
-    try { await api.sendMessage(c.id, state.me.id, texto); }
-    catch (e) { hooks.toast?.(e.message); devolverTexto?.(texto); }
+    try {
+      await api.sendMessage(c.id, state.me.id, texto, null, responde);
+      state.respondiendoA = null;
+      dejarDeAvisarQueEscribo();
+      render();
+    } catch (e) { hooks.toast?.(e.message); devolverTexto?.(texto); }
     return;
   }
 
@@ -914,6 +1151,8 @@ async function mandarMensaje(texto, devolverTexto) {
     }
     await api.enviarConArchivos(c.id, texto, fichas);
     state.mandando = false;
+    state.respondiendoA = null;
+    dejarDeAvisarQueEscribo();
     vaciarBandeja();
     // Red de seguridad para el que manda: en vez de confiar en que los avisos en vivo lleguen
     // completos y en orden, se le pide al servidor lo que cambio. Es una consulta chica y se
@@ -973,10 +1212,88 @@ function cerrarVisor() {
 // Los botones de cada mensaje, que aparecen tanto en el cajón como en la pantalla grande.
 function bindAccionesMensaje(contenedor) {
   if (!contenedor) return;
+
   contenedor.querySelectorAll('[data-borrar]').forEach((b) => {
     b.onclick = () => { if (confirm('¿Borrar este mensaje? Se va de verdad, para todos.')) borrarMensaje(b.dataset.borrar); };
   });
-  contenedor.querySelectorAll('[data-editar]').forEach((b) => { b.onclick = () => editarMensaje(b.dataset.editar); });
+
+  // Editar es en linea: el globo se convierte en un campo de texto y listo.
+  contenedor.querySelectorAll('[data-editar]').forEach((b) => {
+    b.onclick = () => { state.editando = b.dataset.editar; render(); };
+  });
+  contenedor.querySelectorAll('[data-cancelar-edicion]').forEach((b) => {
+    b.onclick = () => { state.editando = null; render(); };
+  });
+  contenedor.querySelectorAll('[data-editor]').forEach((form) => {
+    const campo = form.querySelector('input');
+    campo?.addEventListener('keydown', (e) => { if (e.key === 'Escape') { state.editando = null; render(); } });
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const id = form.dataset.editor;
+      const texto = campo.value;
+      const antes = state.messages.find((m) => String(m.id) === String(id));
+      state.editando = null;
+      if (!texto.trim()) { hooks.toast?.('Un mensaje no puede quedar vacío. Si lo querés sacar, borralo.'); render(); return; }
+      if (antes && texto.trim() === antes.body) { render(); return; }
+      render();
+      try { await api.editMessage(id, texto); } catch (err) { hooks.toast?.(err.message); }
+    };
+    setTimeout(() => { campo?.focus(); campo?.setSelectionRange(campo.value.length, campo.value.length); }, 0);
+  });
+
+  contenedor.querySelectorAll('[data-responder]').forEach((b) => {
+    b.onclick = () => {
+      state.respondiendoA = state.messages.find((m) => String(m.id) === String(b.dataset.responder)) || null;
+      render();
+      document.getElementById('chatMessageInput')?.focus();
+    };
+  });
+
+  contenedor.querySelectorAll('[data-fijar]').forEach((b) => {
+    b.onclick = async () => {
+      const m = state.messages.find((x) => String(x.id) === String(b.dataset.fijar));
+      try { await api.fijarMensaje(b.dataset.fijar, !m?.fijado); }
+      catch (e) { hooks.toast?.(e.message); }
+    };
+  });
+
+  contenedor.querySelectorAll('[data-reaccion]').forEach((b) => {
+    b.onclick = () => alternarReaccion(b.dataset.reaccion, b.dataset.emoji);
+  });
+
+  // Ir al mensaje citado: se lo lleva a la vista y se lo marca un segundo.
+  contenedor.querySelectorAll('[data-ir]').forEach((b) => {
+    b.onclick = () => {
+      const destino = contenedor.querySelector(`[data-msg="${CSS.escape(b.dataset.ir)}"]`);
+      if (!destino) return;
+      destino.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      destino.classList.add('resaltado');
+      setTimeout(() => destino.classList.remove('resaltado'), 1200);
+    };
+  });
+}
+
+// Reaccionar es un interruptor: si ya estaba la tuya, la saca.
+async function alternarReaccion(messageId, emoji) {
+  const m = state.messages.find((x) => String(x.id) === String(messageId));
+  if (!m || !state.currentChannel) return;
+  const yaEsta = (m.reacciones || []).some((r) => r.emoji === emoji && r.user_id === state.me.id);
+
+  // Se dibuja al toque y despues se manda: esperar el ida y vuelta para ver un emoji se nota.
+  m.reacciones = yaEsta
+    ? (m.reacciones || []).filter((r) => !(r.emoji === emoji && r.user_id === state.me.id))
+    : [...(m.reacciones || []), { emoji, user_id: state.me.id }];
+  render();
+
+  try {
+    if (yaEsta) await api.sacarReaccion(messageId, state.me.id, emoji);
+    else await api.reaccionar(messageId, state.currentChannel.id, state.me.id, emoji);
+  } catch (e) {
+    hooks.toast?.(e.message);
+    // No salió: se vuelve a lo que dice el servidor en vez de dejar una mentira en pantalla.
+    try { m.reacciones = await api.reaccionesDe(messageId); } catch (_) {}
+    render();
+  }
 }
 
 // ---- Perfil ----
@@ -1530,7 +1847,15 @@ function renderChat() {
   renderBandeja();
 
   if (messagesBox) {
-    if (c.kind === 'voice') {
+    if (state.busqueda) {
+      const r = state.busqueda.resultados;
+      messagesBox.innerHTML = r.length
+        ? `<p class="sc-buscando">Resultados de “${esc(state.busqueda.termino)}”</p>` + r.map(msgItem).join('')
+        : `<p class="sc-empty">Nada con “${esc(state.busqueda.termino)}”.</p>`;
+      bindAccionesMensaje(messagesBox);
+      pintarAdjuntos(messagesBox);
+      messagesBox.scrollTop = 0;
+    } else if (c.kind === 'voice') {
       messagesBox.innerHTML = `<p class="sc-empty">Es un canal de voz. Entrá a la sala con el botón de arriba.</p>`;
     } else if (!state.messages.length) {
       messagesBox.innerHTML = `<p class="sc-empty">Acá todavía no pasó nada.</p>`;
@@ -1541,6 +1866,85 @@ function renderChat() {
       messagesBox.scrollTop = messagesBox.scrollHeight;
     }
   }
+}
+
+function pintarRespondiendo() {
+  const caja = document.getElementById('chatRespondiendo');
+  if (!caja) return;
+  const m = state.respondiendoA;
+  if (!m) { caja.hidden = true; caja.innerHTML = ''; return; }
+  const resumen = m.body ? m.body.slice(0, 120) : (m.adjuntos?.length ? 'un archivo' : '');
+  caja.hidden = false;
+  caja.innerHTML = `<span class="chat-respondiendo-texto">Respondi\u00e9ndole a <strong>${esc(autorDe(m))}</strong>: ${esc(resumen)}</span>
+    <button type="button" class="sc-ghost sc-small" id="chatRespondiendoCancelar" title="Cancelar">✕</button>`;
+  caja.querySelector('#chatRespondiendoCancelar').onclick = () => { state.respondiendoA = null; render(); };
+}
+
+function pintarBuscador() {
+  const caja = document.getElementById('chatBuscador');
+  const info = document.getElementById('chatBuscarInfo');
+  if (!caja) return;
+  caja.hidden = !state.busqueda && !caja.dataset.abierto;
+  if (!info) return;
+  if (!state.busqueda) { info.textContent = ''; return; }
+  const n = state.busqueda.resultados.length;
+  info.textContent = state.busqueda.buscandoAfuera
+    ? `${n} en esta PC, mirando el resto\u2026`
+    : n === 0 ? 'Nada' : n === 1 ? '1 resultado' : `${n} resultados`;
+}
+
+function cerrarBuscador() {
+  const buscador = document.getElementById('chatBuscador');
+  if (buscador) { buscador.dataset.abierto = ''; buscador.hidden = true; }
+  state.busqueda = null;
+  render();
+}
+
+// Cuanto se guarda en este canal. El texto y los adjuntos vencen por separado a proposito: el
+// texto es barato y lo queres tener, las imagenes son el volumen.
+const OPCIONES_RETENCION = [
+  { valor: '', texto: 'Para siempre' },
+  { valor: '365', texto: '1 a\u00f1o' },
+  { valor: '90', texto: '90 d\u00edas' },
+  { valor: '30', texto: '30 d\u00edas' },
+  { valor: '7', texto: '7 d\u00edas' },
+  { valor: '1', texto: '24 horas' }
+];
+
+function pintarRetencion() {
+  const caja = document.getElementById('chatRetencion');
+  const c = state.currentChannel;
+  if (!caja || !c) return;
+
+  const puedo = esDirecto(c) || c.owner_id === state.me?.id;
+  const opciones = (sel, conSiempre) => OPCIONES_RETENCION
+    .filter((o) => conSiempre || o.valor !== '')
+    .map((o) => `<option value="${o.valor}" ${String(sel ?? '') === o.valor ? 'selected' : ''}>${o.texto}</option>`).join('');
+
+  caja.innerHTML = `
+    <div class="chat-retencion-fila">
+      <label>Los mensajes</label>
+      <select id="retTexto" ${puedo ? '' : 'disabled'}>${opciones(c.retencion_texto_dias, true)}</select>
+      <label>Los archivos</label>
+      <select id="retAdjuntos" ${puedo ? '' : 'disabled'}>${opciones(c.retencion_adjuntos_dias ?? 90, false)}</select>
+      ${puedo ? `<button type="button" class="sc-primary sc-small" id="retGuardar">Guardar</button>` : ''}
+      <button type="button" class="sc-ghost sc-small" id="retCerrar">Cerrar</button>
+    </div>
+    <p class="sc-muted sc-tiny">Lo que vence se borra de verdad, del servidor y del almacenamiento. El texto pesa poco y conviene guardarlo; las im\u00e1genes son las que llenan el espacio.${puedo ? '' : ' Esto lo cambia el due\u00f1o del canal.'}</p>`;
+
+  caja.querySelector('#retCerrar').onclick = () => { caja.hidden = true; };
+  const guardar = caja.querySelector('#retGuardar');
+  if (guardar) guardar.onclick = async () => {
+    const texto = caja.querySelector('#retTexto').value;
+    const adj = caja.querySelector('#retAdjuntos').value;
+    try {
+      await api.definirRetencion(c.id, texto === '' ? null : Number(texto), Number(adj));
+      c.retencion_texto_dias = texto === '' ? null : Number(texto);
+      c.retencion_adjuntos_dias = Number(adj);
+      hooks.toast?.('Listo. Lo vencido se limpia solo.');
+      caja.hidden = true;
+    } catch (e) { hooks.toast?.(e.message); }
+  };
 }
 
 // ------------------------------------------------------------------
@@ -1711,6 +2115,49 @@ function bindSidebarForms() {
       encima = 0;
       if (cartel) cartel.hidden = true;
       sumarArchivos(e.dataTransfer.files);
+    });
+  }
+
+  // ---- Avisar que estoy escribiendo ----
+  if (chatMsgInput && !chatMsgInput._escribiendo) {
+    chatMsgInput._escribiendo = true;
+    chatMsgInput.addEventListener('input', () => { if (chatMsgInput.value.trim()) avisarQueEscribo(); });
+  }
+
+  // ---- El buscador ----
+  const buscador = document.getElementById('chatBuscador');
+  const buscarInput = document.getElementById('chatBuscarInput');
+  const btnBuscar = document.getElementById('btnChatBuscar');
+  if (btnBuscar && buscador && !btnBuscar._bound) {
+    btnBuscar._bound = true;
+    btnBuscar.addEventListener('click', () => {
+      const abierto = buscador.dataset.abierto === '1';
+      if (abierto) { cerrarBuscador(); return; }
+      buscador.dataset.abierto = '1';
+      buscador.hidden = false;
+      buscarInput.value = '';
+      buscarInput.focus();
+    });
+    document.getElementById('chatBuscarCerrar')?.addEventListener('click', cerrarBuscador);
+    let demora;
+    buscarInput.addEventListener('input', () => {
+      clearTimeout(demora);
+      // Se espera a que deje de tipear: sin esto, cada tecla seria una consulta al servidor.
+      demora = setTimeout(() => buscar(buscarInput.value), 300);
+    });
+    buscarInput.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrarBuscador(); });
+  }
+
+  // ---- Cuanto se guarda ----
+  const btnRetencion = document.getElementById('btnChatRetencion');
+  if (btnRetencion && !btnRetencion._bound) {
+    btnRetencion._bound = true;
+    btnRetencion.addEventListener('click', () => {
+      const caja = document.getElementById('chatRetencion');
+      if (!caja) return;
+      if (!caja.hidden) { caja.hidden = true; return; }
+      pintarRetencion();
+      caja.hidden = false;
     });
   }
 

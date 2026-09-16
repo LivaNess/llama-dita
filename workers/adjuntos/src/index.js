@@ -340,18 +340,29 @@ async function rpc(env, funcion, cuerpo) {
 async function purgar(env, tope = 100) {
   if (!env.PURGA_SECRETO || faltaLaCredencial(env)) return { borrados: 0, motivo: 'sin secreto o sin credencial' };
 
+  // Primero se borra lo VENCIDO segun la retencion de cada canal. Eso a su vez encola los
+  // objetos de los adjuntos que se fueron, asi que tiene que correr antes de vaciar la cola:
+  // si no, lo vencido en esta vuelta se borraria recien en la siguiente.
+  let vencidos = null;
+  try {
+    const r = await rpc(env, 'purgar_vencidos', { secreto: env.PURGA_SECRETO, tope: 500 });
+    vencidos = Array.isArray(r) ? r[0] : r;
+  } catch (e) {
+    console.error('no se pudo purgar lo vencido:', e?.message);
+  }
+
   const claves = await rpc(env, 'tomar_objetos_a_borrar', { secreto: env.PURGA_SECRETO, tope });
-  if (!Array.isArray(claves) || !claves.length) return { borrados: 0 };
+  if (!Array.isArray(claves) || !claves.length) return { borrados: 0, vencidos };
 
   const listos = [];
   for (const key of claves) {
     try { await env.ADJUNTOS.delete(key); listos.push(key); }
     catch (e) { console.error('no se pudo borrar', key, e?.message); }
   }
-  if (!listos.length) return { borrados: 0 };
+  if (!listos.length) return { borrados: 0, vencidos };
 
   const confirmados = await rpc(env, 'confirmar_objetos_borrados', { secreto: env.PURGA_SECRETO, claves: listos });
-  return { borrados: listos.length, confirmados };
+  return { borrados: listos.length, confirmados, vencidos };
 }
 
 // ------------------------------------------------------------------

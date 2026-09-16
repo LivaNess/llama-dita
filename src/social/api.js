@@ -135,7 +135,7 @@ export async function abrirChatDirecto(otroId) {
 // ---------- Mensajes ----------
 // Los adjuntos viajan pegados al mensaje: una consulta en vez de dos.
 const CAMPOS_ADJUNTO = 'id, object_key, nombre, mime, bytes, ancho, alto';
-const CAMPOS_MENSAJE = `id, body, created_at, updated_at, edited_at, author_id, client_id, author:profiles!messages_author_id_fkey(username, display_name, avatar_key), adjuntos:attachments(${CAMPOS_ADJUNTO})`;
+const CAMPOS_MENSAJE = `id, body, created_at, updated_at, edited_at, author_id, client_id, reply_to, fijado, author:profiles!messages_author_id_fkey(username, display_name, avatar_key), adjuntos:attachments(${CAMPOS_ADJUNTO}), reacciones:reactions(emoji, user_id)`;
 
 // Primera vez en un canal: se baja un pedazo de historial y listo. De ahí en adelante manda
 // `sincronizarCanal`, que pide solo lo que cambió.
@@ -172,12 +172,13 @@ export async function sincronizarCanal(channelId, desde, solapeMs = 30000) {
   return { mensajes: nuevos.data || [], lapidas: borrados.data || [], completo: false };
 }
 
-export async function sendMessage(channelId, myId, body, clientId) {
+export async function sendMessage(channelId, myId, body, clientId, replyTo) {
   const text = body.trim();
   if (!text) return;
   // El identificador lo pone el cliente: si la red corta y el mensaje se reenvía, entra una
   // sola vez en lugar de aparecer duplicado.
   const fila = { channel_id: channelId, author_id: myId, body: text, client_id: clientId || crearId() };
+  if (replyTo) fila.reply_to = replyTo;
   const { error } = await supabase.from('messages').insert(fila);
   if (error && (error.message || '').toLowerCase().includes('duplicate')) return; // ya había entrado
   fail(error);
@@ -205,6 +206,51 @@ export async function adjuntosDe(messageId) {
     .eq('message_id', messageId);
   fail(error);
   return data || [];
+}
+
+// ---------- Comodidades ----------
+export async function reaccionar(messageId, channelId, myId, emoji) {
+  const { error } = await supabase.from('reactions').insert({ message_id: messageId, channel_id: channelId, user_id: myId, emoji });
+  // Reaccionar dos veces con lo mismo no es un error: es que ya estaba.
+  if (error && (error.message || '').toLowerCase().includes('duplicate')) return;
+  fail(error);
+}
+
+export async function sacarReaccion(messageId, myId, emoji) {
+  const { error } = await supabase.from('reactions').delete().eq('message_id', messageId).eq('user_id', myId).eq('emoji', emoji);
+  fail(error);
+}
+
+export async function reaccionesDe(messageId) {
+  const { data, error } = await supabase.from('reactions').select('emoji, user_id').eq('message_id', messageId);
+  fail(error);
+  return data || [];
+}
+
+export async function fijarMensaje(id, valor) {
+  const { error } = await supabase.rpc('fijar_mensaje', { mensaje: id, valor });
+  fail(error);
+}
+
+// ---------- Buscador ----------
+// Solo para lo que nunca bajaste a esta PC: lo de todos los días lo resuelve la caché local
+// sin tocar la red. Corre con tu sesión, así que encuentra solo donde podés ver.
+export async function buscarEnElServidor(termino, channelId) {
+  const t = (termino || '').trim();
+  if (t.length < 2) return [];
+  const { data, error } = await supabase.rpc('buscar_mensajes', { termino: t, canal: channelId || null, tope: 50 });
+  fail(error);
+  return data || [];
+}
+
+// ---------- Retención ----------
+export async function definirRetencion(channelId, textoDias, adjuntosDias) {
+  const { error } = await supabase.rpc('definir_retencion', {
+    canal: channelId,
+    texto_dias: textoDias ?? null,
+    adjuntos_dias: adjuntosDias ?? 90
+  });
+  fail(error);
 }
 
 export async function editMessage(id, body) {
@@ -250,6 +296,22 @@ export async function createCallInvite(myId, calleeId, roomCode) {
 export async function updateCallInvite(id, status) {
   const { error } = await supabase.from('call_invites').update({ status }).eq('id', id);
   fail(error);
+}
+
+// ---------- "Está escribiendo" ----------
+// Va por aviso suelto (broadcast) y no por la base: un mensaje que se empieza a escribir y se
+// descarta no tiene por qué dejar una fila en ningún lado.
+//
+// Es la función con peor relación entre lo que aporta y lo que gasta del cupo común, así que
+// el cuentagotas y las demás reglas viven en `panel.js`, donde se decide **cuándo** avisar.
+export function canalDeEscritura(channelId, alEscribir) {
+  const ch = supabase.channel('escribiendo-' + channelId, { config: { broadcast: { self: false } } });
+  ch.on('broadcast', { event: 'escribiendo' }, (m) => alEscribir(m.payload));
+  ch.subscribe();
+  return {
+    avisar: (payload) => ch.send({ type: 'broadcast', event: 'escribiendo', payload }),
+    cerrar: () => supabase.removeChannel(ch)
+  };
 }
 
 // ---------- Realtime (respeta RLS: solo llegan filas que podés ver) ----------
