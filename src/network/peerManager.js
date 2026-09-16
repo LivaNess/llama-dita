@@ -110,6 +110,24 @@ export class PeerManager {
     this.joinRoomChannel();
   }
 
+  // Cortar la llamada. No alcanza con cerrar la conexión: si nos quedamos en la misma
+  // sala, la presencia del otro nos vuelve a juntar en cuanto sincroniza. Por eso se sale
+  // del canal y se vuelve a una sala propia vacía, listos para llamar o que nos llamen.
+  leaveRoom() {
+    this.destroy();
+    this.isInitiatingCall = false;
+    this.roomId = `llamadita-${Math.random().toString(36).substring(2, 8)}`;
+
+    try {
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.set('room', this.roomId);
+      window.history.replaceState({}, '', newUrl);
+    } catch (e) {}
+
+    this.joinRoomChannel();
+    return this.roomId;
+  }
+
   setRoom(targetRoomId) {
     const normalized = PeerManager.normalizeRoomId(targetRoomId);
     if (!normalized) return false;

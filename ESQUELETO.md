@@ -77,8 +77,9 @@ prueba y con qué hay que tener cuidado.
 
 ### D. Red y voz
 - **Archivos:** `src/network/peerManager.js`
-- **Qué hace:** conecta dos personas en una sala. Usa Supabase Realtime para que se
-  encuentren y WebRTC para mandar el audio directo, con servidores STUN y TURN.
+- **Qué hace:** conecta dos personas en una sala y también las desconecta (`leaveRoom()`).
+  Usa Supabase Realtime para que se encuentren y WebRTC para mandar el audio directo, con
+  servidores STUN y TURN.
 - **Depende de:** el cliente Supabase compartido (área E, para Realtime) y audio.
 - **Dependen de ella:** arranque y las llamadas directas del panel social.
 - **Cómo se prueba:** dos PCs en la misma sala; el estado pasa a "Conexión activa".

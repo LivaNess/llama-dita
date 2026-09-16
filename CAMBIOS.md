@@ -19,6 +19,20 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 1.14.2A · 2026-09-15 · Claude
+**Qué cambió.** Hay un botón **Salir de la llamada** en la barra de arriba. Aparece solo
+cuando hay alguien del otro lado y corta sin cerrar la app: quedás en standby, en una sala
+tuya vacía, listo para llamar o para que te llamen. Al otro le figura que te fuiste.
+**Por qué.** Hasta ahora la única forma de salir de una llamada era cerrar la aplicación.
+**Dónde.** `index.html` y `src/style.css` (el botón), `src/network/peerManager.js`
+(`leaveRoom()`) y `src/main.js` (limpia la cabina remota y vuelve a standby). Áreas A y D.
+**Cómo se verifica.** Dos personas (o dos pestañas) en la misma sala hasta que diga
+"Conectado". Tocar "Salir de la llamada": el que corta vuelve a standby con un código de
+sala nuevo, y el otro pasa a "Esperando conexión remota" con la cabina limpia. Después, el
+que quedó puede volver a entrar con el código nuevo y la llamada se arma de nuevo.
+**Ojo.** No alcanzaba con cerrar la conexión: quedándose en la misma sala, la presencia del
+otro los volvía a juntar en cuanto sincronizaba. Por eso el que corta se va a una sala nueva.
+
 ### 1.14.1A · 2026-09-15 · Claude
 **Qué cambió.** El botón de llamar a un amigo ahora se ve verde de verdad, en la barra
 lateral y en el panel de amigos. Lo mismo el telefonito que suena en el aviso de llamada.

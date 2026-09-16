@@ -13,6 +13,7 @@ const onAirBadge = document.getElementById('onAirBadge');
 const onAirText = document.getElementById('onAirText');
 const roomPill = document.getElementById('roomPill');
 const btnCopyInvite = document.getElementById('btnCopyInvite');
+const btnLeaveCall = document.getElementById('btnLeaveCall');
 const btnShareInviteSecondary = document.getElementById('btnShareInviteSecondary');
 
 // Local Booth DOM
@@ -62,6 +63,9 @@ const btnSidebarMic = document.getElementById('btnSidebarMic');
 let currentActiveChannel = null;
 
 function updateMainViews() {
+  // El botón de cortar solo tiene sentido si hay alguien del otro lado.
+  if (btnLeaveCall) btnLeaveCall.hidden = !(isConnected || peerManager.remotePeerId);
+
   if (currentActiveChannel) {
     if (channelChatView) channelChatView.style.display = 'flex';
     if (studioBoothsView) studioBoothsView.style.display = 'none';
@@ -475,6 +479,33 @@ btnToggleRemoteAudio.addEventListener('click', () => {
     showToast('Audio remoto activo');
   }
 });
+
+// Salir de la llamada: corta, vuelve a una sala propia vacía y deja la app en standby.
+// El otro lado se entera solo (desaparece nuestra presencia del canal de señalización).
+function leaveCall() {
+  const nuevaSala = peerManager.leaveRoom();
+
+  isConnected = false;
+  remoteStream = null;
+  remoteAudioElement.srcObject = null;
+  if (remoteAudioProcessor) {
+    remoteAudioProcessor.destroy();
+    remoteAudioProcessor = null;
+  }
+
+  onAirBadge.classList.remove('live');
+  onAirText.textContent = 'STANDBY';
+  guestNameInput.value = 'Participante';
+  guestStatusPill.innerHTML = '<span>Esperando participante...</span>';
+  guestSpeakingIndicator.className = 'speaking-indicator';
+  guestSpeakingText.textContent = 'Sin conexión';
+
+  roomPill.textContent = `Sala: ${nuevaSala}`;
+  showToast('Saliste de la llamada');
+  updateMainViews();
+}
+
+btnLeaveCall?.addEventListener('click', leaveCall);
 
 // Copy Invite Link to Clipboard
 function copyInviteLink() {

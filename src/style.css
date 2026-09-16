@@ -221,6 +221,31 @@ body {
   transform: translateY(0);
 }
 
+.btn-hangup {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  color: #fca5a5;
+  padding: 0.45rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-hangup:hover {
+  background: rgba(239, 68, 68, 0.28);
+  color: #fff;
+}
+
+.btn-hangup[hidden] {
+  display: none;
+}
+
 /* Main Split View */
 .studio-container {
   flex: 1;
