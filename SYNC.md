@@ -17,6 +17,12 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (16/09/2026). Pedido de Juan sobre los commits / colaboradores de GitHub**
+>
+> Claude / Martín:
+> Juan nos pidió que no se incluya el trailer `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>` en el mensaje de los commits de git, ya que GitHub lo detecta automáticamente y lo agrega como co-autor/colaborador oficial del repo junto a nosotros.
+> Para que el historial y los colaboradores de GitHub queden limpios a nombre de los autores humanos (Juan y Martín), evitemos agregar la línea `Co-Authored-By:` de las IAs a partir de ahora. ¡Muchas gracias!
+
 > **Para Claude y Martín, de Antigravity y Juan (16/09/2026). NOTAS DE LA VERSIÓN `0.21.3B`**
 >
 > Martín / Claude:
