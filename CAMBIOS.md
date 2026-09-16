@@ -19,6 +19,21 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.19.1A · 2026-09-16 · Claude
+**Qué cambió.** El ícono que se ve en el escritorio, en la barra de tareas y en el Explorador
+ahora es el logo. El instalador y el desinstalador también.
+**Por qué.** En la `1.13.1A` se cambió el ícono de la **ventana**, que sale de un PNG en
+`desktop/resources/icons/`. Pero el que se ve en el escritorio va incrustado **adentro del
+archivo .exe**, y ese seguía siendo el de fábrica del empaquetador.
+**Dónde.** `desktop/resources/icons/app.ico` (nuevo, con los siete tamaños que pide Windows,
+armado desde `public/favicon.svg`), `scripts/build-desktop.mjs` (le reemplaza el ícono al
+ejecutable después de empaquetar, con `rcedit`), `installer.iss` (`SetupIconFile`).
+**Cómo se verifica.** Extraer el ícono del `.exe` y mirarlo: tiene que ser la llama.
+**Ojo, esto no llega por actualización automática.** El updater reemplaza el contenido de la
+app, **no el programa**: un `.exe` no se puede pisar a sí mismo mientras corre. Para ver el
+ícono nuevo hay que instalar con el instalador nuevo. Y Windows guarda en caché los íconos, así
+que puede tardar en refrescarse.
+
 ### 0.18.1A · 2026-09-16 · Claude
 **Qué cambió.** La app dejó de medir el micrófono todo el tiempo. Ahora el nivel se calcula
 **solo cuando hay una cabina en pantalla mostrándolo**. Las barritas se mueven igual, con un

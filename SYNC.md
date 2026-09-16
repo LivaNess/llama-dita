@@ -71,6 +71,7 @@ Cronológico. Acá se lee qué significa cada área y foco (el número no es un 
 | `0.17.1A` | Claude | Base de datos / no perder lo de los demás | Borrar una cuenta ya no borra el canal ni los mensajes de otros (las dos claves pasan a quedar en nulo). `npm run verificar` falla si una tabla nueva no tiene activadas las políticas de seguridad. |
 | `0.17.2A` | Claude | Robustez / actualizador, instalador y reintento | El updater verifica la huella de lo que baja; el instalador incluye el script del enlace del mail; el reintento de conexión renegocia sobre la misma conexión en vez de rehacer la llamada. |
 | `0.18.1A` | Claude | Audio / medir solo cuando se mira | Se elimina el nodo que analizaba el micrófono 47 veces por segundo aunque estuviera todo apagado. El nivel se lee del analizador cuando hay una cabina en pantalla. A/B en la máquina de Martín: mediana de 2,5% a 0,76% de CPU. |
+| `0.19.1A` | Claude | Escritorio / ícono del ejecutable | El logo va ahora adentro del .exe (antes solo estaba el de la ventana), más el instalador y el desinstalador. No llega por actualización automática: hay que reinstalar. |
 ---
 
 ## ⚠️ Reglas para agentes

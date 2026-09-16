@@ -55,7 +55,25 @@ run('npx --yes @neutralinojs/neu build');
 const neu = join(desktop, 'dist', cfg.cli.binaryName, 'resources.neu');
 if (!existsSync(neu)) { console.error('No se generó ' + neu); process.exit(1); }
 
-// 4. Manifiesto de actualización, con la huella del paquete recién generado.
+// 4. El ícono del ejecutable.
+// El ícono de la ventana sale de resources/icons/appIcon.png, pero el que se ve en el
+// escritorio, en la barra de tareas y en el Explorador va incrustado DENTRO del .exe, y el
+// binario de Neutralino viene con el suyo de fábrica. Se lo reemplazamos acá.
+if (process.platform === 'win32') {
+  const exe = join(desktop, 'dist', cfg.cli.binaryName, `${cfg.cli.binaryName}-win_x64.exe`);
+  const ico = join(desktop, 'resources', 'icons', 'app.ico');
+  if (existsSync(exe) && existsSync(ico)) {
+    const rcedit = join(root, 'node_modules', 'rcedit', 'bin', 'rcedit-x64.exe');
+    if (existsSync(rcedit)) {
+      execSync(`"${rcedit}" "${exe}" --set-icon "${ico}"`, { stdio: 'inherit' });
+      console.log('Ícono del ejecutable actualizado.');
+    } else {
+      console.warn('No está rcedit: el .exe queda con el ícono de fábrica. Corré npm install.');
+    }
+  }
+}
+
+// 5. Manifiesto de actualización, con la huella del paquete recién generado.
 // La huella es lo que le permite al updater comprobar que bajó exactamente esto y no otra
 // cosa: su única verificación era que el archivo pesara más de 10 KB.
 const huella = createHash('sha256').update(readFileSync(neu)).digest('hex');
@@ -70,7 +88,7 @@ const manifest = {
 };
 writeFileSync(join(desktop, 'update-manifest.json'), JSON.stringify(manifest, null, 2) + String.fromCharCode(10));
 
-// 5. El script del enlace del mail viaja con el instalador.
+// 6. El script del enlace del mail viaja con el instalador.
 // Si no, en una instalación nueva el registro de Windows apunta a un archivo que todavía no
 // existe (lo escribe la app en su primer arranque) y tocar el enlace del mail no hace nada.
 // Tiene que decir lo mismo que el SCRIPT de src/social/deeplink.js.
