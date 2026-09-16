@@ -1,10 +1,6 @@
 [Setup]
 AppName=Llama-dita
-<<<<<<< HEAD
-AppVersion=0.21.3D
-=======
 AppVersion=0.22.1A
->>>>>>> 20a68b9 ([0.22.1A] feat: foto de perfil, y que lo borrado se borre de verdad)
 AppPublisher=Llama-dita
 AppPublisherURL=https://llamadita.com.ar
 DefaultDirName={localappdata}\Llama-dita
