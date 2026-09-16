@@ -1,7 +1,11 @@
 {
   "$schema": "https://raw.githubusercontent.com/neutralinojs/neutralinojs/main/schemas/neutralino.config.schema.json",
   "applicationId": "com.llamadita.app",
+<<<<<<< HEAD
   "version": "0.21.3D",
+=======
+  "version": "0.22.1A",
+>>>>>>> 20a68b9 ([0.22.1A] feat: foto de perfil, y que lo borrado se borre de verdad)
   "defaultMode": "window",
   "port": 24024,
   "documentRoot": "/resources/",

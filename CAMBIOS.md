@@ -19,6 +19,59 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.22.1A · 2026-09-16 · Claude
+**Qué cambió.** Cada uno tiene su foto de perfil y la cambia cuando quiere, desde la pestaña
+Perfil. Se ve en el pie de la barra lateral, en la lista de amigos y en los miembros de un
+canal. Y se puede sacar, no solo cambiar.
+
+**Y lo que importa, que es lo que no se ve.** Nada de esto se va juntando:
+
+- Al cambiar la foto, **la anterior se borra del servidor**. No quedan diez avatares viejos por
+  persona ocupando el cupo. Lo hace un disparador de la base cuando ve que la foto cambió, así
+  que vale para todos los caminos (cambiarla, sacarla, borrar la cuenta) sin que la app tenga
+  que acordarse en cada uno.
+- **La cola de borrado ahora se vacía sola, cada media hora.** Hasta acá, borrar un mensaje con
+  imagen anotaba el archivo para borrarlo pero no había nada que lo hiciera: los bytes se
+  quedaban en el bucket para siempre. Ahora el repartidor se despierta solo, borra los objetos
+  y confirma.
+
+**Por qué.** Sin la primera, cambiarse la foto diez veces deja nueve imágenes que no le sirven
+a nadie. Sin la segunda, la primera no borra nada: solo anota.
+
+**Dónde.** `supabase/migrations/20260916_006_fotos_de_perfil_y_purga.sql` (aplicada),
+`workers/adjuntos/` (permiso para la foto, lectura de avatares y el despertador),
+`src/social/adjuntos.js`, `src/social/panel.js`, `src/social/api.js`, `src/social/social.css`.
+
+**Medido en el motor de la app.** Una foto de 4000×2250 de 22 MB sale **cuadrada de 256×256**,
+recortada por el centro, en 177 milisegundos. Una foto de cámara real queda en el orden de los
+15 a 25 KB. El tope que acepta el servidor es 1 MB, y es solo una red de seguridad: si el
+achicado fallara, una foto de perfil nunca puede ocupar como un archivo del chat.
+
+**Sobre el secreto de la purga.** La base guarda **el hash**, no el secreto. El repartidor lo
+manda por HTTPS y la base compara los hashes: si alguien llegara a leer esa tabla, no se lleva
+nada con lo que pueda llamar a las funciones. Y no se le dio al repartidor la llave de servicio
+de Supabase, que abre toda la base sin pasar por ninguna política: tiene dos funciones que solo
+hacen lo suyo. Lo peor que se puede hacer con ese secreto es borrar archivos que ya estaban
+marcados para borrarse.
+
+**Cómo se verifica.**
+1. Perfil → "Poner una foto". Tiene que aparecer redonda en el pie de la barra lateral.
+2. Cambiarla por otra. Al rato (o disparando la purga a mano), la anterior ya no está en el
+   bucket.
+3. "Sacarla": vuelve a las iniciales y la imagen se borra.
+4. Probado de punta a punta: se puso un objeto en el bucket, se lo encoló, se disparó la purga
+   y el objeto devolvió 404. Con un secreto inventado, la purga contesta 403.
+
+**Se cruzó con la `0.21.3D`.** Antigravity sumó al mismo tiempo el avatar en la cabecera del
+chat, pero lo leía de `avatar_url`, que es una columna que viene de la migración 001 y **nunca
+se llena**: esa foto no se veía nunca. Al mezclar quedó enganchada a `avatar_key`, que es la
+foto de verdad, así que ahora sí se ve. De su versión se conservó todo lo demás: el botón de
+colgar en la lista de amigos, el menú con eliminar chat, la hora debajo y la alineación.
+
+**Lo que NO tiene todavía.** La foto no sale al lado de cada mensaje del chat. El globo de
+mensaje hoy muestra nombre y hora, y meterle la foto cambia bastante el dibujo; se puede sumar
+cuando se defina cómo queda.
+
 ### 0.21.3D · 2026-09-16 · Antigravity
 **Qué cambió.** Mejoras estéticas y de UX en chat, lista de amigos y llamadas:
 1. **Avatar en cabecera de chat:** Si el amigo tiene `avatar_url`, se muestra su foto de perfil circular; en caso contrario, muestra el `@`.

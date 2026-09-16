@@ -9,6 +9,11 @@ R2_BUCKET = "llamadita-adjuntos"
 R2_ACCOUNT_ID = "f09774e006b4d4534f5a5b1d5f25cc5f"
 ORIGENES = "http://localhost:24024,http://127.0.0.1:24024,http://localhost:3000,https://llamadita.pages.dev"
 
+# El despertador: cada media hora vacia la cola de objetos a borrar. Sin esto, cambiar la foto
+# de perfil o borrar un mensaje con imagen deja el archivo viejo ocupando el cupo para siempre.
+[triggers]
+crons = ["*/30 * * * *"]
+
 # El atajo interno al bucket. Solo lo usa el borrado, que no necesita firmar nada.
 [[r2_buckets]]
 binding = "ADJUNTOS"

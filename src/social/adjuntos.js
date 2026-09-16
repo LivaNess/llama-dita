@@ -163,6 +163,55 @@ function ponerEnElBucket(url, blob, mime, alAvanzar) {
 }
 
 // ------------------------------------------------------------------
+// La foto de perfil
+// ------------------------------------------------------------------
+// Se dibuja en un circulito de 40 pixeles, asi que guardarla grande no sirve para nada: se
+// recorta cuadrada por el centro, se lleva a 256 y va en formato moderno. De una foto de 4 MB
+// quedan 15 o 20 KB. Y como la vieja se borra sola al cambiarla, cambiarse la foto cien veces
+// no ocupa mas que tenerla una.
+const LADO_AVATAR = 256;
+
+export async function achicarAvatar(file) {
+  if (!esImagen(file.type)) throw new Error('La foto de perfil tiene que ser una imagen.');
+
+  let bitmap;
+  try { bitmap = await createImageBitmap(file); }
+  catch (_) { throw new Error('No pude leer esa imagen. Proba con un JPG o un PNG.'); }
+
+  // Recorte cuadrado desde el centro: si no, una foto apaisada entra deformada en el circulito.
+  const lado = Math.min(bitmap.width, bitmap.height);
+  const x0 = Math.round((bitmap.width - lado) / 2);
+  const y0 = Math.round((bitmap.height - lado) / 2);
+
+  const lienzo = document.createElement('canvas');
+  lienzo.width = lienzo.height = LADO_AVATAR;
+  const ctx = lienzo.getContext('2d');
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(bitmap, x0, y0, lado, lado, 0, 0, LADO_AVATAR, LADO_AVATAR);
+  bitmap.close?.();
+
+  const chica = await new Promise((res) => lienzo.toBlob(res, 'image/webp', 0.9));
+  lienzo.width = lienzo.height = 0;
+  if (!chica) throw new Error('No pude preparar la foto.');
+
+  // El tipo se lee del resultado, no se da por sentado (ver el comentario de `achicar`).
+  return { blob: chica, mime: chica.type || 'image/webp' };
+}
+
+// Devuelve la direccion del objeto nuevo. Guardarla en el perfil es lo que dispara el borrado
+// de la anterior, del lado de la base.
+export async function subirAvatar(file, { alAvanzar } = {}) {
+  const { blob, mime } = await achicarAvatar(file);
+  const permiso = await alRepartidor('/avatar', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ mime, bytes: blob.size })
+  });
+  await ponerEnElBucket(permiso.url, blob, mime, alAvanzar);
+  return permiso.object_key;
+}
+
+// ------------------------------------------------------------------
 // Mirar
 // ------------------------------------------------------------------
 // El permiso de lectura dura una hora. Se guarda en memoria para no pedir uno nuevo cada vez

@@ -50,6 +50,19 @@ function isOnline(p) {
   return !!p && state.online.has(p.id);
 }
 
+// La foto de perfil, o las iniciales si todavia no puso ninguna.
+//
+// Se dibuja vacia con la direccion anotada y despues `pintarImagenes` le pone la direccion
+// firmada. Se hace asi porque el permiso de lectura hay que pedirlo: si se pidiera en cada
+// redibujado, una lista de 30 amigos serian 30 pedidos cada vez que cambia una presencia.
+// `urlParaVer` los guarda una hora en memoria, asi que en la practica es uno por persona.
+function fotoDe(perfil, clase = 'sc-foto') {
+  const nombre = perfil?.display_name || perfil?.username || '?';
+  const iniciales = esc(nombre.slice(0, 2).toUpperCase());
+  if (!perfil?.avatar_key) return `<span class="${clase} sin-foto">${iniciales}</span>`;
+  return `<span class="${clase}"><img data-key="${esc(perfil.avatar_key)}" alt="${esc(nombre)}" loading="lazy" /></span>`;
+}
+
 function statusDot(p) {
   const st = p ? state.online.get(p.id) : null;
   const cls = st ? (st === 'dnd' ? 'dnd' : st === 'idle' ? 'idle' : 'online') : 'offline';
@@ -439,7 +452,7 @@ function friendsView() {
         <button class="sc-primary sc-small" data-accept="${f.id}">Aceptar</button><button class="sc-ghost sc-small" data-remove="${f.id}">No</button></div>`).join('')}` : ''}
     <h4>Amigos ${friends.length ? `<span class="sc-muted">(${friends.filter((x) => isOnline(x.p)).length} conectados)</span>` : ''}</h4>
     ${friends.length ? friends.map(({ f, p }) => `
-      <div class="sc-item sc-clickable" data-chat="${p.id}" title="Abrir chat privado">${statusDot(p)}<div class="sc-item-text"><strong>${esc(p.display_name || p.username)}</strong><small>@${esc(p.username)}</small></div>
+      <div class="sc-item sc-clickable" data-chat="${p.id}" title="Abrir chat privado">${fotoDe(p)}${statusDot(p)}<div class="sc-item-text"><strong>${esc(p.display_name || p.username)}</strong><small>@${esc(p.username)}</small></div>
         <button class="sc-call sc-small" data-call="${p.id}" title="Llamar" ${isOnline(p) ? '' : 'disabled'}>${ICONO_TELEFONO}</button>
         <button class="sc-ghost sc-small" data-remove="${f.id}" title="Quitar amigo">✕</button></div>`).join('')
       : `<p class="sc-empty">Todavía no tenés amigos agregados. Buscá a alguien por su nombre de usuario.</p>`}
@@ -483,7 +496,7 @@ function channelDetail() {
       <div class="sc-messages" id="scMessages">${state.messages.map(msgItem).join('') || `<p class="sc-empty">Sin mensajes todavía.</p>`}</div>
       <form class="sc-row" id="scMsgForm"><input type="text" id="scMsg" placeholder="Escribí un mensaje" maxlength="2000" autocomplete="off" required /><button class="sc-primary sc-small" type="submit">Enviar</button></form>`}
     <h4>Miembros (${state.members.length})</h4>
-    ${state.members.map((m) => `<div class="sc-item">${statusDot(m.profile || {})}<div class="sc-item-text"><strong>${esc(m.profile?.display_name || m.profile?.username || '…')}</strong><small>@${esc(m.profile?.username || '')}${m.role === 'owner' ? ' · dueño' : ''}</small></div>
+    ${state.members.map((m) => `<div class="sc-item">${fotoDe(m.profile)}${statusDot(m.profile || {})}<div class="sc-item-text"><strong>${esc(m.profile?.display_name || m.profile?.username || '…')}</strong><small>@${esc(m.profile?.username || '')}${m.role === 'owner' ? ' · dueño' : ''}</small></div>
       ${owner && m.role !== 'owner' ? `<button class="sc-ghost sc-small" data-kick="${m.user_id}">Sacar</button>` : ''}</div>`).join('')}
     ${owner && friendsNotIn.length ? `<div class="sc-row"><select id="scAddFriend">${friendsNotIn.map((p) => `<option value="${p.id}">${esc(p.display_name || p.username)}</option>`).join('')}</select><button class="sc-ghost sc-small" id="scAddFriendBtn">Sumar amigo</button></div>` : ''}
     <div class="sc-row sc-danger-row">${owner ? `<button class="sc-danger sc-small" id="scDeleteChannel">Borrar canal</button>` : `<button class="sc-danger sc-small" id="scLeaveChannel">Salir del canal</button>`}</div>`;
@@ -773,19 +786,36 @@ async function borrarParaLosDos(channelId) {
 // Las imagenes se dibujan vacias y despues se les pone la direccion firmada. Se hace asi y no
 // al reves porque el permiso de lectura hay que pedirlo, y pedirlo para cada imagen en cada
 // redibujado seria un pedido por imagen por render.
-async function pintarAdjuntos(contenedor) {
+// Rellena cualquier imagen diferida: sirve igual para los adjuntos del chat y para las fotos
+// de perfil, porque las dos se piden con un permiso que vence.
+async function pintarImagenes(contenedor) {
   if (!contenedor) return;
   for (const img of contenedor.querySelectorAll('img[data-key]:not([src])')) {
     const key = img.dataset.key;
     try {
       img.src = await archivos.urlParaVer(key);
     } catch (e) {
-      img.closest('.sc-adj-foto')?.classList.add('rota');
-      img.replaceWith(Object.assign(document.createElement('span'), {
-        className: 'sc-adj-error', textContent: 'No se pudo cargar'
-      }));
+      const caja = img.closest('.sc-adj-foto');
+      if (caja) {
+        caja.classList.add('rota');
+        img.replaceWith(Object.assign(document.createElement('span'), {
+          className: 'sc-adj-error', textContent: 'No se pudo cargar'
+        }));
+      } else {
+        // Una foto de perfil que no carga no es un problema: se cae a las iniciales.
+        const burbuja = img.parentElement;
+        if (burbuja) {
+          burbuja.classList.add('sin-foto');
+          burbuja.textContent = (img.alt || '?').slice(0, 2).toUpperCase();
+        }
+      }
     }
   }
+}
+
+async function pintarAdjuntos(contenedor) {
+  if (!contenedor) return;
+  await pintarImagenes(contenedor);
 
   contenedor.querySelectorAll('[data-ver]').forEach((b) => {
     b.onclick = () => abrirVisor(b.dataset.ver, b.dataset.nombre);
@@ -895,6 +925,28 @@ async function mandarMensaje(texto, devolverTexto) {
   }
 }
 
+// Cambiar (o sacar) la foto de perfil.
+//
+// El borrado de la anterior NO se hace desde aca: lo hace un disparador de la base cuando ve
+// que `avatar_key` cambio. Asi vale para todos los caminos (cambiarla, sacarla, borrar la
+// cuenta) sin que la app tenga que acordarse en cada uno.
+async function cambiarFoto(file) {
+  if (!state.me || state.cambiandoFoto) return;
+  state.cambiandoFoto = true;
+  try {
+    const key = file ? await archivos.subirAvatar(file) : null;
+    state.me = await api.updateMyProfile(state.me.id, { avatar_key: key });
+    // La foto vieja ya no existe: si quedara su permiso guardado, se seguiria viendo un rato.
+    archivos.olvidarPermisos();
+    hooks.toast?.(file ? 'Foto actualizada.' : 'Foto sacada.');
+  } catch (e) {
+    hooks.toast?.(e.message);
+  } finally {
+    state.cambiandoFoto = false;
+    render();
+  }
+}
+
 // ------------------------------------------------------------------
 // El visor de imagenes
 // ------------------------------------------------------------------
@@ -927,7 +979,16 @@ function bindAccionesMensaje(contenedor) {
 
 // ---- Perfil ----
 function profileView() {
-  return `<form id="scProfileForm" class="sc-form">
+  return `<div class="sc-foto-editor">
+      ${fotoDe(state.me, 'sc-foto-grande')}
+      <div class="sc-foto-acciones">
+        <input type="file" id="scFotoInput" accept="image/*" hidden />
+        <button class="sc-primary sc-small" type="button" id="scCambiarFoto">${state.me.avatar_key ? 'Cambiar la foto' : 'Poner una foto'}</button>
+        ${state.me.avatar_key ? `<button class="sc-ghost sc-small" type="button" id="scSacarFoto">Sacarla</button>` : ''}
+        <p class="sc-muted sc-tiny">Se recorta cuadrada y se achica sola. La anterior se borra: no se van juntando.</p>
+      </div>
+    </div>
+    <form id="scProfileForm" class="sc-form">
     <label>Nombre visible</label><input type="text" id="scDisplayName" value="${esc(state.me.display_name)}" maxlength="40" />
     <label>Usuario (letras, números y _)</label><input type="text" id="scUsername" value="${esc(state.me.username)}" maxlength="20" pattern="[a-z0-9_]{3,20}" />
     <p class="sc-muted sc-tiny">Tus amigos te encuentran por el usuario. Mail: ${esc(state.session.user.email)}</p>
@@ -985,6 +1046,7 @@ function bindMain() {
   });
   const msgs = q('#scMessages');
   if (msgs) { bindAccionesMensaje(msgs); pintarAdjuntos(msgs); msgs.scrollTop = msgs.scrollHeight; }
+  pintarImagenes(drawer);
   drawer.querySelectorAll('[data-kick]').forEach((b) => b.addEventListener('click', () => act(() => api.leaveChannel(state.currentChannel.id, b.dataset.kick))));
   q('#scAddFriendBtn')?.addEventListener('click', () => act(() => api.addFriendToChannel(state.currentChannel.id, q('#scAddFriend').value), 'Amigo sumado'));
   q('#scDeleteChannel')?.addEventListener('click', () => { if (confirm(`¿Borrar el canal "${state.currentChannel.name}"?`)) act(async () => { await api.deleteChannel(state.currentChannel.id); closeChannel(); }); });
@@ -1002,6 +1064,19 @@ function bindMain() {
       headerBtn.querySelector('span').textContent = display_name || username;
     }, 'Perfil guardado');
   });
+  // ---- La foto de perfil ----
+  const fotoInput = q('#scFotoInput');
+  q('#scCambiarFoto')?.addEventListener('click', () => fotoInput?.click());
+  fotoInput?.addEventListener('change', async () => {
+    const file = fotoInput.files?.[0];
+    fotoInput.value = '';
+    if (!file) return;
+    await cambiarFoto(file);
+  });
+  q('#scSacarFoto')?.addEventListener('click', () => {
+    if (confirm('¿Sacar tu foto de perfil? La imagen se borra del servidor, no queda guardada.')) cambiarFoto(null);
+  });
+
   q('#scLogout')?.addEventListener('click', async () => { await signOut(); });
 }
 
@@ -1095,7 +1170,15 @@ function renderSidebar() {
   // 1. Pie de Usuario
   const name = state.me.display_name || state.me.username;
   const initials = name.slice(0, 2).toUpperCase();
-  if (userAvatar) userAvatar.textContent = initials;
+  if (userAvatar) {
+    if (state.me.avatar_key) {
+      userAvatar.innerHTML = `<img data-key="${esc(state.me.avatar_key)}" alt="${esc(name)}" />`;
+      userAvatar.classList.add('con-foto');
+    } else {
+      userAvatar.textContent = initials;
+      userAvatar.classList.remove('con-foto');
+    }
+  }
   if (userName) userName.textContent = name;
   if (userHandle) userHandle.textContent = `@${state.me.username}`;
 
@@ -1182,6 +1265,7 @@ function renderSidebar() {
           const inCall = hooks.isCallActiveWith ? hooks.isCallActiveWith(p) : false;
           return `
             <div class="sidebar-friend-item sc-clickable ${isSelected ? 'active' : ''}" data-sidebar-dm="${p.id}" role="button" tabindex="0" title="${isSelected ? 'Cerrar chat' : 'Abrir chat privado'} con ${esc(p.display_name || p.username)}">
+              ${fotoDe(p)}
               ${statusDot(p)}
               <div class="friend-info">
                 <span class="friend-name">${esc(p.display_name || p.username)}</span>
@@ -1347,8 +1431,9 @@ function renderChat() {
 
   if (icon) {
     if (dm) {
-      if (otro?.avatar_url) {
-        icon.innerHTML = `<img src="${esc(otro.avatar_url)}" alt="${esc(nombreCanal(c))}" class="chat-channel-avatar" />`;
+      if (otro?.avatar_key) {
+        icon.innerHTML = `<img data-key="${esc(otro.avatar_key)}" alt="${esc(nombreCanal(c))}" class="chat-channel-avatar" />`;
+        pintarImagenes(icon);
       } else {
         icon.textContent = '@';
       }

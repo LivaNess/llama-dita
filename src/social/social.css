@@ -179,3 +179,24 @@
 }
 .visor-cerrar:hover { background: rgba(239,68,68,.5); }
 .visor-pie { display: flex; align-items: center; gap: .8rem; color: #cbd5e1; font-size: .82rem; }
+
+/* ---- Foto de perfil ---- */
+.sc-foto, .sc-foto-grande {
+  flex: none; display: inline-grid; place-items: center; overflow: hidden;
+  border-radius: 50%; background: rgba(168,85,247,.28); color: #fff;
+  font-weight: 700; letter-spacing: .02em; user-select: none;
+}
+.sc-foto { width: 28px; height: 28px; font-size: .68rem; }
+.sc-foto-grande { width: 84px; height: 84px; font-size: 1.5rem; }
+.sc-foto img, .sc-foto-grande img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.sc-foto-editor { display: flex; align-items: center; gap: .9rem; margin-bottom: 1rem; }
+.sc-foto-acciones { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; }
+.sc-foto-acciones p { width: 100%; margin: .1rem 0 0; }
+
+/* El circulito del pie de la barra lateral, cuando tiene foto de verdad. */
+#sidebarUserAvatar.con-foto { padding: 0; overflow: hidden; }
+#sidebarUserAvatar.con-foto img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 50%; }
+
+/* En la lista de amigos, la foto va antes que el puntito de estado. */
+.sidebar-friend-item .sc-foto { margin-right: .1rem; }

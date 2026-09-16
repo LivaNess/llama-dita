@@ -188,6 +188,14 @@ prueba y con qué hay que tener cuidado.
   base). Vive como **secreto del Worker** y no va nunca al repositorio ni a la app.
 - **Cuidado 2:** el plan gratis da 10 milisegundos de procesador y 100 MB de cuerpo por pedido.
   Por eso los archivos no pueden pasar por el Worker: con el tope de 100 MB, no entrarían.
+- **La purga:** el repartidor se despierta cada media hora (disparador `cron` de Cloudflare),
+  le pide a la base la cola de objetos a borrar, los borra del bucket y recién entonces
+  confirma. El orden importa: si se corta en el medio, la fila sigue en la cola y se reintenta.
+  Borrar dos veces no hace nada; perder el rastro de un archivo, sí. También se puede disparar
+  a mano con `POST /borrar` y el secreto.
+- **Cuidado 4:** la base guarda el **hash** del secreto de la purga, no el secreto. Y el
+  repartidor **no** tiene la llave de servicio de Supabase a propósito: esa llave abre toda la
+  base sin pasar por ninguna política.
 - **Cuidado 3:** el bucket tiene su propia lista de orígenes permitidos (CORS). Si la app se
   sirviera desde otro puerto, las subidas empezarían a fallar sin mensaje claro.
 

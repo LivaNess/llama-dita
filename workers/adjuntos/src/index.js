@@ -41,6 +41,15 @@ const CUPO_POR_PERSONA = 200 * 1024 * 1024;
 const MINUTOS_PARA_SUBIR = 5;
 const HORAS_PARA_VER = 1;
 
+// La foto de perfil se dibuja en un circulito de 40 pixeles. La app la achica a 256x256 antes
+// de subirla, asi que llega pesando entre 10 y 30 KB. El tope de 1 MB es por las dudas: aunque
+// el achicado fallara, una foto de perfil nunca puede ocupar como un archivo del chat.
+const TOPE_AVATAR = 1024 * 1024;
+
+// Los avatares viven bajo `a/`, los adjuntos del chat bajo `c/`. El prefijo decide a que tabla
+// se le pregunta si podes mirarlo.
+const esAvatar = (key) => typeof key === 'string' && key.startsWith('a/');
+
 // ------------------------------------------------------------------
 // Utilidades
 // ------------------------------------------------------------------
@@ -218,6 +227,35 @@ async function permisoParaSubir(req, env, origen) {
 }
 
 // ------------------------------------------------------------------
+// 1b. Pedir permiso para cambiar la foto de perfil
+// ------------------------------------------------------------------
+// Va aparte del de los adjuntos por dos motivos: no cuelga de ningun canal (no hay a quien
+// preguntarle si sos miembro), y no cuenta contra el cupo de archivos, porque de una foto de
+// perfil hay una sola por persona y la vieja se borra sola al cambiarla.
+async function permisoParaAvatar(req, env, origen) {
+  if (faltaLaCredencial(env)) {
+    return json({ error: 'Las fotos todavia no estan habilitadas: falta cargar la credencial del almacenamiento.' }, 503, origen);
+  }
+  const quien = await quienSos(req, env);
+  if (!quien) return json({ error: 'Sesion invalida o vencida.' }, 401, origen);
+
+  let pedido;
+  try { pedido = await req.json(); } catch (_) { return json({ error: 'Pedido ilegible.' }, 400, origen); }
+  const { mime, bytes } = pedido || {};
+  if (!mime || !bytes) return json({ error: 'Falta el tipo o el tamano.' }, 400, origen);
+  if (!IMAGENES.includes(mime)) return json({ error: 'La foto de perfil tiene que ser una imagen.' }, 415, origen);
+  if (bytes > TOPE_AVATAR) return json({ error: 'La foto de perfil no puede pasar de 1 MB.' }, 413, origen);
+
+  // La direccion incluye un identificador al azar, asi que cambiar la foto NO reusa la misma
+  // direccion: si la reusara, el que tuviera la anterior en su cache seguiria viendo la vieja.
+  const extension = (mime.split('/')[1] || 'webp').replace('jpeg', 'jpg');
+  const key = `a/${quien.id}/${crypto.randomUUID()}.${extension}`;
+
+  const url = await firmar(env, key, 'PUT', MINUTOS_PARA_SUBIR * 60);
+  return json({ object_key: key, url, vence_en: MINUTOS_PARA_SUBIR * 60 }, 200, origen);
+}
+
+// ------------------------------------------------------------------
 // 2. Pedir permiso para ver
 // ------------------------------------------------------------------
 async function permisoParaVer(req, env, origen) {
@@ -230,11 +268,12 @@ async function permisoParaVer(req, env, origen) {
   const key = new URL(req.url).searchParams.get('key');
   if (!key) return json({ error: 'Falta el archivo.' }, 400, origen);
 
-  // Que la base conteste si lo podés ver. Si no sos del canal, las políticas devuelven vacío.
-  const fichas = await consultarComoVos(
-    env, quien,
-    `attachments?object_key=eq.${encodeURIComponent(key)}&select=object_key,mime,nombre`
-  );
+  // Que la base conteste si lo podes ver. Nunca decide este servicio: hace la consulta con TU
+  // sesion y las politicas contestan. Si no te corresponde, vuelve vacio.
+  const fichas = esAvatar(key)
+    ? await consultarComoVos(env, quien, `profiles?avatar_key=eq.${encodeURIComponent(key)}&select=id`)
+    : await consultarComoVos(env, quien, `attachments?object_key=eq.${encodeURIComponent(key)}&select=object_key,mime,nombre`);
+
   if (!fichas.length) return json({ error: 'Ese archivo no existe o no es para vos.' }, 404, origen);
 
   const url = await firmar(env, key, 'GET', HORAS_PARA_VER * 3600);
@@ -252,14 +291,22 @@ async function borrarObjetos(req, env, origen) {
     return json({ error: 'No.' }, 403, origen);
   }
   let keys;
-  try { keys = (await req.json())?.keys; } catch (_) { return json({ error: 'Pedido ilegible.' }, 400, origen); }
-  if (!Array.isArray(keys) || !keys.length) return json({ borrados: 0 }, 200, origen);
+  try { keys = (await req.json())?.keys; } catch (_) { keys = null; }
+
+  // Sin lista, vacia la cola que lleva la base. Es la misma purga que corre sola, pero a mano,
+  // para no tener que esperar media hora cuando se esta probando.
+  if (!Array.isArray(keys)) {
+    try { return json(await purgar(env), 200, origen); }
+    catch (e) { return json({ error: e.message }, 502, origen); }
+  }
+
+  if (!keys.length) return json({ borrados: 0 }, 200, origen);
   if (keys.length > 200) return json({ error: 'De a 200 como mucho.' }, 400, origen);
 
   let borrados = 0;
   for (const key of keys) {
     try {
-      await env.ADJUNTOS.delete(key); // acá sí conviene el atajo interno: no hay que firmar nada
+      await env.ADJUNTOS.delete(key); // aca si conviene el atajo interno: no hay que firmar nada
       borrados++;
     } catch (_) {}
   }
@@ -267,7 +314,57 @@ async function borrarObjetos(req, env, origen) {
 }
 
 // ------------------------------------------------------------------
+// 4. La purga: que lo borrado se borre de verdad
+// ------------------------------------------------------------------
+// Corre sola cada media hora. Sin esto, borrar un mensaje con foto o cambiarse el avatar deja
+// el archivo viejo ocupando el cupo para siempre, que es exactamente la fuga que aparece a los
+// seis meses con el bucket lleno y nadie sabiendo por que.
+//
+// El orden importa: primero se borra el objeto del bucket y RECIEN DESPUES se confirma. Si se
+// corta en el medio, la fila sigue en la cola y se reintenta en la vuelta siguiente. Borrar dos
+// veces no hace nada; perder el rastro de un archivo, si.
+async function rpc(env, funcion, cuerpo) {
+  const r = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/${funcion}`, {
+    method: 'POST',
+    headers: {
+      apikey: env.SUPABASE_PUBLISHABLE_KEY,
+      authorization: `Bearer ${env.SUPABASE_PUBLISHABLE_KEY}`,
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify(cuerpo)
+  });
+  if (!r.ok) throw new Error(`${funcion}: ${r.status}`);
+  return await r.json();
+}
+
+async function purgar(env, tope = 100) {
+  if (!env.PURGA_SECRETO || faltaLaCredencial(env)) return { borrados: 0, motivo: 'sin secreto o sin credencial' };
+
+  const claves = await rpc(env, 'tomar_objetos_a_borrar', { secreto: env.PURGA_SECRETO, tope });
+  if (!Array.isArray(claves) || !claves.length) return { borrados: 0 };
+
+  const listos = [];
+  for (const key of claves) {
+    try { await env.ADJUNTOS.delete(key); listos.push(key); }
+    catch (e) { console.error('no se pudo borrar', key, e?.message); }
+  }
+  if (!listos.length) return { borrados: 0 };
+
+  const confirmados = await rpc(env, 'confirmar_objetos_borrados', { secreto: env.PURGA_SECRETO, claves: listos });
+  return { borrados: listos.length, confirmados };
+}
+
+// ------------------------------------------------------------------
 export default {
+  // El despertador de Cloudflare. No lo llama nadie de afuera.
+  async scheduled(evento, env, ctx) {
+    ctx.waitUntil(
+      purgar(env)
+        .then((r) => console.log('purga automatica:', JSON.stringify(r)))
+        .catch((e) => console.error('purga automatica fallo:', e?.message))
+    );
+  },
+
   async fetch(req, env) {
     const origen = origenPermitido(req, env);
     if (origen === null) return new Response('Origen no permitido', { status: 403 });
@@ -277,6 +374,7 @@ export default {
     const { pathname } = new URL(req.url);
     try {
       if (req.method === 'POST' && pathname === '/subir') return await permisoParaSubir(req, env, origen);
+      if (req.method === 'POST' && pathname === '/avatar') return await permisoParaAvatar(req, env, origen);
       if (req.method === 'GET' && pathname === '/ver') return await permisoParaVer(req, env, origen);
       if (req.method === 'POST' && pathname === '/borrar') return await borrarObjetos(req, env, origen);
       if (pathname === '/salud') return json({ ok: true, credencial: !faltaLaCredencial(env) }, 200, origen);

@@ -32,7 +32,7 @@ export async function searchUsers(q, excludeId) {
   if (term.length < 2) return [];
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, username, display_name, status, last_seen_at')
+    .select('id, username, display_name, status, last_seen_at, avatar_key')
     .ilike('username', `%${term}%`)
     .neq('id', excludeId)
     .limit(8);
@@ -44,7 +44,7 @@ export async function searchUsers(q, excludeId) {
 export async function listFriendships() {
   const { data, error } = await supabase
     .from('friendships')
-    .select('id, status, requester_id, addressee_id, created_at, requester:profiles!friendships_requester_id_fkey(id, username, display_name, status, last_seen_at), addressee:profiles!friendships_addressee_id_fkey(id, username, display_name, status, last_seen_at)')
+    .select('id, status, requester_id, addressee_id, created_at, requester:profiles!friendships_requester_id_fkey(id, username, display_name, status, last_seen_at, avatar_key), addressee:profiles!friendships_addressee_id_fkey(id, username, display_name, status, last_seen_at, avatar_key)')
     .neq('status', 'blocked')
     .order('created_at', { ascending: false });
   fail(error);
@@ -112,7 +112,7 @@ export async function leaveChannel(channelId, myId) {
 export async function listMembers(channelId) {
   const { data, error } = await supabase
     .from('channel_members')
-    .select('user_id, role, profile:profiles(id, username, display_name, status, last_seen_at)')
+    .select('user_id, role, profile:profiles(id, username, display_name, status, last_seen_at, avatar_key)')
     .eq('channel_id', channelId);
   fail(error);
   return data || [];
@@ -135,7 +135,7 @@ export async function abrirChatDirecto(otroId) {
 // ---------- Mensajes ----------
 // Los adjuntos viajan pegados al mensaje: una consulta en vez de dos.
 const CAMPOS_ADJUNTO = 'id, object_key, nombre, mime, bytes, ancho, alto';
-const CAMPOS_MENSAJE = `id, body, created_at, updated_at, edited_at, author_id, client_id, author:profiles(username, display_name), adjuntos:attachments(${CAMPOS_ADJUNTO})`;
+const CAMPOS_MENSAJE = `id, body, created_at, updated_at, edited_at, author_id, client_id, author:profiles(username, display_name, avatar_key), adjuntos:attachments(${CAMPOS_ADJUNTO})`;
 
 // Primera vez en un canal: se baja un pedazo de historial y listo. De ahí en adelante manda
 // `sincronizarCanal`, que pide solo lo que cambió.
