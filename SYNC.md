@@ -102,12 +102,48 @@ Cronológico. Acá se lee qué significa cada área y foco (el número no es un 
 
 ## 📌 Pendientes conocidos
 
-1. **Prueba real de llamada entre dos personas** (Martín y Juan, cada uno en su PC, con
-   audio en los dos sentidos desde la lista de amigos). Sigue siendo lo único grande sin
-   verificar de punta a punta. Lo que sí se probó de la `1.12.x`: dos pestañas en la misma
-   sala llegan a "Conectado" con el cliente compartido y se pasan el nombre en los dos
-   sentidos; el audio no se pudo probar así porque las dos pestañas comparten el mismo
-   micrófono.
-2. **Probar el instalador nuevo en una máquina limpia**: que instale, que el enlace del
-   mail abra la app y que no quede una segunda ventana. Nunca se probó una instalación
-   desde cero con el esquema registrado.
+### Bugs verificados en el código de hoy (16/09/2026)
+
+Salieron de la revisión por áreas y están confirmados uno por uno leyendo el repositorio y
+la base. No son hipótesis.
+
+1. **Se puede perder el chat de todos.** `channels.owner_id` y `messages.author_id` están con
+   borrado en cascada. Si el dueño de un canal borra su cuenta se borra el canal y con él los
+   mensajes de todos; si cualquiera borra la suya, desaparecen todos sus mensajes de todos
+   lados. Arreglo: cambiar la cascada por "queda sin dueño" o "autor borrado". Migración chica.
+2. **Mina para las tablas que vengan.** La migración 001 termina con un permiso amplio sobre
+   **todas** las tablas del esquema para cualquiera con cuenta. Hoy está tapado porque cada
+   tabla tiene sus políticas, pero la próxima tabla que se cree sin activarlas queda abierta.
+   Arreglo: control automático en `npm run verificar` que falle si hay una tabla sin RLS.
+3. **Las invitaciones no se pueden dar de baja.** No vencen, no tienen tope de usos, y la
+   función que las canjea corre saltándose las políticas sin chequear nada más que si el código
+   existe. (La entropía no es el problema: son 4.294 millones de combinaciones.)
+4. **El actualizador no verifica lo que baja.** Única comprobación: que pese más de 10 KB. No
+   compara con lo que decía el manifiesto, y no sabe volver atrás si una versión sale rota.
+5. **El enlace del mail puede no andar en instalaciones nuevas.** `installer.iss` registra el
+   esquema apuntando a `abrir-enlace.cmd`, que **no está en `[Files]`**: lo escribe la app en su
+   primer arranque.
+6. **El motor de audio no descansa.** `audioManager.js` usa un `ScriptProcessorNode` de 1024
+   muestras: unas 47 pasadas por segundo en el hilo principal, el doble en llamada, y sigue
+   corriendo silenciado, con los visualizadores apagados y con la ventana minimizada. Es el
+   piso de consumo que parecía irreducible. Reemplazo: `AudioWorklet`.
+7. **Reinicio de red que no reinicia nada.** `peerManager.restartIceConnection()` llama a
+   `restartIce()` y acto seguido `initiateCall()` crea una conexión nueva que lo descarta.
+
+### Lo grande sin verificar
+
+8. **Prueba real de llamada entre dos personas** (Martín y Juan, cada uno en su PC, con audio
+   en los dos sentidos desde la lista de amigos). Sigue siendo lo único grande sin verificar de
+   punta a punta.
+9. **Probar el instalador nuevo en una máquina limpia**: que instale, que el enlace del mail
+   abra la app y que no quede una segunda ventana.
+
+### Cuatro mediciones que destraban decisiones
+
+10. **El consumo con una llamada andando.** Lo medido (422 MB / 220 MB / 0,45 %) es con la app
+    abierta sin hacer nada.
+11. **Con qué bitrate y qué codec sale la voz hoy.** Lo elige el navegador; de eso depende el
+    número de la fila "Llamadita" de los presets.
+12. **Cuánto cuesta el motor de audio** del punto 6.
+13. **Si el plan gratis de la base hace copias de respaldo.** Cambia qué se puede prometer en
+    la pantalla de borrado.
