@@ -54,9 +54,38 @@ Cronológico. Acá se lee qué significa cada área y foco (el número no es un 
 
 ---
 
+## 📍 Dónde estamos (cierre 2026-09-15, versión `1.11.2B`)
+
+Lo que quedó andando y verificado en esta sesión:
+
+- **Dominio propio**: `llamadita.com.ar` delegado a Cloudflare, con la web, las
+  actualizaciones y las descargas saliendo de ahí. La dirección vieja de Pages redirige.
+- **Mail**: Resend verificado; los códigos de ingreso salen desde `acceso@llamadita.com.ar`
+  con tope de 100 por hora. Casillas `dantey24@` (Martín) y `liva@` (Juan) por Email Routing.
+- **Ingreso**: el mail trae código de 6 dígitos y enlace; el enlace deja la sesión iniciada
+  en la app (esquema `llamadita://` + copia al portapapeles como respaldo).
+- **Accesos**: Juan es Owner en Supabase, Super Administrator en Cloudflare y está invitado
+  como Admin en Resend.
+- **Documentos**: `AGENTS.md`, `ESQUELETO.md` y `CAMBIOS.md`, con verificación automática en
+  cada push (`npm run verificar` + GitHub Actions, en verde).
+
+---
+
 ## 📌 Pendientes conocidos
-- **Acceso/Credenciales de Cloudflare Pages para despliegue de web (`llamadita`)**: En la máquina de Juan (`juandiegooliva03@gmail.com`), el comando `npm run deploy:web` falla indicando que el proyecto `llamadita` no existe en su cuenta de Cloudflare (está registrado en la cuenta de Martín). Para que Juan/Antigravity puedan desplegar directamente se necesita: (a) invitar la cuenta de Juan como miembro en Cloudflare al proyecto `llamadita`, o (b) configurar las variables de entorno `CLOUDFLARE_API_TOKEN` y `CLOUDFLARE_ACCOUNT_ID`. Mientras tanto, no se hace `git push` de despliegue directo hasta coordinar con Claude/Martín.
-- **Una conexión en vivo por usuario (pendiente de prueba real)**: `src/network/peerManager.js` crea su propio cliente Supabase, así que cada usuario abre 2 conexiones Realtime (tope del plan gratis: 200 simultáneas → ~100 usuarios). El cambio es usar `import { supabase } from '../supabase/client.js'`. Probado que la señalización se suscribe con el cliente compartido; falta una llamada completa entre dos personas antes de subirlo. Área de red: coordinar con Antigravity.
-- **SMTP propio en Supabase (bloqueante para uso real)**: sin SMTP, Supabase manda como máximo 2 mails por hora para todo el proyecto. liczeta usa Resend con dominio propio (150/hora). Límite de conexiones Realtime del plan gratis: 200 simultáneas (1 por usuario desde 1.7.1A).
-- Regenerar `installer/Llama-dita-Setup.exe` con `crear-instalador.bat` (Inno Setup) para instalaciones nuevas en `1.3.1A`.
-- Al conectar por llamada directa, la cabina remota a veces muestra "Participante" en vez del nombre (el mensaje `profile` por DataChannel puede llegar antes de que el otro esté listo).
+
+1. **Prueba real de llamada entre dos personas** (Martín y Juan, cada uno en su PC). Es lo
+   único grande sin verificar de punta a punta: llamada directa desde la lista de amigos,
+   con audio en los dos sentidos.
+2. **Una sola conexión en vivo por usuario**: `src/network/peerManager.js` crea su propio
+   cliente Supabase, así que cada usuario abre dos conexiones y el plan gratis da 200 en
+   total. El cambio es usar `src/supabase/client.js`. Probado que la señalización se
+   suscribe bien con el cliente compartido; falta la llamada completa antes de subirlo.
+   Área de red: coordinar con Antigravity.
+3. **Regenerar el instalador** con `crear-instalador.bat` (necesita Inno Setup, lo tiene
+   Juan). El actual es de una versión vieja y no registra el esquema del enlace. Las
+   instalaciones existentes se actualizan solas igual.
+4. **Íconos del escritorio**: la ventana y la bandeja del sistema siguen con los íconos de
+   fábrica de Neutralino, no con el logo.
+5. **Nombre del participante en la llamada**: a veces la cabina remota muestra
+   "Participante" en vez del nombre, porque el dato viaja por el canal de datos y puede
+   llegar antes de que el otro lado esté listo.
