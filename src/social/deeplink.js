@@ -88,6 +88,28 @@ async function revisarEnlace(nl, toast) {
   toast?.(error ? 'El enlace ya fue usado o venció. Pedí un código nuevo.' : 'Entraste desde el enlace del mail');
 }
 
+// ------------------------------------------------- portapapeles (camino seguro)
+// Chrome no siempre deja que una página abra una app. Por eso la página /entrar/
+// también copia el enlace: la app lo detecta, entra y limpia el portapapeles.
+// Solo mira textos que empiezan con llamadita://auth, nada más.
+const PREFIJO = `${ESQUEMA}://auth`;
+let ultimoVisto = '';
+
+async function revisarPortapapeles(nl, toast) {
+  let texto = '';
+  try { texto = (await nl.clipboard.readText()) || ''; } catch (_) { return; }
+  const limpio = texto.trim();
+  if (!limpio.startsWith(PREFIJO) || limpio === ultimoVisto) return;
+  ultimoVisto = limpio;
+
+  const tokens = tokensDesde(limpio);
+  if (!tokens || tokens.error) return;
+
+  const { error } = await supabase.auth.setSession(tokens);
+  try { await nl.clipboard.writeText(''); } catch (_) {}
+  toast?.(error ? 'El enlace ya fue usado o venció. Pedí un código nuevo.' : 'Entraste desde el enlace del mail');
+}
+
 // ---------------------------------------------------------------- arranque
 export async function initDeepLink({ toast } = {}) {
   const nl = await neutralino();
@@ -109,4 +131,6 @@ export async function initDeepLink({ toast } = {}) {
   await instalarScriptYEsquema(nl);
   await revisarEnlace(nl, toast);
   setInterval(() => revisarEnlace(nl, toast), 1500);
+  revisarPortapapeles(nl, toast);
+  setInterval(() => revisarPortapapeles(nl, toast), 1500);
 }
