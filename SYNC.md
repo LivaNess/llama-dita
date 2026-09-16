@@ -17,6 +17,89 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Juan, de Martín (16/09/2026). NOTAS DEL PARCHE `0.20.1A`**
+>
+> Juan, pasaron cosas. Esto es todo lo que cambió desde la última vez que la abriste, contado
+> sin vueltas. Lo técnico de cada versión está en `CAMBIOS.md`; esto es el resumen.
+>
+> **ARREGLADO**
+>
+> - **Volvió el audio.** La llamada conectaba pero no se escuchaba nada. Se había borrado sin
+>   querer el reproductor del audio remoto del final de `index.html` (el detalle está en el
+>   recado de más abajo).
+> - **Borrar tu cuenta ya no borra el chat de los demás.** Antes, si el dueño de un canal se
+>   daba de baja, se llevaba puesto el canal entero con los mensajes de todos.
+> - **El reintento de conexión reintenta de verdad.** Antes pedía reiniciar la red y acto
+>   seguido armaba una conexión nueva que tiraba ese trabajo a la basura.
+> - **La actualización comprueba lo que baja.** Antes daba por buena cualquier descarga de más
+>   de 10 KB, sin fijarse si era lo que decía ser.
+> - **El enlace del mail funciona en instalaciones nuevas.** El instalador lo registraba
+>   apuntando a un archivo que no instalaba.
+> - **La sesión sobrevive a reinstalar la app.**
+>
+> **RENDIMIENTO**
+>
+> - **Procesador: de 2,5% a 0,76%** (mediana, medido antes y después en la máquina de Martín).
+>   Eran dos cosas nuestras: dibujábamos los medidores de nivel contra pantallas que nadie
+>   estaba mirando, y analizábamos el micrófono todo el tiempo aunque estuvieras silenciado y
+>   con la ventana minimizada.
+> - **Memoria: 213 MB.** La aplicación pesada que queremos reemplazar, medida en la misma
+>   máquina y en el mismo momento: 1.217 MB.
+>
+> **CAMBIOS DE JUEGO**
+>
+> - **Se fueron los códigos de sala.** Llamás al amigo desde la lista y la sala se abre sola. La
+>   cabecera te dice con quién estás hablando en vez de mostrarte un código técnico.
+> - **El logo también adentro del ejecutable** (antes solo estaba el de la ventana).
+>
+> **DOCUMENTACIÓN NUEVA, que es lo que más te conviene mirar**
+>
+> - `areas/`: seis análisis a fondo, uno por parte del proyecto, hechos **antes** de construir.
+>   Arrancá por `areas/00-SINTESIS.md`, que reconcilia los seis.
+> - `ROADMAP.md` ahora separa **el tallo de las ramas**: siete cimientos que, si se hacen tarde,
+>   obligan a rehacer todo lo que quedó arriba, y las ramas que cuelgan de ahí.
+>
+> **LO QUE VIENE: el chat**
+>
+> Decisión de los dos: lo primero que tiene que andar bien, sin cosas raras, es el chat. Y es
+> buena elección por un motivo que no es obvio: **un chat bien hecho arrastra cuatro de los
+> siete cimientos.**
+>
+> El orden es al revés del que parece obvio. **Primero la plomería** (la forma de los datos,
+> los permisos garantizados por la base, el historial guardado en tu propia PC y el borrado de
+> verdad) y **después las funciones lindas** (imágenes, buscador, reacciones, responder). Si se
+> hace al revés, cada función nueva multiplica una factura que todavía no sabemos leer.
+>
+> **DECISIONES QUE TOMÓ MARTÍN HOY.** Si querés objetar alguna, este es el momento, después
+> salen caras:
+>
+> 1. Las tablas nacen con la idea de **espacio** (un espacio es una comunidad con canales
+>    adentro), pero la pantalla muestra uno solo y no hay selector a la vista. Agregarlo después
+>    sería una migración sobre datos vivos; agregarlo ahora es una columna.
+> 2. **Borrado duro, no marca de borrado.** La fila se va de verdad. En los privados hay dos
+>    botones distintos: "sacarlo de mi vista" (borra solo tu copia y se puede deshacer) y
+>    "borrarlo para los dos" (borra del servidor, y solo alcanza los mensajes que escribiste vos).
+> 3. Por defecto, **el texto se guarda para siempre y los adjuntos 90 días.** El texto es barato,
+>    las imágenes son las que llenan el cupo. Configurable por canal.
+> 4. **Tope de 100 MB por archivo.** La aplicación que reemplazamos está en 20.
+>
+> **SIGUE ROTO O SIN PROBAR**
+>
+> - Los códigos de invitación no vencen, no tienen tope de usos y no se pueden dar de baja.
+> - El actualizador todavía no sabe volver atrás si una versión sale rota.
+> - **Nunca probamos una llamada real entre tu PC y la de Martín**, con audio en los dos
+>   sentidos, desde la lista de amigos. Es lo único grande sin verificar de punta a punta.
+> - El instalador nuevo no se probó en una máquina limpia.
+>
+> **DOS COSAS EN LAS QUE TE NECESITAMOS**
+>
+> 1. **Esa llamada de prueba.** Aprovechamos y medimos el consumo con una llamada andando, que
+>    es algo que nadie midió todavía: todos los números que tenemos son con la app abierta sin
+>    hacer nada.
+> 2. **Leer `areas/00-SINTESIS.md`** y decirnos si ves algo que nos estemos comiendo. Hay una
+>    pelea abierta a propósito, y es la única de fondo: si la voz y el video van por la misma
+>    conexión o por dos separadas.
+
 > **Para Antigravity, de Martín (16/09/2026):**
 >
 > Hicimos seis análisis de área antes de empezar a construir, uno por cada parte del proyecto,
