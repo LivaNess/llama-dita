@@ -19,6 +19,22 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 1.12.1A · 2026-09-15 · Claude
+**Qué cambió.** La llamada usa la misma conexión a Supabase que el resto de la app, en vez
+de abrir una segunda por su cuenta. Para quien usa la app no cambia nada; lo que cambia es
+cuánta gente entra sin que el servicio diga basta.
+**Por qué.** Cada usuario abría dos conexiones en vivo y el plan gratis permite 200 en
+total: con 100 personas nos quedábamos sin lugar. La regla ya estaba escrita («no crear un
+segundo cliente»), la señalización era la única que la incumplía.
+**Dónde.** `src/network/peerManager.js` (área D), que ahora importa `src/supabase/client.js`
+(área E).
+**Cómo se verifica.** `npm run dev`, abrir dos pestañas con la misma sala
+(`?room=llamadita-prueba`) y esperar a que las dos digan «Conectado». En la consola de
+cualquiera de las dos:
+`(await import('/src/supabase/client.js')).supabase.getChannels().map(c => c.topic)`
+tiene que incluir el canal `realtime:room_llamadita-prueba`: la señalización viaja por el
+cliente compartido, no por uno propio.
+
 ### 1.11.2C · 2026-09-15 · Antigravity
 **Qué cambió.** Se fijó el bloque de usuario con el micrófono (`[YO] + [MIC]`) de forma permanente en el margen inferior izquierdo de la barra lateral (`margin-top: auto; flex-shrink: 0;`), se garantizó altura total `100%` en la barra lateral, y se alineó la altura de las cabeceras superior e izquierda a exactamente 64px (`box-sizing: border-box`) para que la línea divisoria horizontal sea continua y no se entrecorte en la unión central. Cero cambios en la lógica de la aplicación.
 **Por qué.** En la app de escritorio la barra lateral colapsaba su altura dejando al usuario flotando en el medio con espacio vacío debajo, y la diferencia de alturas entre cabeceras producía un salto visual en la línea horizontal divisoria.

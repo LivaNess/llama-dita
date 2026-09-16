@@ -79,12 +79,12 @@ prueba y con qué hay que tener cuidado.
 - **Archivos:** `src/network/peerManager.js`
 - **Qué hace:** conecta dos personas en una sala. Usa Supabase Realtime para que se
   encuentren y WebRTC para mandar el audio directo, con servidores STUN y TURN.
-- **Depende de:** Supabase (Realtime) y audio.
+- **Depende de:** el cliente Supabase compartido (área E, para Realtime) y audio.
 - **Dependen de ella:** arranque y las llamadas directas del panel social.
 - **Cómo se prueba:** dos PCs en la misma sala; el estado pasa a "Conexión activa".
-- **Cuidado:** hoy crea su **propio** cliente Supabase. Cada cliente abre una conexión en
-  vivo más por usuario y el plan gratis permite 200 en total. Pasarlo al cliente compartido
-  está pendiente (ver `SYNC.md`).
+- **Cuidado:** desde la `1.12.1A` usa el cliente compartido de área E. No volver a
+  `createClient` acá: cada cliente nuevo abre una conexión en vivo más por usuario y el
+  plan gratis permite 200 en total.
 
 ### E. Cliente Supabase compartido
 - **Archivos:** `src/supabase/client.js`

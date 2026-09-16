@@ -48,7 +48,7 @@ Reglas:
 - Nunca pushear con el build roto.
 - Nunca subir el Hito sin permiso explícito.
 - **Cero menciones a otras apps de chat/voz** en código, UI, docs o commits. Llama-dita se describe por lo que es.
-- Antes de reinventar algo, mirar si ya existe: `src/supabase/client.js` es el cliente Supabase compartido (auth, datos, presencia). No crear clientes nuevos con `createClient`: cada uno abre una conexión en vivo más por usuario. La señalización (`peerManager.js`) todavía tiene el suyo; migrarla está en Pendientes de `SYNC.md`.
+- Antes de reinventar algo, mirar si ya existe: `src/supabase/client.js` es el cliente Supabase compartido (auth, datos, presencia). No crear clientes nuevos con `createClient`: cada uno abre una conexión en vivo más por usuario. La señalización (`peerManager.js`) también lo usa desde la `1.12.1A`.
 - **Escala objetivo: 50 a 100 usuarios en el plan gratis de Supabase.** Nada que escriba en la base de forma periódica ni que emita en vivo cambios de una tabla que todos escuchan. Presencia = Realtime Presence (canal `presencia`).
 
 ---

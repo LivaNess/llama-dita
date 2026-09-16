@@ -9,7 +9,7 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 | Agente | Versión objetivo | Archivos en edición | Estado |
 | :--- | :--- | :--- | :--- |
-| *Ninguno* | - | - | *Libre para tomar tareas* |
+| Claude | `1.12.1A` → `1.13.1A` | `src/network/peerManager.js`, `src/main.js`, `desktop/resources/icons/` | Pendientes 2, 4 y 5 (cliente compartido, nombre del participante, íconos) |
 
 > Para tomar una tarea, reemplazá la fila con tu agente, la versión objetivo y los archivos que vas a intervenir. Al hacer el commit final, restaurá el estado a *Libre*.
 
@@ -44,6 +44,7 @@ Cronológico. Acá se lee qué significa cada área y foco (el número no es un 
 | `1.10.2A` | Claude | Mudanza al dominio propio | Todo lo que colgaba de `llamadita.pages.dev` o de GitHub pasa a `llamadita.com.ar`: el manifiesto y el paquete de actualización se publican con la web (`/update-manifest.json` y `/descargas/resources.neu`), el updater los toma de ahí (GitHub queda solo como respaldo mientras propaga el DNS), la dirección vieja redirige al dominio cuando este responde, y el instalador declara el sitio como página del editor. |
 | `1.10.3A` | Antigravity | Web oficial / diseño dark studio | Rediseño completo de la web oficial (`web/index.html` y `web/css/site.css`) adoptando la estética de la app de escritorio: paleta dark studio (#0A0F22), tarjetas glassmorphism, simulación de cabinas de audio con vúmetros y badges en vivo, inputs oscuros con foco azul eléctrico y logo claro. |
 | `1.11.2C` | Antigravity | Interfaz / cabeceras alineadas y pie fijo | Alineación a 64px de las cabeceras superior e izquierda para eliminar la discontinuidad en la línea horizontal divisoria, barra lateral a 100% de altura y pie de usuario `[YO] + [MIC]` fijado de forma permanente al margen inferior izquierdo. |
+| `1.12.1A` | Claude | Red y voz / una sola conexión | La señalización dejó de crear su propio cliente Supabase y usa `src/supabase/client.js`. Cada usuario pasa de dos conexiones en vivo a una: con el plan gratis (200 en total) el techo pasa de ~100 a ~200 personas. |
 ---
 
 ## ⚠️ Reglas para agentes
@@ -77,16 +78,11 @@ Lo que quedó andando y verificado en esta sesión:
 1. **Prueba real de llamada entre dos personas** (Martín y Juan, cada uno en su PC). Es lo
    único grande sin verificar de punta a punta: llamada directa desde la lista de amigos,
    con audio en los dos sentidos.
-2. **Una sola conexión en vivo por usuario**: `src/network/peerManager.js` crea su propio
-   cliente Supabase, así que cada usuario abre dos conexiones y el plan gratis da 200 en
-   total. El cambio es usar `src/supabase/client.js`. Probado que la señalización se
-   suscribe bien con el cliente compartido; falta la llamada completa antes de subirlo.
-   Área de red: coordinar con Antigravity.
-3. **Regenerar el instalador** con `crear-instalador.bat` (necesita Inno Setup, lo tiene
+2. **Regenerar el instalador** con `crear-instalador.bat` (necesita Inno Setup, lo tiene
    Juan). El actual es de una versión vieja y no registra el esquema del enlace. Las
    instalaciones existentes se actualizan solas igual.
-4. **Íconos del escritorio**: la ventana y la bandeja del sistema siguen con los íconos de
+3. **Íconos del escritorio**: la ventana y la bandeja del sistema siguen con los íconos de
    fábrica de Neutralino, no con el logo.
-5. **Nombre del participante en la llamada**: a veces la cabina remota muestra
+4. **Nombre del participante en la llamada**: a veces la cabina remota muestra
    "Participante" en vez del nombre, porque el dato viaja por el canal de datos y puede
    llegar antes de que el otro lado esté listo.

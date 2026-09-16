@@ -1,7 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
-
-const SUPABASE_URL = 'https://mwzkrahindnheuheoycv.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_SiB6rCFCoaa6O4_g0_Sc2Q_gPhbcdXL';
+// La señalización usa el MISMO cliente que el resto de la app: cada cliente nuevo
+// abre una conexión en vivo más por usuario y el plan gratis permite 200 en total.
+import { supabase } from '../supabase/client.js';
 
 const ICE_SERVERS = [
   { urls: 'stun:stun.l.google.com:19302' },
@@ -22,13 +21,7 @@ const ICE_SERVERS = [
 
 export class PeerManager {
   constructor() {
-    this.supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
-      realtime: {
-        params: {
-          eventsPerSecond: 20
-        }
-      }
-    });
+    this.supabase = supabase;
 
     this.myPeerId = 'p_' + Math.random().toString(36).substring(2, 10);
     this.roomId = null;
