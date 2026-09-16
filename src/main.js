@@ -317,8 +317,27 @@ function setupNetworking() {
   peerManager.initPeer(localStream);
 }
 
-// 60 FPS Render Loop
-function renderAudioMetrics() {
+// Bucle de dibujo.
+//
+// Medido en la app instalada (2026-09-15): con la ventana a la vista gastaba 6,5% de CPU
+// sin llamada ni nada, y minimizada 0,55%. O sea que todo ese gasto era dibujar medidores
+// y espectros a 60 cuadros por segundo aunque las cabinas no estuvieran en pantalla.
+// Regla: se dibuja solo cuando hay cabinas a la vista, y a la mitad de cuadros cuando la
+// ventana quedo atras (que es justo cuando estas jugando).
+let ultimoCuadro = 0;
+
+function renderAudioMetrics(ahora = 0) {
+  const cabinasALaVista = studioBoothsView && studioBoothsView.style.display !== 'none';
+  if (!cabinasALaVista || document.hidden) {
+    requestAnimationFrame(renderAudioMetrics);
+    return;
+  }
+  if (!document.hasFocus() && ahora - ultimoCuadro < 32) {
+    requestAnimationFrame(renderAudioMetrics);
+    return;
+  }
+  ultimoCuadro = ahora;
+
   const isSuspended = audioManager.audioCtx && audioManager.audioCtx.state === 'suspended';
 
   // 1. Local Microphone Metrics

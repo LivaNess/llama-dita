@@ -19,6 +19,22 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 1.15.1A · 2026-09-15 · Claude
+**Qué cambió.** La app dejó de gastar procesador cuando no hay nada que mirar. Medido en la
+máquina de Martín, con la ventana abierta y sin llamada: **pasó de 6,49% a 0,45% de CPU**.
+De referencia, la app que queremos reemplazar marcaba 0,20% en el mismo momento, así que
+pasamos de gastar 20 veces más que ella a estar en el mismo orden.
+**Por qué.** El bucle que dibuja los medidores y el espectro corría a 60 cuadros por segundo
+siempre, incluso con las cabinas fuera de pantalla (o sea, dibujando en canvas que nadie
+veía). Se confirmó minimizando la ventana: ahí el gasto caía solo a 0,55%, lo que demostraba
+que todo el consumo era dibujo y no el motor de la aplicación.
+**Dónde.** `src/main.js`, el bucle `renderAudioMetrics` (área A).
+**Cómo se verifica.** Con la app abierta y sin llamada, mirar el uso de CPU del árbol de
+procesos de Llama-dita en el Administrador de tareas: tiene que estar por debajo del 1%.
+**De paso quedó medida la app entera** (versión 1.15.1A, sin llamada, ventana a la vista):
+422 MB de memoria de trabajo y 220 MB de memoria privada, contra 1.077 MB y 1.217 MB de la
+otra. O sea **5,5 veces más liviana en memoria propia**, con el mismo gasto de procesador.
+
 ### 1.14.2A · 2026-09-15 · Claude
 **Qué cambió.** Hay un botón **Salir de la llamada** en la barra de arriba. Aparece solo
 cuando hay alguien del otro lado y corta sin cerrar la app: quedás en standby, en una sala
