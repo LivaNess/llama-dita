@@ -131,8 +131,8 @@ ajuste se puede tocar a mano por separado.
 |---|---|---|---|---|
 | Para quién | máquina justa, o jugando algo pesado | una PC normal | nuestro recomendado | sobra máquina y sobra internet |
 | Audio | mono, bitrate bajo, corta el envío en silencio | intermedio | **lo que suena hoy** | estéreo, bitrate alto |
-| Cámara | 360p 15 fps | 540p 30 fps | 720p 30 fps | 1080p 30/60 fps |
-| Pantalla | 720p 15 fps | 1080p 30 fps | 1080p 60 fps | 1440p 60 fps |
+| Cámara | 360p 15 fps | 540p 30 fps | 720p 30 fps | 1080p 30 fps |
+| Pantalla | 720p 15 fps | 1080p 30 fps | 1080p 60 fps | 1080p 60 fps, bitrate alto |
 | Codec de video | H.264 por hardware | H.264 por hardware | H.264 por hardware | AV1 o VP9 |
 | Visualizadores de audio | apagados | livianos | completos | completos |
 | Animaciones de la interfaz | apagadas | básicas | completas | completas |
