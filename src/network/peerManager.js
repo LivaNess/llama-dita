@@ -114,6 +114,19 @@ export class PeerManager {
   // sala, la presencia del otro nos vuelve a juntar en cuanto sincroniza. Por eso se sale
   // del canal y se vuelve a una sala propia vacía, listos para llamar o que nos llamen.
   leaveRoom() {
+    try {
+      if (this.remotePeerId) {
+        this.sendSignal({
+          from: this.myPeerId,
+          to: this.remotePeerId,
+          type: 'hangup'
+        });
+      }
+      if (this.dataChannel && this.dataChannel.readyState === 'open') {
+        this.dataChannel.send(JSON.stringify({ type: 'hangup' }));
+      }
+    } catch (e) {}
+
     this.destroy();
     this.isInitiatingCall = false;
     this.roomId = `llamadita-${Math.random().toString(36).substring(2, 8)}`;
@@ -294,8 +307,8 @@ export class PeerManager {
         this.onConnectionStatusChange?.('connected', 'Conexión activa');
       } else if (state === 'connecting') {
         this.onConnectionStatusChange?.('connecting', 'Estableciendo enlace de audio...');
-      } else if (state === 'disconnected') {
-        this.onConnectionStatusChange?.('disconnected', 'Participante desconectado');
+      } else if (state === 'disconnected' || state === 'closed') {
+        this.handleDisconnect();
       } else if (state === 'failed') {
         console.warn('Conexión P2P fallida. Reintentando reinicio ICE...');
         this.onConnectionStatusChange?.('connecting', 'Reconectando vía relay...');
@@ -410,6 +423,9 @@ export class PeerManager {
       }
     } else if (type === 'direct-data') {
       this.handleRemoteData(data);
+    } else if (type === 'hangup') {
+      console.log('Señal de corte recibida del otro participante');
+      this.handleDisconnect();
     }
   }
 
@@ -473,6 +489,7 @@ export class PeerManager {
 
     channel.onclose = () => {
       console.log('Canal de datos cerrado');
+      this.handleDisconnect();
     };
 
     channel.onerror = (err) => {
@@ -482,8 +499,9 @@ export class PeerManager {
 
   // Nombre visible en la cabina del otro lado. Queda guardado para poder reenviarlo:
   // si el dato llega antes de que el otro esté listo, se pierde y nadie lo pide de nuevo.
-  setLocalProfile(name) {
+  setLocalProfile(name, avatarKey = null) {
     this.localName = name || null;
+    if (avatarKey !== undefined) this.localAvatarKey = avatarKey;
     this.sendProfile();
   }
 
@@ -491,7 +509,12 @@ export class PeerManager {
   // suyo. Así los dos terminan con el nombre del otro sin importar quién llegó primero.
   sendProfile(wantsReply = true) {
     if (!this.localName) return;
-    this.sendData({ type: 'profile', name: this.localName, wantsReply });
+    this.sendData({
+      type: 'profile',
+      name: this.localName,
+      avatarKey: this.localAvatarKey || null,
+      wantsReply
+    });
   }
 
   handleRemoteData(data) {

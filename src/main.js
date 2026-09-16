@@ -1,6 +1,7 @@
 import { audioManager } from './audio/audioManager.js';
 import { PeerManager } from './network/peerManager.js';
 import { initSocial, updateSocialCallState, getSocialState } from './social/panel.js';
+import { urlParaVer } from './social/adjuntos.js';
 import { initUpdater } from './updater.js';
 import { initDeepLink } from './social/deeplink.js';
 
@@ -14,6 +15,7 @@ const studioCallBar = document.getElementById('studioCallBar');
 
 // La cabecera dice con quién estás hablando, no en qué sala técnica estás.
 let conQuien = null;
+let conQuienAvatarKey = null;
 function setCallStatus(texto) { if (callStatus) callStatus.textContent = texto; }
 
 // Local Booth DOM
@@ -22,11 +24,8 @@ const hostUserName = document.getElementById('hostUserName');
 const hostAvatarContent = document.getElementById('hostAvatarContent');
 const hostVocalAura = document.getElementById('hostVocalAura');
 const hostAvatarDisc = document.getElementById('hostAvatarDisc');
-const btnLoopback = document.getElementById('btnLoopback');
-const btnLoopbackText = document.getElementById('btnLoopbackText');
 const micSensitivityRange = document.getElementById('micSensitivityRange');
 const sensitivityVal = document.getElementById('sensitivityVal');
-const micDeviceSelect = document.getElementById('micDeviceSelect');
 
 // Remote Booth DOM
 const guestBooth = document.getElementById('guestBooth');
@@ -41,23 +40,30 @@ const btnToggleRemoteAudioText = document.getElementById('btnToggleRemoteAudioTe
 const remoteAudioElement = document.getElementById('remoteAudioElement');
 const toastContainer = document.getElementById('toastContainer');
 
-// Layout Views & Sidebar Mic
+// Layout Views, Footer Mic & Loopback Monitor
 const channelChatView = document.getElementById('channelChatView');
 const studioBoothsView = document.getElementById('studioBoothsView');
 const standbyView = document.getElementById('standbyView');
 const btnSidebarMic = document.getElementById('btnSidebarMic');
+const btnLoopback = document.getElementById('btnLoopback');
 let currentActiveChannel = null;
 let isUserLoggedIn = false;
 
-function updateBoothProfiles() {
+async function updateBoothProfiles() {
   const social = typeof getSocialState === 'function' ? getSocialState() : null;
 
   // 1. Host (Local)
   const localName = social?.me?.display_name || social?.me?.username || 'Tú';
   if (hostUserName) hostUserName.textContent = localName;
   if (hostAvatarContent) {
-    if (social?.me?.avatar_url) {
-      hostAvatarContent.innerHTML = `<img src="${social.me.avatar_url}" class="booth-avatar-img" alt="${localName}" />`;
+    if (social?.me?.avatar_key) {
+      try {
+        const url = await urlParaVer(social.me.avatar_key);
+        hostAvatarContent.innerHTML = `<img src="${url}" class="booth-avatar-img" alt="${localName}" />`;
+      } catch (e) {
+        const initials = (localName || 'YO').substring(0, 2).toUpperCase();
+        hostAvatarContent.textContent = initials;
+      }
     } else {
       const initials = (localName || 'YO').substring(0, 2).toUpperCase();
       hostAvatarContent.textContent = initials;
@@ -68,19 +74,34 @@ function updateBoothProfiles() {
   const remoteName = conQuien || 'Participante';
   if (guestUserName) guestUserName.textContent = remoteName;
   if (guestAvatarContent) {
-    let friendAvatarUrl = null;
-    if (social?.friendships && conQuien) {
+    let friendAvatarKey = conQuienAvatarKey || null;
+
+    if (!friendAvatarKey && social?.friendships && conQuien) {
       const item = social.friendships.find(f => {
-        const friend = f.friend;
-        return friend && (friend.display_name === conQuien || friend.username === conQuien);
+        const other = f.requester_id === social.me?.id ? f.addressee : f.requester;
+        return other && (other.display_name === conQuien || other.username === conQuien);
       });
-      if (item?.friend?.avatar_url) {
-        friendAvatarUrl = item.friend.avatar_url;
+      if (item) {
+        const other = item.requester_id === social.me?.id ? item.addressee : item.requester;
+        friendAvatarKey = other?.avatar_key;
       }
     }
 
-    if (friendAvatarUrl) {
-      guestAvatarContent.innerHTML = `<img src="${friendAvatarUrl}" class="booth-avatar-img" alt="${remoteName}" />`;
+    if (friendAvatarKey) {
+      try {
+        const url = await urlParaVer(friendAvatarKey);
+        guestAvatarContent.innerHTML = `<img src="${url}" class="booth-avatar-img" alt="${remoteName}" />`;
+      } catch (e) {
+        if (conQuien && conQuien !== 'Participante') {
+          guestAvatarContent.textContent = conQuien.substring(0, 2).toUpperCase();
+        } else {
+          guestAvatarContent.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+            </svg>
+          `;
+        }
+      }
     } else if (conQuien && conQuien !== 'Participante') {
       guestAvatarContent.textContent = conQuien.substring(0, 2).toUpperCase();
     } else {
@@ -173,7 +194,6 @@ async function startMicrophone(deviceId = null) {
   try {
     localStream = await audioManager.initLocalStream(deviceId);
     peerManager.updateLocalStream(localStream);
-    await loadAudioDevices();
     if (audioPermissionBanner) {
       audioPermissionBanner.style.display = 'none';
     }
@@ -201,45 +221,6 @@ async function init() {
   requestAnimationFrame(renderAudioMetrics);
 }
 
-// Load audio devices into selector
-async function loadAudioDevices() {
-  if (!micDeviceSelect) return;
-  try {
-    const devices = await audioManager.getAudioInputDevices();
-    micDeviceSelect.innerHTML = '';
-
-    if (devices.length === 0) {
-      const opt = document.createElement('option');
-      opt.text = 'Dispositivo predeterminado';
-      opt.value = '';
-      micDeviceSelect.appendChild(opt);
-      return;
-    }
-
-    devices.forEach((device, index) => {
-      const opt = document.createElement('option');
-      opt.value = device.deviceId;
-      opt.text = device.label || `Dispositivo ${index + 1}`;
-      if (device.deviceId === audioManager.currentDeviceId) {
-        opt.selected = true;
-      }
-      micDeviceSelect.appendChild(opt);
-    });
-  } catch (err) {
-    console.warn('Error al enumerar dispositivos:', err);
-  }
-}
-
-// Handle device switch
-micDeviceSelect?.addEventListener('change', async (e) => {
-  const deviceId = e.target.value;
-  if (!deviceId) return;
-  const ok = await startMicrophone(deviceId);
-  if (ok) {
-    showToast('Dispositivo de audio actualizado');
-  }
-});
-
 // Microphone sensitivity range slider
 micSensitivityRange?.addEventListener('input', (e) => {
   const val = parseInt(e.target.value, 10);
@@ -254,16 +235,16 @@ remoteVolumeRange?.addEventListener('input', (e) => {
   if (remoteAudioElement) remoteAudioElement.volume = val / 100;
 });
 
-// Monitor toggle
+// Monitor toggle (en el pie de usuario de la barra lateral)
 btnLoopback?.addEventListener('click', () => {
   const isEnabled = audioManager.toggleLoopback();
   if (isEnabled) {
-    btnLoopback.className = 'btn-control btn-secondary active';
-    if (btnLoopbackText) btnLoopbackText.textContent = 'Detener monitoreo';
+    btnLoopback.classList.add('active');
+    btnLoopback.title = 'Monitoreo local activo (escucharte)';
     showToast('Monitoreo local activo');
   } else {
-    btnLoopback.className = 'btn-control btn-secondary';
-    if (btnLoopbackText) btnLoopbackText.textContent = 'Monitorear';
+    btnLoopback.classList.remove('active');
+    btnLoopback.title = 'Monitoreo local (escucharte)';
     showToast('Monitoreo local desactivado');
   }
 });
@@ -277,7 +258,11 @@ function setupNetworking() {
       showToast('Participante conectado a la sala');
       updateSocialCallState();
       updateBoothProfiles();
-      peerManager.sendProfile();
+      const social = typeof getSocialState === 'function' ? getSocialState() : null;
+      peerManager.setLocalProfile(
+        social?.me?.display_name || social?.me?.username || 'Usuario',
+        social?.me?.avatar_key || null
+      );
     } else if (status === 'waiting') {
       isConnected = false;
       setCallStatus(conQuien ? `Llamando a ${conQuien}…` : 'Esperando participante…');
@@ -285,16 +270,10 @@ function setupNetworking() {
       isConnected = false;
       setCallStatus('Conectando…');
     } else if (status === 'disconnected') {
-      isConnected = false;
-      guestAvatarDisc?.classList.remove('active');
-      if (guestVocalAura) {
-        guestVocalAura.style.transform = 'scale(1)';
-        guestVocalAura.style.opacity = '0.05';
+      if (isConnected || conQuien) {
+        showToast(conQuien ? `${conQuien} cortó la llamada` : 'Llamada finalizada');
+        leaveCall(false);
       }
-      setCallStatus('Sin llamada');
-      conQuien = null;
-      updateBoothProfiles();
-      showToast('Participante desconectado');
     } else if (status === 'error') {
       showToast(msg || 'Error de conexión', 4000);
     }
@@ -321,8 +300,13 @@ function setupNetworking() {
   peerManager.onRemoteData = (data) => {
     if (data.type === 'profile' && data.name) {
       conQuien = data.name;
+      if (data.avatarKey) conQuienAvatarKey = data.avatarKey;
       if (isConnected) setCallStatus(`En llamada con ${data.name}`);
       updateBoothProfiles();
+      updateSocialCallState();
+    } else if (data.type === 'hangup') {
+      showToast(conQuien ? `${conQuien} cortó la llamada` : 'Tu amigo cortó la llamada');
+      leaveCall(false);
     }
   };
 
@@ -439,17 +423,20 @@ btnToggleRemoteAudio?.addEventListener('click', () => {
 
   if (isRemoteMuted) {
     btnToggleRemoteAudio.className = 'btn-control muted';
-    if (btnToggleRemoteAudioText) btnToggleRemoteAudioText.textContent = 'Activar audio remoto';
-    showToast('Audio remoto silenciado');
+    if (btnToggleRemoteAudioText) btnToggleRemoteAudioText.textContent = 'Activar audio';
+    showToast('Audio de tu amigo silenciado');
   } else {
     btnToggleRemoteAudio.className = 'btn-control';
-    if (btnToggleRemoteAudioText) btnToggleRemoteAudioText.textContent = 'Silenciar audio remoto';
-    showToast('Audio remoto activo');
+    if (btnToggleRemoteAudioText) btnToggleRemoteAudioText.textContent = 'Silenciar';
+    showToast('Audio de tu amigo activo');
   }
 });
 
 // Salir de la llamada: corta, vuelve a una sala propia vacía y deja la app en standby.
-function leaveCall() {
+function leaveCall(sendSignal = true) {
+  if (sendSignal) {
+    try { peerManager.sendData({ type: 'hangup' }); } catch (e) {}
+  }
   peerManager.leaveRoom();
 
   isConnected = false;
@@ -461,14 +448,23 @@ function leaveCall() {
   }
 
   conQuien = null;
+  conQuienAvatarKey = null;
+  if (guestAvatarDisc) guestAvatarDisc.classList.remove('active');
+  if (guestVocalAura) {
+    guestVocalAura.style.transform = 'scale(1)';
+    guestVocalAura.style.opacity = '0.05';
+  }
+
   updateBoothProfiles();
   setCallStatus('Sin llamada');
-  showToast('Saliste de la llamada');
   updateMainViews();
   updateSocialCallState();
 }
 
-btnLeaveCall?.addEventListener('click', leaveCall);
+btnLeaveCall?.addEventListener('click', () => {
+  showToast('Saliste de la llamada');
+  leaveCall(true);
+});
 
 // Start the app on load
 window.addEventListener('DOMContentLoaded', () => {
@@ -486,7 +482,8 @@ window.addEventListener('DOMContentLoaded', () => {
     },
     getRoom: () => peerManager.roomId,
     setLocalName: (name) => {
-      peerManager.setLocalProfile(name);
+      const social = typeof getSocialState === 'function' ? getSocialState() : null;
+      peerManager.setLocalProfile(name, social?.me?.avatar_key || null);
       updateBoothProfiles();
     },
     toast: showToast,
@@ -497,7 +494,7 @@ window.addEventListener('DOMContentLoaded', () => {
     onAuthStateChange: (loggedIn) => {
       isUserLoggedIn = !!loggedIn;
       if (!loggedIn && isConnected) {
-        leaveCall();
+        leaveCall(true);
       }
       updateBoothProfiles();
       updateMainViews();
@@ -507,7 +504,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const fn = friend.display_name || friend.username;
       return conQuien === fn || conQuien === friend.username || conQuien === friend.display_name;
     },
-    hangup: () => leaveCall()
+    hangup: () => leaveCall(true)
   });
   // Buscar actualizaciones al abrir (opcional) + popover en el tag de versión del header.
   initUpdater({ toast: showToast });

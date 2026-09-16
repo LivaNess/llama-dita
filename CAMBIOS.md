@@ -19,6 +19,20 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.24.1B · 2026-09-16 · Antigravity
+**Qué cambió.** Cuatro correcciones críticas sobre la llamada y la vista de cabinas:
+1. **Fotos en las cabinas ("DEBE MOSTRAR FOTOS"):** Ahora se cargan y muestran las fotos de perfil reales en los discos de avatar del usuario local y del amigo conectado (resolviendo las direcciones firmadas de `avatar_key` mediante `urlParaVer`).
+2. **Actualización al cortar llamada ("Si mi amigo corta, se debe actualizar"):** Al cortar el amigo o desconectarse, se envía señal de `hangup`, se detecta el corte en WebRTC y presencia, se sale automáticamente de la llamada volviendo a standby y se actualiza de inmediato la barra lateral (el botón del amigo pasa de rojo "Colgar" a verde "Llamar").
+3. **Monitoreo reubicado al pie de usuario ("VA AHÍ"):** El botón de monitoreo local (`btnLoopback`) se movió al pie de la barra lateral izquierda junto al botón de silenciar micrófono, manteniendo ambas herramientas de entrada juntas.
+4. **Simplificación estética de controles:** Se eliminó el selector de dispositivo de la cabina y se acortó el texto del botón de silenciar audio del amigo a "Silenciar".
+**Por qué.** Pedido puntual de Juan sobre captura anotada.
+**Dónde.** `index.html`, `src/network/peerManager.js`, `src/main.js`, `package.json`.
+**Cómo se verifica.**
+1. Ejecutar `npm run verificar`.
+2. Al estar en llamada, las fotos de ambos participantes se ven en los discos circulares.
+3. Si el otro participante corta, la app sale de la llamada, vuelve a standby y el botón del amigo se actualiza a verde.
+4. El botón de monitoreo vive en el pie de usuario de la barra lateral al lado del micrófono.
+
 ### 0.24.1A · 2026-09-16 · Claude
 **Qué cambió.** Cierra el tronco del chat: los pasos 4, 5, 6 y 7 de `areas/chat-e-historial.md`.
 Lo que se ve:
