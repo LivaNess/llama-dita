@@ -19,6 +19,19 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 1.13.1A · 2026-09-15 · Claude
+**Qué cambió.** La ventana de la app de escritorio (y su lugar en la barra de tareas) deja
+de mostrar el ícono de fábrica de Neutralino y muestra el logo: la llama con auriculares
+sobre el cuadrado azul marino. Lo mismo el ícono de bandeja, para cuando se use.
+**Por qué.** Era lo último que seguía diciendo "app genérica" en el escritorio.
+**Dónde.** `desktop/resources/icons/appIcon.png` (256×256) y `trayIcon.png` (32×32),
+generados a partir de `public/favicon.svg` (área L, marca).
+**Cómo se verifica.** `npm run build:desktop`, abrir la app y mirar la esquina de la
+ventana y la barra de tareas. Para regenerarlos: abrir la app en el navegador, dibujar
+`/favicon.svg` en un canvas del tamaño que haga falta y guardar el PNG.
+**Ojo.** El ícono del ejecutable en sí (el `.exe` en el Explorador) viene incrustado en el
+binario de Neutralino y no cambia con esto.
+
 ### 1.12.2A · 2026-09-15 · Claude
 **Qué cambió.** La cabina del otro lado muestra su nombre y no "Participante". Si la
 persona se renombra o entra con su cuenta después, el cambio le llega igual; cuando se

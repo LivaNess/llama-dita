@@ -1,7 +1,11 @@
 {
   "$schema": "https://raw.githubusercontent.com/neutralinojs/neutralinojs/main/schemas/neutralino.config.schema.json",
   "applicationId": "com.llamadita.app",
+<<<<<<< HEAD
   "version": "1.11.2C",
+=======
+  "version": "1.13.1A",
+>>>>>>> c1199eb ([1.13.1A] feat: la ventana y la bandeja del escritorio usan el logo)
   "defaultMode": "window",
   "port": 24024,
   "documentRoot": "/resources/",

@@ -46,6 +46,7 @@ Cronológico. Acá se lee qué significa cada área y foco (el número no es un 
 | `1.11.2C` | Antigravity | Interfaz / cabeceras alineadas y pie fijo | Alineación a 64px de las cabeceras superior e izquierda para eliminar la discontinuidad en la línea horizontal divisoria, barra lateral a 100% de altura y pie de usuario `[YO] + [MIC]` fijado de forma permanente al margen inferior izquierdo. |
 | `1.12.1A` | Claude | Red y voz / una sola conexión | La señalización dejó de crear su propio cliente Supabase y usa `src/supabase/client.js`. Cada usuario pasa de dos conexiones en vivo a una: con el plan gratis (200 en total) el techo pasa de ~100 a ~200 personas. |
 | `1.12.2A` | Claude | Red y voz / nombre del participante | El nombre se manda cuando el canal de datos abre (no cuando la llamada pasa a "conectado", que es antes de que el otro escuche) y quien lo recibe contesta con el suyo. Al cortarse, la cabina remota vuelve a "Participante". |
+| `1.13.1A` | Claude | Escritorio / íconos | La ventana y la bandeja usan el logo (PNG de 256 y 32 sacados de `public/favicon.svg`) en vez de los íconos de fábrica de Neutralino. El ícono del `.exe` viene en el binario y no cambia. |
 ---
 
 ## ⚠️ Reglas para agentes
@@ -82,5 +83,3 @@ Lo que quedó andando y verificado en esta sesión:
 2. **Regenerar el instalador** con `crear-instalador.bat` (necesita Inno Setup, lo tiene
    Juan). El actual es de una versión vieja y no registra el esquema del enlace. Las
    instalaciones existentes se actualizan solas igual.
-3. **Íconos del escritorio**: la ventana y la bandeja del sistema siguen con los íconos de
-   fábrica de Neutralino, no con el logo.

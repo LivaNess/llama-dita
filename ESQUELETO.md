@@ -145,9 +145,12 @@ prueba y con qué hay que tener cuidado.
 - **Cuidado:** la app usa un puerto fijo, así que **no puede haber dos copias abiertas**.
 
 ### L. Marca
-- **Archivos:** `public/brand/`, `public/favicon.svg`
+- **Archivos:** `public/brand/`, `public/favicon.svg`, `desktop/resources/icons/`
 - **Qué hace:** el logo en sus dos versiones (fondo oscuro y claro) y el ícono.
-- **Dependen de ella:** app y web.
+- **Dependen de ella:** app, web y el escritorio (ventana y bandeja).
+- **Cuidado:** los PNG de `desktop/resources/icons/` salen de `favicon.svg` (256×256 la
+  ventana, 32×32 la bandeja): si cambia el logo, hay que volver a generarlos. El ícono del
+  `.exe` viene incrustado en el binario de Neutralino y no se toca desde acá.
 
 ---
 
