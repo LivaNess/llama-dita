@@ -19,6 +19,12 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 1.11.2C · 2026-09-15 · Antigravity
+**Qué cambió.** Se fijó el bloque de usuario con el micrófono (`[YO] + [MIC]`) de forma permanente en el margen inferior izquierdo de la barra lateral (`margin-top: auto; flex-shrink: 0;`), se garantizó altura total `100%` en la barra lateral, y se alineó la altura de las cabeceras superior e izquierda a exactamente 64px (`box-sizing: border-box`) para que la línea divisoria horizontal sea continua y no se entrecorte en la unión central. Cero cambios en la lógica de la aplicación.
+**Por qué.** En la app de escritorio la barra lateral colapsaba su altura dejando al usuario flotando en el medio con espacio vacío debajo, y la diferencia de alturas entre cabeceras producía un salto visual en la línea horizontal divisoria.
+**Dónde.** `src/style.css`, `src/brand.css`.
+**Cómo se verifica.** Abrir la app de escritorio y confirmar que la línea horizontal superior es perfectamente continua y uniforme y que el bloque de usuario con el micrófono está pegado al fondo a la izquierda.
+
 ### 1.11.2B · 2026-09-15 · Claude
 **Qué cambió.** El protocolo dejó de depender de la buena voluntad: `AGENTS.md` es la
 puerta de entrada para cualquier agente y `npm run verificar` controla que la versión esté

@@ -38,8 +38,19 @@ body {
 }
 
 /* ---------- Identidad en la barra lateral ---------- */
-.app-sidebar { background: #0D1430; border-right: 1px solid rgba(143, 166, 255, 0.12); }
-.sidebar-header { border-bottom: 1px solid rgba(143, 166, 255, 0.12); }
+.app-sidebar {
+  background: #0D1430;
+  border-right: 1px solid rgba(143, 166, 255, 0.12);
+  height: 100%;
+  min-height: 100%;
+}
+.sidebar-header {
+  height: 64px;
+  min-height: 64px;
+  max-height: 64px;
+  box-sizing: border-box;
+  border-bottom: 1px solid rgba(143, 166, 255, 0.12);
+}
 .sidebar-header .logo-icon,
 .logo-icon {
   background: transparent;
@@ -70,13 +81,25 @@ body {
 .sidebar-icon-btn:hover { background: rgba(91, 124, 250, 0.18); color: #fff; }
 .sidebar-channel-item.active { background: rgba(91, 124, 250, 0.16); border-left: 3px solid var(--brand-blue); }
 .sidebar-channel-item:hover { background: rgba(143, 166, 255, 0.08); }
-.sidebar-friend-item:hover { background: rgba(143, 166, 255, 0.08); }
-.sidebar-user-footer { border-top: 1px solid rgba(143, 166, 255, 0.12); background: rgba(10, 15, 34, 0.6); }
+.sidebar-user-footer {
+  margin-top: auto;
+  flex-shrink: 0;
+  border-top: 1px solid rgba(143, 166, 255, 0.12);
+  background: rgba(10, 15, 34, 0.85);
+  box-sizing: border-box;
+}
 .sidebar-user-avatar { background: linear-gradient(140deg, var(--brand-navy-2), var(--brand-blue)); color: #fff; font-family: var(--font-display); font-weight: 700; }
 .sidebar-mic-btn.active { background: rgba(91, 124, 250, 0.18); color: var(--brand-blue-soft); }
 
 /* ---------- Cabecera y controles ---------- */
-.app-header { border-bottom: 1px solid rgba(143, 166, 255, 0.12); background: rgba(13, 20, 48, 0.55); }
+.app-header {
+  height: 64px;
+  min-height: 64px;
+  max-height: 64px;
+  box-sizing: border-box;
+  border-bottom: 1px solid rgba(143, 166, 255, 0.12);
+  background: rgba(13, 20, 48, 0.55);
+}
 .room-id-pill { border-color: rgba(143, 166, 255, 0.22); color: var(--text-secondary); }
 .btn-invite, .btn-join {
   background: linear-gradient(135deg, var(--brand-navy-2), var(--brand-blue));

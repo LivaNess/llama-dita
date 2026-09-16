@@ -43,6 +43,7 @@ Cronológico. Acá se lee qué significa cada área y foco (el número no es un 
 | `1.10.1D` | Claude | Web oficial | Correcciones: `dist/` y `site-dist/` fuera del repositorio (el renglón del .gitignore se había pegado al anterior) y paquete de escritorio con la identidad visual nueva. Las versiones 1.10.1B y 1.10.1C quedaron solo en mensajes de commit: la única fuente sigue siendo package.json. |
 | `1.10.2A` | Claude | Mudanza al dominio propio | Todo lo que colgaba de `llamadita.pages.dev` o de GitHub pasa a `llamadita.com.ar`: el manifiesto y el paquete de actualización se publican con la web (`/update-manifest.json` y `/descargas/resources.neu`), el updater los toma de ahí (GitHub queda solo como respaldo mientras propaga el DNS), la dirección vieja redirige al dominio cuando este responde, y el instalador declara el sitio como página del editor. |
 | `1.10.3A` | Antigravity | Web oficial / diseño dark studio | Rediseño completo de la web oficial (`web/index.html` y `web/css/site.css`) adoptando la estética de la app de escritorio: paleta dark studio (#0A0F22), tarjetas glassmorphism, simulación de cabinas de audio con vúmetros y badges en vivo, inputs oscuros con foco azul eléctrico y logo claro. |
+| `1.11.2C` | Antigravity | Interfaz / cabeceras alineadas y pie fijo | Alineación a 64px de las cabeceras superior e izquierda para eliminar la discontinuidad en la línea horizontal divisoria, barra lateral a 100% de altura y pie de usuario `[YO] + [MIC]` fijado de forma permanente al margen inferior izquierdo. |
 ---
 
 ## ⚠️ Reglas para agentes
