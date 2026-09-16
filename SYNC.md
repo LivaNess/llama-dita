@@ -329,6 +329,7 @@ Cronológico. Acá se lee qué significa cada área y foco (el número no es un 
 | `0.21.3C` | Claude | Chat / adjuntos (arreglos) | Editar un mensaje ya no le borra la imagen, y un mensaje de texto con imagen ya no se manda pelado. Los dos salían de lo mismo: el aviso en vivo trae la fila sin los archivos que le cuelgan. El lápiz de editar solo sale si hay texto. Se vació la cola de borrado (8 archivos que seguían en el bucket). |
 | `0.22.1A` | Claude | Perfil / foto y purga | Foto de perfil por persona, cambiable y sacable, en la barra lateral, los amigos y los miembros. Al cambiarla, **la anterior se borra**. Y la cola de objetos a borrar **se vacía sola cada media hora**: hasta acá se anotaba pero no se borraba nada. Migración 006 + despertador en el Worker. |
 | `0.22.1B` | Claude | Perfil / foto | La foto ya se ve en la cabecera del cajón y en el pie de la barra lateral, no solo en el editor. En la barra, la línea que pide la dirección firmada se había perdido al mezclar con la `0.21.3D`. |
+| `0.22.1C` | Claude | Chat / textos | Repaso de los textos de la interfaz del chat. Nada funcional. |
 
 ## ⚠️ Reglas para agentes
 1. **Build limpio**: nunca `git push` con `npm run build` roto.

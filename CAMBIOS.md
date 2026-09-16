@@ -19,6 +19,14 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.22.1C · 2026-09-16 · Claude
+**Qué cambió.** Repaso de los textos de la interfaz del chat: el cartel de arrastrar, la ayuda
+del clip y el mensaje de un canal vacío. Nada funcional.
+**Por qué.** Venían escritos como instrucciones de manual y no como habla.
+**Dónde.** `index.html`, `src/social/panel.js`.
+**Cómo se verifica.** Abrir un canal sin mensajes, arrastrar un archivo encima de la
+conversación y pasar el mouse por el clip.
+
 ### 0.22.1B · 2026-09-16 · Claude
 **Qué cambió.** La foto de perfil ahora se ve en **todos** lados. Antes se veía solo la grande
 del editor: el circulito de arriba del cajón y el del pie de la barra lateral seguían mostrando

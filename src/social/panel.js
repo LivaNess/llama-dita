@@ -495,7 +495,7 @@ function channelDetail() {
       <button class="sc-ghost sc-small" id="scCopyInvite" title="Copiar código de invitación">Código: ${esc(c.invite_code)}</button>
     </div>
     ${c.kind === 'voice' ? `<button class="sc-primary" id="scJoinVoice">Entrar a la sala de voz</button><p class="sc-muted sc-tiny">Sala P2P: ${esc(c.room_code)} · por ahora de a dos personas por sala.</p>` : `
-      <div class="sc-messages" id="scMessages">${state.messages.map(msgItem).join('') || `<p class="sc-empty">Sin mensajes todavía.</p>`}</div>
+      <div class="sc-messages" id="scMessages">${state.messages.map(msgItem).join('') || `<p class="sc-empty">Acá todavía no pasó nada.</p>`}</div>
       <form class="sc-row" id="scMsgForm"><input type="text" id="scMsg" placeholder="Escribí un mensaje" maxlength="2000" autocomplete="off" required /><button class="sc-primary sc-small" type="submit">Enviar</button></form>`}
     <h4>Miembros (${state.members.length})</h4>
     ${state.members.map((m) => `<div class="sc-item">${fotoDe(m.profile)}${statusDot(m.profile || {})}<div class="sc-item-text"><strong>${esc(m.profile?.display_name || m.profile?.username || '…')}</strong><small>@${esc(m.profile?.username || '')}${m.role === 'owner' ? ' · dueño' : ''}</small></div>
@@ -1533,7 +1533,7 @@ function renderChat() {
     if (c.kind === 'voice') {
       messagesBox.innerHTML = `<p class="sc-empty">Es un canal de voz. Entrá a la sala con el botón de arriba.</p>`;
     } else if (!state.messages.length) {
-      messagesBox.innerHTML = `<p class="sc-empty">Sin mensajes todavía. ¡Sé el primero en escribir!</p>`;
+      messagesBox.innerHTML = `<p class="sc-empty">Acá todavía no pasó nada.</p>`;
     } else {
       messagesBox.innerHTML = state.messages.map(msgItem).join('');
       bindAccionesMensaje(messagesBox);
