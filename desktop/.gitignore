@@ -14,3 +14,6 @@ neutralino.js
 # Neutralinojs related files
 .storage
 *.log
+
+# Carpeta temporal del empaquetador
+/.tmp
