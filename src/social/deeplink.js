@@ -10,7 +10,9 @@
 import { supabase } from '../supabase/client.js';
 
 const ESQUEMA = 'llamadita';
-export const REDIRECT_APP = `${ESQUEMA}://auth`;
+// El mail vuelve a esta página del sitio, que es la que salta a la app.
+// (Los navegadores no saltan a una app desde la redirección del servidor.)
+export const REDIRECT_APP = 'https://llamadita.com.ar/entrar/';
 
 export const esEscritorio = () => typeof window.NL_PORT !== 'undefined';
 

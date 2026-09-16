@@ -1,0 +1,45 @@
+/* Página puente que abre la app desde el enlace del mail */
+.entrar-body {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.entrar-wrap {
+  width: min(520px, 100%);
+  text-align: center;
+  background: var(--bg-card, rgba(18, 26, 54, 0.72));
+  border: 1px solid var(--border-subtle, rgba(143, 166, 255, 0.12));
+  border-radius: var(--radius-lg, 20px);
+  padding: 40px 28px;
+  box-shadow: var(--shadow-main, 0 20px 50px rgba(0, 0, 0, 0.5));
+  backdrop-filter: blur(14px);
+}
+
+.entrar-wrap img {
+  margin: 0 auto 18px;
+}
+
+.entrar-wrap h1 {
+  font-size: 1.7rem;
+  margin-bottom: 0.6rem;
+}
+
+#estado {
+  color: var(--text-secondary, #A6B1D6);
+  margin-bottom: 1.6rem;
+  min-height: 3em;
+}
+
+.entrar-acciones {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-bottom: 1.4rem;
+}
+
+.entrar-nota {
+  font-size: 0.85rem;
+  color: var(--text-muted, #6C77A0);
+}
