@@ -113,10 +113,10 @@ function mount() {
     if (state.pendingRender && !drawer.contains(document.activeElement)) { state.pendingRender = false; render(); }
   }, 0));
 
-  const sidebarLogin = document.getElementById('sidebarLoginContainer');
-  if (sidebarLogin) {
-    sidebarLogin.addEventListener('focusout', () => setTimeout(() => {
-      if (state.pendingRender && !sidebarLogin.contains(document.activeElement)) {
+  const standbyLogin = document.getElementById('standbyLoginContainer');
+  if (standbyLogin) {
+    standbyLogin.addEventListener('focusout', () => setTimeout(() => {
+      if (state.pendingRender && !standbyLogin.contains(document.activeElement)) {
         state.pendingRender = false;
         render();
       }
@@ -193,10 +193,10 @@ function startPresence(uid) {
 // No re-dibujar el panel mientras alguien está escribiendo en él (perdería lo tipeado).
 function safeRender() {
   const a = document.activeElement;
-  const sidebarLogin = document.getElementById('sidebarLoginContainer');
+  const standbyLogin = document.getElementById('standbyLoginContainer');
   const inDrawer = drawer && !drawer.hidden && a && drawer.contains(a);
-  const inSidebarLogin = sidebarLogin && a && sidebarLogin.contains(a);
-  if ((inDrawer || inSidebarLogin) && /^(INPUT|TEXTAREA|SELECT)$/.test(a?.tagName)) {
+  const inStandbyLogin = standbyLogin && a && standbyLogin.contains(a);
+  if ((inDrawer || inStandbyLogin) && /^(INPUT|TEXTAREA|SELECT)$/.test(a?.tagName)) {
     state.pendingRender = true;
     return;
   }
@@ -804,38 +804,42 @@ function renderCallBanner() {
 // ------------------------------------------------------------------
 function renderSidebar() {
   const isLogged = !!(state.session && state.me);
+  const standbyLogin = document.getElementById('standbyLoginContainer');
   const sidebarLogin = document.getElementById('sidebarLoginContainer');
   const sidebarScrollable = document.getElementById('sidebarScrollable');
   const sidebarUserFooter = document.getElementById('sidebarUserFooter');
 
   const standbyTitle = document.getElementById('standbyTitle');
   const standbyDesc = document.getElementById('standbyDesc');
-  const callStatus = document.getElementById('callStatus');
-  const onAirBadge = document.getElementById('onAirBadge');
-  const onAirText = document.getElementById('onAirText');
 
   if (!isLogged) {
     document.body.classList.add('is-logged-out');
 
     if (sidebarLogin) {
-      sidebarLogin.style.display = 'block';
-      sidebarLogin.innerHTML = loginView({ isSidebar: true });
-      bindLogin(sidebarLogin);
+      sidebarLogin.style.display = 'none';
+      sidebarLogin.innerHTML = '';
     }
     if (sidebarScrollable) sidebarScrollable.style.display = 'none';
     if (sidebarUserFooter) sidebarUserFooter.style.display = 'none';
 
-    if (standbyTitle) standbyTitle.textContent = 'Acceso restringido';
-    if (standbyDesc) standbyDesc.textContent = 'Iniciá sesión o creá tu cuenta en la barra lateral para acceder al programa, canales y llamadas.';
-    if (callStatus) callStatus.textContent = 'Sin sesión';
-    if (onAirBadge) onAirBadge.classList.remove('live');
-    if (onAirText) onAirText.textContent = 'BLOQUEADO';
+    if (standbyTitle) standbyTitle.textContent = '¿Otra vez chateando solo, en serio?';
+    if (standbyDesc) standbyDesc.textContent = 'Iniciá sesión o creá tu cuenta para acceder al programa, canales y llamadas.';
+
+    if (standbyLogin) {
+      standbyLogin.style.display = 'block';
+      standbyLogin.innerHTML = loginView({ isSidebar: true });
+      bindLogin(standbyLogin);
+    }
 
     return;
   }
 
   // Usuario autenticado
   document.body.classList.remove('is-logged-out');
+  if (standbyLogin) {
+    standbyLogin.style.display = 'none';
+    standbyLogin.innerHTML = '';
+  }
   if (sidebarLogin) {
     sidebarLogin.style.display = 'none';
     sidebarLogin.innerHTML = '';
@@ -845,8 +849,6 @@ function renderSidebar() {
 
   if (standbyTitle) standbyTitle.textContent = 'Sin sesión activa';
   if (standbyDesc) standbyDesc.textContent = 'Seleccioná un canal de texto en la barra lateral o llamá a un amigo.';
-  if (callStatus && callStatus.textContent === 'Sin sesión') callStatus.textContent = 'Sin llamada';
-  if (onAirText && onAirText.textContent === 'BLOQUEADO') onAirText.textContent = 'STANDBY';
 
   const channelsList = document.getElementById('sidebarChannelsList');
   const friendsList = document.getElementById('sidebarFriendsList');

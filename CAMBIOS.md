@@ -19,6 +19,19 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.21.2B · 2026-09-16 · Antigravity
+**Qué cambió.** Rediseño visual de la pantalla de bienvenida y login para usuarios sin sesión:
+1. **Login centrado en la tarjeta:** El formulario de login y registro se reubicó directamente debajo de la ilustración de la llama en la tarjeta central (`#standbyCard`), en lugar de la barra lateral.
+2. **Mensaje personalizado:** El título de la tarjeta pasó a decir *"¿Otra vez chateando solo, en serio?"* y la descripción se ajustó a *"Iniciá sesión o creá tu cuenta para acceder al programa, canales y llamadas."*
+3. **Elevación visual de la tarjeta:** La tarjeta sube ligeramente (`padding-bottom` compensado) para centrar armoniosamente el contenido con el formulario integrado.
+4. **Limpieza de estados en la cabecera:** Se retiraron de la vista los indicadores redundantes ("Sin sesión", "ESPERANDO"), dejando la cabecera limpia.
+**Por qué.** Mejora de apariencia solicitada por el usuario para mayor calidez y orden visual, sin alterar ninguna de las lógicas de autenticación ni WebRTC existentes.
+**Dónde.** `index.html`, `src/style.css`, `src/social/panel.js`, `package.json`.
+**Cómo se verifica.**
+1. Ejecutar `npm run verificar`.
+2. Al abrir la app sin sesión: la barra lateral izquierda queda limpia y oscura; en el centro, la tarjeta principal muestra la llama, el título *"¿Otra vez chateando solo, en serio?"* y justo debajo el formulario de login/registro (Crear cuenta / Ya tengo cuenta, mail, código); en la cabecera superior ya no figuran badges ni estados innecesarios.
+3. Al loguearse con código de 6 dígitos, la app abre normalmente la sesión restaurando canales, amigos y salas.
+
 ### 0.21.2A · 2026-09-16 · Claude
 **Qué cambió.** Todavía nada que se vea: es la mitad de abajo de los adjuntos, la que hay que
 tener antes de poner el clip en la pantalla. Queda armado el lugar donde van a vivir las

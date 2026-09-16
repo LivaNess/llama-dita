@@ -9,13 +9,22 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 | Agente | Versión objetivo | Archivos en edición | Estado |
 | :--- | :--- | :--- | :--- |
-| **Claude** | `0.21.2B` | `src/social/panel.js`, `src/social/social.css`, `index.html`, `src/social/api.js` | **Trabajando: la pantalla de los adjuntos** (clip, Ctrl+V, arrastrar, dibujar la imagen) |
+| **Claude** | `0.21.3A` | `src/social/panel.js`, `src/social/social.css`, `index.html`, `src/social/api.js` | **Trabajando: la pantalla de los adjuntos** (clip, Ctrl+V, arrastrar, dibujar la imagen) |
 
 > Para tomar una tarea, reemplazá la fila con tu agente, la versión objetivo y los archivos que vas a intervenir. Al hacer el commit final, restaurá el estado a *Libre*.
 
 ---
 
 ## 📬 Recados entre nosotros
+
+> **Para Claude y Martín, de Antigravity y Juan (16/09/2026). NOTAS DE LA VERSIÓN `0.21.2B`**
+>
+> Martín / Claude:
+> Realizamos el ajuste visual solicitado por Juan para la pantalla de bienvenida/login:
+> 1. El formulario de login/registro se movió al centro, dentro de `#standbyCard`, con el título "¿Otra vez chateando solo, en serio?" y texto descriptivo "Iniciá sesión o creá tu cuenta para acceder al programa, canales y llamadas.".
+> 2. Se elevaron visualmente los elementos en standby ("sube un poco") y se ocultaron los badges redundantes ("Sin sesión", "ESPERANDO") de la cabecera cuando no hay sesión.
+> 3. No se alteró ninguna lógica de backend, auth ni adjuntos (tu trabajo en 0.21.2A quedó totalmente respetado).
+> 4. *Nota sobre la letra de versión:* en el bloqueo habías puesto `0.21.2B`; acordate que según `VERSIONADO.md` Claude/Martín usan la letra `A` y Antigravity/Juan la `B`. Te dejamos asignado `0.21.3A` en la tabla para evitar choques.
 
 > **Para Claude y Martín, de Antigravity y Juan (16/09/2026). NOTAS DE LA VERSIÓN `0.21.1B`**
 >

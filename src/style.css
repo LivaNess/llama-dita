@@ -1451,140 +1451,195 @@ button.logo-tag { font: inherit; cursor: pointer; }
 }
 
 /* ------------------------------------------------------------------
-   Panel de Login integrado en la barra lateral (Sin sesión activa)
+   Panel de Login integrado en la tarjeta central (Sin sesión activa)
 ------------------------------------------------------------------ */
-.sidebar-login-container {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 1.25rem 1rem;
+.standby-login-container {
+  width: 100%;
+  text-align: left;
 }
 
-.sidebar-login-container .sc-login {
+.standby-login-container .sc-login {
   padding: 0;
   gap: 0.85rem;
 }
 
-.sidebar-login-container .sc-login h2 {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--brand-cream, #fff);
-  margin-bottom: 0.2rem;
+.standby-login-container .sc-login h2 {
+  display: none;
 }
 
-.sidebar-login-container .sc-muted {
-  font-size: 0.78rem;
-  line-height: 1.4;
-  color: var(--text-secondary);
+.standby-login-container .sc-mode {
+  display: flex;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 3px;
+  margin-bottom: 0.75rem;
 }
 
-.sidebar-login-container label {
-  font-size: 0.76rem;
+.standby-login-container .sc-mode button {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-secondary, #94a3b8);
+  padding: 0.48rem;
+  border-radius: 6px;
   font-weight: 600;
-  color: var(--text-secondary);
+  font-size: 0.8rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s ease;
+}
+
+.standby-login-container .sc-mode button.active {
+  background: var(--brand-blue, #7c3aed);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.standby-login-container .sc-muted {
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--text-secondary, #94a3b8);
+  text-align: center;
+  margin-bottom: 0.85rem;
+}
+
+.standby-login-container label {
+  display: block;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #cbd5e1;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  margin-bottom: 0.35rem;
 }
 
-.sidebar-login-container input {
+.standby-login-container input {
   width: 100%;
   box-sizing: border-box;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.14);
   color: #fff;
   border-radius: 8px;
-  padding: 0.6rem 0.75rem;
-  font-size: 0.86rem;
-}
-
-.sidebar-login-container input:focus {
-  outline: none;
-  border-color: var(--brand-blue, #a855f7);
-  background: rgba(255, 255, 255, 0.09);
-}
-
-.sidebar-login-container .sc-primary {
-  width: 100%;
-  padding: 0.65rem;
+  padding: 0.65rem 0.85rem;
   font-size: 0.88rem;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.standby-login-container input:focus {
+  outline: none;
+  border-color: #a855f7;
+  background: rgba(255, 255, 255, 0.09);
+  box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
+}
+
+.standby-login-container .sc-primary {
+  width: 100%;
+  padding: 0.68rem;
+  font-size: 0.9rem;
   font-weight: 700;
-  margin-top: 0.25rem;
-}
-
-.sidebar-login-container .sc-link {
-  font-size: 0.78rem;
-  margin-top: 0.2rem;
-}
-
-.sidebar-login-container .sc-mode {
-  display: flex;
-  background: rgba(255, 255, 255, 0.06);
+  margin-top: 0.5rem;
   border-radius: 8px;
-  padding: 3px;
-  gap: 3px;
-  margin-bottom: 0.2rem;
+  background: #8b5cf6;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.35);
+  transition: transform 0.1s ease, filter 0.15s ease;
 }
 
-.sidebar-login-container .sc-mode button {
-  flex: 1;
+.standby-login-container .sc-primary:hover {
+  filter: brightness(1.1);
+}
+
+.standby-login-container .sc-primary:active {
+  transform: scale(0.98);
+}
+
+.standby-login-container .sc-link {
+  display: block;
+  width: 100%;
+  text-align: center;
   background: none;
   border: none;
-  color: var(--text-secondary);
-  padding: 0.45rem;
-  border-radius: 6px;
-  font-weight: 600;
-  font-size: 0.78rem;
+  color: #93c5fd;
+  font-size: 0.8rem;
+  margin-top: 0.6rem;
   cursor: pointer;
+  padding: 0.3rem;
   font-family: inherit;
-  transition: all 0.15s ease;
 }
 
-.sidebar-login-container .sc-mode button.active {
-  background: var(--brand-blue, #7c3aed);
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+.standby-login-container .sc-link:hover {
+  text-decoration: underline;
+  color: #bfdbfe;
+}
+
+.standby-login-container .sc-ok {
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: #86efac;
+  text-align: center;
+  margin-bottom: 0.6rem;
+}
+
+.standby-login-container .sc-error {
+  font-size: 0.8rem;
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  margin-top: 0.6rem;
+  text-align: center;
 }
 
 /* Estado de bloqueo en vista standby cuando no hay sesión */
-body.is-logged-out .app-sidebar {
-  width: 300px;
-  min-width: 300px;
-  max-width: 300px;
+body.is-logged-out .standby-view {
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 7vh; /* Sube la tarjeta hacia arriba */
 }
 
 body.is-logged-out .standby-card {
+  width: 100%;
+  max-width: 440px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(14, 20, 42, 0.6);
-  padding: 2.2rem 2rem;
+  background: rgba(14, 20, 42, 0.78);
+  padding: 2.2rem 2.4rem;
   border-radius: 20px;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
 body.is-logged-out .standby-icon {
   background: rgba(91, 124, 250, 0.1);
   border-color: rgba(91, 124, 250, 0.25);
   box-shadow: 0 0 24px rgba(91, 124, 250, 0.15);
+  margin-bottom: 1.1rem;
 }
 
 body.is-logged-out .standby-title {
   color: var(--brand-cream, #fff);
   font-size: 1.35rem;
+  font-weight: 700;
+  margin-bottom: 0.45rem;
 }
 
 body.is-logged-out .standby-desc {
   color: var(--text-secondary, #94a3b8);
-  max-width: 340px;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  margin-bottom: 1.35rem;
+  max-width: 360px;
 }
 
-body.is-logged-out .app-header .call-status-pill {
-  color: var(--text-muted);
-  border-color: rgba(255, 255, 255, 0.05);
-}
-
-body.is-logged-out .on-air-badge {
-  opacity: 0.6;
+/* En estado deslogueado se eliminan los estados de IA de la cabecera */
+body.is-logged-out .app-header .call-status-pill,
+body.is-logged-out .app-header .on-air-badge {
+  display: none !important;
 }
