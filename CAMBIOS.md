@@ -19,6 +19,24 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.22.1B · 2026-09-16 · Claude
+**Qué cambió.** La foto de perfil ahora se ve en **todos** lados. Antes se veía solo la grande
+del editor: el circulito de arriba del cajón y el del pie de la barra lateral seguían mostrando
+las iniciales aunque tuvieras foto puesta.
+
+**Por qué pasaba, y eran dos motivos distintos:**
+- La cabecera del cajón dibujaba las iniciales y punto: nunca tuvo dónde poner la foto.
+- El pie de la barra lateral sí la dibujaba, pero la línea que le pide la dirección firmada
+  **se perdió al mezclar con la `0.21.3D`**. La foto se dibujaba vacía y nadie la rellenaba.
+  Ahora esa línea vive al final del dibujado de la barra, donde no se puede perder de vista.
+
+**Dónde.** `src/social/panel.js`, `src/social/social.css`.
+
+**Cómo se verifica.** Con una foto puesta, tiene que verse en cuatro lugares: el editor de
+perfil, el circulito de la cabecera del cajón, el pie de la barra lateral y el renglón del
+amigo. Verificado antes en la base y el bucket: la foto subía y se guardaba bien (6 KB en el
+bucket), el problema era solo de dibujado.
+
 ### 0.22.1A · 2026-09-16 · Claude
 **Qué cambió.** Cada uno tiene su foto de perfil y la cambia cuando quiere, desde la pestaña
 Perfil. Se ve en el pie de la barra lateral, en la lista de amigos y en los miembros de un

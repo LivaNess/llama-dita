@@ -360,7 +360,9 @@ function pendingCount() { return state.friendships.filter((f) => f.status === 'p
 
 function profileHeader() {
   return `<header class="sc-head">
-    <div class="sc-avatar">${esc((state.me.display_name || state.me.username).slice(0, 2).toUpperCase())}</div>
+    <div class="sc-avatar ${state.me.avatar_key ? 'con-foto' : ''}">${state.me.avatar_key
+      ? `<img data-key="${esc(state.me.avatar_key)}" alt="${esc(state.me.display_name || state.me.username)}" />`
+      : esc((state.me.display_name || state.me.username).slice(0, 2).toUpperCase())}</div>
     <div class="sc-head-text"><strong>${esc(state.me.display_name || state.me.username)}</strong><small>@${esc(state.me.username)}</small></div>
     <select class="sc-status" id="scStatus" title="Tu estado">
       ${['online', 'idle', 'dnd'].map((s) => `<option value="${s}" ${state.me.status === s ? 'selected' : ''}>${{ online: 'Conectado', idle: 'Ausente', dnd: 'No molestar' }[s]}</option>`).join('')}
@@ -983,7 +985,7 @@ function profileView() {
       ${fotoDe(state.me, 'sc-foto-grande')}
       <div class="sc-foto-acciones">
         <input type="file" id="scFotoInput" accept="image/*" hidden />
-        <button class="sc-primary sc-small" type="button" id="scCambiarFoto">${state.me.avatar_key ? 'Cambiar la foto' : 'Poner una foto'}</button>
+        <button class="sc-primary sc-small" type="button" id="scCambiarFoto">${state.me.avatar_key ? 'Cambiarla' : 'Ponerla'}</button>
         ${state.me.avatar_key ? `<button class="sc-ghost sc-small" type="button" id="scSacarFoto">Sacarla</button>` : ''}
         <p class="sc-muted sc-tiny">Se recorta cuadrada y se achica sola. La anterior se borra: no se van juntando.</p>
       </div>
@@ -1319,6 +1321,12 @@ function renderSidebar() {
       }
     }
   }
+
+  // Lo ultimo: rellenar las fotos. La barra se redibuja entera en cada render, asi que los
+  // `img` vuelven a salir vacios y hay que volver a pedirles la direccion firmada (que se
+  // guarda una hora en memoria, asi que en la practica es un pedido por persona).
+  pintarImagenes(friendsList);
+  pintarImagenes(userAvatar);
 }
 
 // ------------------------------------------------------------------
