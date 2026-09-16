@@ -98,14 +98,30 @@ prueba y con qué hay que tener cuidado.
 
 ### F. Cuentas y panel social
 - **Archivos:** `src/social/auth.js`, `src/social/api.js`, `src/social/panel.js`,
-  `src/social/sesionGuardada.js`, `src/social/social.css`
+  `src/social/sesionGuardada.js`, `src/social/cacheLocal.js`, `src/social/social.css`
 - **Qué hace:** entrar sin contraseña (código por mail), perfil, amigos con presencia,
-  canales de texto y de voz, mensajes y llamadas directas.
+  canales de texto y de voz, chats privados de a dos, mensajes y llamadas directas.
 - **Depende de:** cliente Supabase, base de datos, red (para la llamada).
 - **Dependen de ella:** arranque (dibuja la barra lateral).
-- **Cómo se prueba:** dos cuentas, mandarse solicitud, aceptar, llamarse.
+- **Cómo se prueba:** dos cuentas, mandarse solicitud, aceptar, llamarse, escribirse.
 - **Cuidado:** la presencia **no** se guarda en la base. Va por Realtime Presence, porque
   escribir cada minuto no escala.
+
+#### F.1 El historial guardado en la PC (`src/social/cacheLocal.js`)
+- **Qué hace:** guarda los mensajes en el disco de cada uno (IndexedDB) y lleva, por canal,
+  una marca de "de acá tengo todo hasta tal momento". Con eso, abrir un canal no baja nada si
+  no hubo novedades.
+- **Depende de:** el motor de la app (IndexedDB) y nada más. No habla con la red.
+- **Dependen de ella:** `panel.js`, que pinta desde acá antes de preguntarle al servidor.
+- **Cómo se prueba:** abrir un canal, cerrarlo y volver a abrirlo: los mensajes aparecen al
+  instante y la pestaña de red no muestra una descarga de historial.
+- **Cuidado:** es caché, no es la verdad. Si se pierde, se vuelve a bajar y listo; nada de acá
+  se considera definitivo. Y **si el origen cambia (otro puerto), se pierde entera**: por eso
+  la app se sirve siempre desde el mismo puerto fijo.
+- **La trampa que ya está resuelta:** al servidor se le pide siempre desde *la marca menos 30
+  segundos*. Postgres pone la hora del mensaje cuando la transacción arranca pero la fila se ve
+  cuando termina, así que pedir desde la marca exacta pierde mensajes. Los repetidos que trae
+  el solape se tiran por identificador.
 
 ### G. Enlace del mail
 - **Archivos:** `src/social/deeplink.js`, `web/entrar/index.html`, `web/js/entrar.js`
@@ -134,11 +150,30 @@ prueba y con qué hay que tener cuidado.
 
 ### J. Base de datos
 - **Archivos:** `supabase/migrations/`
-- **Qué hace:** perfiles, amistades, canales, miembros, mensajes y llamadas, con RLS para
-  que cada uno vea solo lo suyo.
+- **Qué hace:** espacios, perfiles, amistades, canales, miembros, mensajes, lápidas y
+  llamadas, con RLS para que cada uno vea solo lo suyo.
 - **Dependen de ella:** cuentas y panel social.
+- **La forma de los datos (desde la migración 004):**
+  - `spaces` / `space_members`: un espacio es una comunidad con canales adentro. Hay uno solo
+    y la pantalla no lo muestra, pero las tablas ya saben de él: el día que haya varios no
+    hay que migrar mensajes que ya existen.
+  - `channels`: los de tipo `text` y `voice` viven en un espacio. Los de tipo `dm` son los
+    chats privados de a dos: no viven en ningún espacio y llevan una `dm_key` única armada
+    con los dos identificadores, que es lo que garantiza una sola conversación por par.
+  - `messages`: además del texto lleva `client_id` (lo pone el cliente, para que un reenvío
+    no duplique), `edited_at` y `updated_at` indexado, que es lo que hace barato pedir "dame
+    lo que cambió desde tal momento".
+  - `message_tombstones`: el borrado es duro, la fila se va. La lápida es lo único que queda,
+    y es cómo se entera el que estaba desconectado. Se limpia a los 90 días con
+    `purgar_lapidas()`.
+- **Funciones que usa la app:** `abrir_chat_directo(otro)` comprueba que sean amigos y
+  devuelve el chat privado, creándolo la primera vez. `join_channel_by_code(code)` entra a un
+  canal con su código.
 - **Cuidado:** todo cambio de esquema se escribe como migración nueva, numerada, aunque se
   haya aplicado a mano.
+- **Cuidado 2:** en un chat privado el "dueño" es el que lo abrió, pero **no** puede borrar
+  los mensajes del otro. La política de borrado lo excluye a propósito; en un canal normal el
+  dueño sí modera.
 
 ### K. Empaquetado e instalador
 - **Archivos:** `desktop/`, `installer.iss`, `crear-instalador.bat`

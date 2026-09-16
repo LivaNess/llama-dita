@@ -19,6 +19,66 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.21.1A · 2026-09-16 · Claude
+**Qué cambió.** Tres cosas que se ven:
+
+1. **Chat privado con cada amigo.** Tocando a un amigo en la barra lateral (o en el cajón) se
+   abre la conversación de a dos. El botón del teléfono sigue llamando como antes. Desde
+   adentro del chat privado también se puede llamar.
+2. **El historial deja de bajarse entero cada vez.** Ahora vive en tu PC: abrir un canal es
+   instantáneo y al servidor solo se le pide lo que cambió desde la última vez. Y se terminó
+   el techo de 60 mensajes.
+3. **Borrar de verdad.** Cada mensaje propio se puede editar y borrar; el borrado se va de la
+   base y desaparece de la pantalla del otro, incluso si estaba desconectado cuando pasó. En
+   los chats privados hay dos botones distintos: *Sacar de mi vista* (borra la copia de esta
+   computadora, es reversible) y *Borrar lo mío para los dos* (borra del servidor, y solo
+   alcanza lo que escribiste vos).
+
+**Por qué.** Es el cimiento del chat, hecho antes que las funciones lindas. Hasta acá, cada
+vez que abrías un canal la app pedía los últimos 60 mensajes al servidor, siempre, aunque ya
+los hubieras visto mil veces. El plan gratis da 5 GB de bajada por mes: con 200 personas
+bajando 1 MB de historial por día son 6 GB y nos pasamos sin haber hecho una sola llamada. Y
+sin borrado de verdad, cada función nueva multiplicaba una factura que todavía no sabíamos
+leer. Sale del camino de `areas/chat-e-historial.md` y de las cuatro decisiones que tomó
+Martín, anotadas en `SYNC.md`.
+
+**Dónde.**
+- `supabase/migrations/20260916_004_esqueleto_del_chat.sql` (nueva, ya aplicada): espacios,
+  chats privados, identificador de mensaje puesto por el cliente, edición, lápidas y
+  retención.
+- `src/social/cacheLocal.js` (nuevo): el historial guardado en la PC de cada uno.
+- `src/social/api.js`: sincronización por diferencia, abrir chat privado, editar y borrar.
+- `src/social/panel.js`, `src/social/social.css`, `index.html`: la pantalla.
+
+**Decisiones que quedaron congeladas acá.** Las tablas nacen con la idea de *espacio* aunque
+la pantalla muestre uno solo; el borrado es duro (la fila se va, no se marca); por defecto el
+texto se guarda para siempre y los adjuntos 90 días; el tope por archivo va a ser de 100 MB.
+
+**Cómo se verifica.**
+1. Tocar un amigo en la barra lateral: tiene que abrirse el chat privado con su nombre arriba.
+2. Escribir un mensaje y que le llegue al otro al toque.
+3. Cerrar el chat y volver a abrirlo: los mensajes aparecen **al instante**, sin esperar.
+4. Pasar el mouse por encima de un mensaje propio: aparecen el lápiz y la cruz. Borrarlo y
+   mirar que desaparezca también de la pantalla del otro.
+5. Cerrar la app del otro, borrar un mensaje, y volver a abrirla: el mensaje no tiene que
+   estar. Eso es la lápida funcionando.
+6. En un canal normal, el dueño puede borrar mensajes ajenos. En un privado, **no**: probado
+   contra la base, el intento devuelve cero filas.
+
+**Se cruzó con la `0.20.1B`.** Antigravity hizo los chats privados al mismo tiempo, con otro
+modelo: un canal de texto normal con el código de sala `dm-<id>-<id>`, creado desde la app.
+Quedó el modelo de esta versión (canal de tipo `dm` creado por el servidor) por tres motivos
+concretos, anotados en el recado de `SYNC.md`. De su versión se conservaron las mejoras de
+pantalla, que eran buenas y no dependían del modelo: el botón de llamar propio en la cabecera
+con su estado de "no está conectado", el subtítulo con el arroba, el renglón del amigo
+resaltado cuando su chat está abierto, el menú contextual de los canales con clic derecho y el
+nombre corregido de la sección de amigos.
+
+**Sin verificar todavía.** El almacenamiento duradero del historial devuelve *false* en un
+navegador común. Falta probarlo en la app empaquetada (WebView2), que es donde importa: si
+ahí también diera *false*, el motor podría tirar la caché cuando el disco se llena y habría
+que volver a bajar el historial. No rompe nada, cuesta un rato de bajada.
+
 ### 0.20.1B · 2026-09-16 · Antigravity
 **Qué cambió.** Al hacer clic en un amigo de la barra lateral se abre su chat privado (DM) en la vista principal con su nombre, estado y botón de llamada directa integrado en la cabecera. El botón de teléfono en la fila del amigo sigue llamando de inmediato. En los canales de la barra lateral, un clic derecho despliega un menú contextual con opciones para copiar código de invitación y salir del canal (o eliminarlo si sos el dueño). La sección "Y LOS AMIGOS?" se renombró a "AMIGOS -".
 **Por qué.** No había forma de chatear de a dos por privado (los mensajes solo existían dentro de canales colectivos) ni de llamar a un amigo desde su conversación. Tampoco había forma directa y cómoda de abandonar canales desde la barra lateral.

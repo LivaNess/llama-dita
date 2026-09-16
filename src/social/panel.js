@@ -9,6 +9,7 @@ import { supabase } from '../supabase/client.js';
 import { getSession, onAuthChange, sendCode, verifyCode, signOut } from './auth.js';
 import { guardarSesion, recuperarSesion } from './sesionGuardada.js';
 import * as api from './api.js';
+import * as cache from './cacheLocal.js';
 
 const RING_TIMEOUT_MS = 45000;
 
@@ -22,6 +23,7 @@ const state = {
   members: [],
   messages: [],
   currentChannel: null,
+  directos: new Map(), // id de canal -> chat privado abierto (no salen en la lista de canales)
   incomingCall: null,
   outgoingCall: null,
   unsub: [],
@@ -142,6 +144,13 @@ async function onLogin() {
     return;
   }
   hooks.setLocalName?.(state.me.display_name || state.me.username);
+
+  // El historial vive en esta PC. Le pedimos al motor que no tire la caché cuando el disco se
+  // llena: si dice que no, el chat anda igual, solo que vuelve a bajar lo que ya tenía.
+  cache.pedirAlmacenamientoDuradero().then((ok) => {
+    if (ok === false) console.warn('[cache] el motor no garantiza el historial local');
+  });
+
   startPresence(uid);
   await Promise.all([refreshFriends(), refreshChannels()]);
   subscribeAll(uid);
@@ -182,6 +191,7 @@ function onLogout() {
   state.unsub.forEach((u) => { try { u(); } catch (_) {} });
   state.unsub = [];
   clearInterval(state.heartbeat);
+  state.directos.clear();
   Object.assign(state, { me: null, friendships: [], channels: [], members: [], messages: [], currentChannel: null, incomingCall: null, outgoingCall: null });
   headerBtn.querySelector('span').textContent = 'Crear cuenta';
   setTimeout(() => toggleDrawer(true), 300);
@@ -211,7 +221,7 @@ function onProfileChange(p) {
 async function refreshFriends() { state.friendships = await api.listFriendships(); }
 async function refreshChannels() {
   state.channels = await api.listChannels();
-  if (state.currentChannel && !state.channels.find((c) => c.id === state.currentChannel.id)) state.currentChannel = null;
+  if (state.currentChannel && !esDirecto(state.currentChannel) && !state.channels.find((c) => c.id === state.currentChannel.id)) state.currentChannel = null;
 }
 
 // ------------------------------------------------------------------
@@ -394,7 +404,7 @@ function friendsView() {
         <button class="sc-primary sc-small" data-accept="${f.id}">Aceptar</button><button class="sc-ghost sc-small" data-remove="${f.id}">No</button></div>`).join('')}` : ''}
     <h4>Amigos ${friends.length ? `<span class="sc-muted">(${friends.filter((x) => isOnline(x.p)).length} conectados)</span>` : ''}</h4>
     ${friends.length ? friends.map(({ f, p }) => `
-      <div class="sc-item">${statusDot(p)}<div class="sc-item-text"><strong>${esc(p.display_name || p.username)}</strong><small>@${esc(p.username)}</small></div>
+      <div class="sc-item sc-clickable" data-chat="${p.id}" title="Abrir chat privado">${statusDot(p)}<div class="sc-item-text"><strong>${esc(p.display_name || p.username)}</strong><small>@${esc(p.username)}</small></div>
         <button class="sc-call sc-small" data-call="${p.id}" title="Llamar" ${isOnline(p) ? '' : 'disabled'}>${ICONO_TELEFONO}</button>
         <button class="sc-ghost sc-small" data-remove="${f.id}" title="Quitar amigo">✕</button></div>`).join('')
       : `<p class="sc-empty">Todavía no tenés amigos agregados. Buscá a alguien por su nombre de usuario.</p>`}
@@ -405,10 +415,9 @@ function friendsView() {
 
 // ---- Canales ----
 function channelsView() {
-  if (state.currentChannel && !state.currentChannel.room_code?.startsWith('dm-')) return channelDetail();
-  const regular = state.channels.filter((c) => !c.room_code?.startsWith('dm-'));
-  const mine = regular.filter((c) => c.owner_id === state.me.id);
-  const others = regular.filter((c) => c.owner_id !== state.me.id);
+  if (state.currentChannel && !esDirecto(state.currentChannel)) return channelDetail();
+  const mine = state.channels.filter((c) => c.owner_id === state.me.id);
+  const others = state.channels.filter((c) => c.owner_id !== state.me.id);
   const item = (c) => `<button class="sc-item sc-clickable" data-open="${c.id}"><span class="sc-kind">${c.kind === 'voice' ? '🔊' : '#'}</span><div class="sc-item-text"><strong>${esc(c.name)}</strong><small>${c.kind === 'voice' ? 'Canal de voz' : 'Canal de texto'}${c.owner_id === state.me.id ? ' · tuyo' : ''}</small></div></button>`;
   return `
     <form class="sc-row" id="scCreateForm">
@@ -445,95 +454,209 @@ function channelDetail() {
     <div class="sc-row sc-danger-row">${owner ? `<button class="sc-danger sc-small" id="scDeleteChannel">Borrar canal</button>` : `<button class="sc-danger sc-small" id="scLeaveChannel">Salir del canal</button>`}</div>`;
 }
 
+function autorDe(m) {
+  // El nombre vivo del miembro le gana al que quedó guardado en la caché: si alguien se
+  // cambió el nombre, el historial viejo no se queda con el anterior.
+  const vivo = state.members.find((x) => x.user_id === m.author_id)?.profile
+    || (m.author_id === state.me?.id ? state.me : null);
+  return vivo?.display_name || vivo?.username || m.author?.display_name || m.author?.username || 'cuenta borrada';
+}
+
 function msgItem(m) {
   const mine = m.author_id === state.me.id;
+  // Lo tuyo lo borrás siempre. Lo ajeno, solo el dueño de un canal, y nunca en un chat
+  // privado: si no, el que abrió la conversación podría borrar lo que dijo el otro.
+  const puedoBorrar = mine || (!esDirecto(state.currentChannel) && state.currentChannel?.owner_id === state.me.id);
   const t = new Date(m.created_at);
-  return `<div class="sc-msg ${mine ? 'mine' : ''}"><small>${esc(m.author?.display_name || m.author?.username || 'cuenta borrada')} · ${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}</small><div>${esc(m.body)}</div></div>`;
+  const hora = `${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}`;
+  return `<div class="sc-msg ${mine ? 'mine' : ''}" data-msg="${esc(m.id)}">
+    <small>${esc(autorDe(m))} · ${hora}${m.edited_at ? ' · editado' : ''}</small>
+    <div class="sc-msg-body">${esc(m.body)}</div>
+    ${puedoBorrar ? `<div class="sc-msg-acciones">${mine ? `<button type="button" class="sc-msg-accion" data-editar="${esc(m.id)}" title="Editar">✎</button>` : ''}<button type="button" class="sc-msg-accion" data-borrar="${esc(m.id)}" title="Borrar para todos">✕</button></div>` : ''}
+  </div>`;
 }
 
-function getDmFriend(c) {
-  if (c.dmFriend) return c.dmFriend;
-  if (c.room_code?.startsWith('dm-')) {
-    const ids = c.room_code.slice(3).split('-');
-    const friendId = ids.find((id) => id !== state.me?.id);
-    if (friendId) {
-      const f = state.friendships.find((x) => (x.requester_id === friendId || x.addressee_id === friendId) && x.status === 'accepted');
-      if (f) return otherSide(f);
-      const m = state.members.find((x) => x.user_id === friendId);
-      if (m?.profile) return m.profile;
-    }
-  }
-  return null;
+// ------------------------------------------------------------------
+// Historial: la caché local y la sincronización por diferencia
+// ------------------------------------------------------------------
+function esDirecto(c) { return c?.kind === 'dm'; }
+
+function buscarCanal(id) {
+  return state.channels.find((x) => x.id === id) || state.directos.get(id) || null;
 }
 
-async function openDmWithFriend(friend) {
-  if (!state.session || !state.me) {
-    toggleDrawer(true);
-    return;
-  }
-  const pair = [state.me.id, friend.id].sort();
-  const dmRoomCode = `dm-${pair[0]}-${pair[1]}`;
-
-  let ch = state.channels.find((c) => c.room_code === dmRoomCode);
-  if (!ch) {
-    try {
-      ch = await api.getChannelByRoomCode(dmRoomCode);
-    } catch (_) {}
-  }
-  if (!ch) {
-    try {
-      ch = await api.createChannel(state.me.id, friend.display_name || friend.username, 'text', dmRoomCode);
-      try {
-        await api.addFriendToChannel(ch.id, friend.id);
-      } catch (_) {}
-    } catch (err) {
-      try {
-        ch = await api.getChannelByRoomCode(dmRoomCode);
-      } catch (_) {}
-    }
-  }
-  if (ch) {
-    ch.dmFriend = friend;
-    if (!state.channels.find((c) => c.id === ch.id)) {
-      state.channels.push(ch);
-    }
-    if (state.currentChannel?.id === ch.id) {
-      closeChannel();
-    } else {
-      openChannel(ch.id, friend);
-    }
-  }
+function nombreCanal(c) {
+  if (!c) return '';
+  if (!esDirecto(c)) return c.name;
+  if (c.conNombre) return c.conNombre;
+  const otro = state.members.find((m) => m.user_id !== state.me?.id)?.profile;
+  return otro?.display_name || otro?.username || 'Chat privado';
 }
 
-async function openChannel(id, dmFriend = null) {
-  const c = state.channels.find((x) => x.id === id);
+// Junta lo que ya teníamos con lo que vino, tira los repetidos por identificador (el solape de
+// 30 segundos los trae a propósito) y saca los que tienen lápida.
+function mezclar(actuales, nuevos, lapidas = []) {
+  const borrados = new Set(lapidas.map((l) => String(l.message_id)));
+  const porId = new Map();
+  for (const m of [...actuales, ...nuevos]) porId.set(String(m.id), m);
+  for (const id of borrados) porId.delete(id);
+  // Se ordena por la hora convertida a numero, no por el texto: el aviso en vivo y la consulta
+  // al servidor no siempre escriben la fecha igual, y comparar textos pondria un mensaje nuevo
+  // en el lugar equivocado.
+  return [...porId.values()].sort((a, b) => (hora(a.created_at) - hora(b.created_at)) || (Number(a.id) - Number(b.id)));
+}
+
+const hora = (v) => { const t = Date.parse(v); return Number.isNaN(t) ? 0 : t; };
+
+function marcaMasNueva(mensajes, lapidas) {
+  let max = 0;
+  for (const m of mensajes) max = Math.max(max, hora(m.updated_at || m.created_at));
+  for (const l of lapidas) max = Math.max(max, hora(l.deleted_at));
+  return max ? new Date(max).toISOString() : null;
+}
+
+async function sincronizar(channelId) {
+  const marca = await cache.leerMarca(channelId);
+  let res;
+  try {
+    res = await api.sincronizarCanal(channelId, marca, cache.SOLAPE_MS);
+  } catch (e) { hooks.toast?.(e.message); return; }
+
+  const { mensajes, lapidas } = res;
+  if (mensajes.length) await cache.guardarMensajes(mensajes.map((m) => ({ ...m, channel_id: channelId })));
+  if (lapidas.length) {
+    await cache.guardarLapidas(lapidas);
+    await cache.olvidarMensajes(lapidas.map((l) => l.message_id));
+  }
+  const nueva = marcaMasNueva(mensajes, lapidas);
+  if (nueva) await cache.guardarMarca(channelId, nueva);
+
+  if (state.currentChannel?.id !== channelId) return;
+  state.messages = mezclar(state.messages, mensajes, lapidas);
+}
+
+async function llegoMensaje(channelId, fila) {
+  const perfil = state.members.find((m) => m.user_id === fila.author_id)?.profile;
+  const m = { ...fila, author: perfil ? { username: perfil.username, display_name: perfil.display_name } : null };
+  await cache.guardarMensajes([m]);
+  await cache.guardarMarca(channelId, marcaMasNueva([m], []));
+  if (state.currentChannel?.id !== channelId) return;
+  state.messages = mezclar(state.messages, [m]);
+  render();
+}
+
+// Un borrado no viaja como "fila borrada" (ese aviso llega solo con la clave y no se puede
+// filtrar por canal): viaja como el alta de una lápida.
+async function llegoBorrado(channelId, lapida) {
+  await cache.guardarLapidas([lapida]);
+  await cache.olvidarMensajes([lapida.message_id]);
+  await cache.guardarMarca(channelId, marcaMasNueva([], [lapida]));
+  if (state.currentChannel?.id !== channelId) return;
+  state.messages = mezclar(state.messages, [], [lapida]);
+  render();
+}
+
+function suscribirCanal(id) {
+  if (state.channelUnsub) state.channelUnsub();
+  state.channelUnsub = api.subscribe('chan-' + id, [
+    { table: 'messages', event: 'INSERT', filter: `channel_id=eq.${id}`, cb: (p) => llegoMensaje(id, p.new) },
+    { table: 'messages', event: 'UPDATE', filter: `channel_id=eq.${id}`, cb: (p) => llegoMensaje(id, p.new) },
+    { table: 'message_tombstones', event: 'INSERT', filter: `channel_id=eq.${id}`, cb: (p) => llegoBorrado(id, p.new) },
+    { table: 'channel_members', filter: `channel_id=eq.${id}`, cb: async () => { if (state.currentChannel?.id === id) { state.members = await api.listMembers(id); render(); } } }
+  ]);
+}
+
+async function openChannel(id) {
+  const c = buscarCanal(id);
   if (!c) return;
-  if (dmFriend) c.dmFriend = dmFriend;
   state.currentChannel = c;
   toggleDrawer(false);
   state.members = [];
   state.messages = [];
+  const conTexto = c.kind !== 'voice';
+
+  // 1. Lo que ya está en esta PC se pinta al toque. Abrir un canal no espera a la red.
+  if (conTexto) state.messages = await cache.leerMensajes(id);
+  if (state.currentChannel?.id !== id) return;
   render();
-  [state.members, state.messages] = await Promise.all([api.listMembers(id), c.kind === 'text' ? api.listMessages(id) : Promise.resolve([])]);
-  if (state.channelUnsub) state.channelUnsub();
-  state.channelUnsub = api.subscribe('chan-' + id, [
-    { table: 'messages', event: 'INSERT', filter: `channel_id=eq.${id}`, cb: async (p) => {
-      if (state.currentChannel?.id !== id) return;
-      let author = state.members.find((m) => m.user_id === p.new.author_id)?.profile;
-      if (!author && p.new.author_id === state.me?.id) author = state.me;
-      if (!author && c.dmFriend && p.new.author_id === c.dmFriend.id) author = c.dmFriend;
-      state.messages.push({ ...p.new, author });
-      render();
-    } },
-    { table: 'channel_members', filter: `channel_id=eq.${id}`, cb: async () => { if (state.currentChannel?.id === id) { state.members = await api.listMembers(id); render(); } } }
-  ]);
+
+  // 2. Y recién después se le pide al servidor lo que cambió desde la última vez.
+  state.members = await api.listMembers(id);
+  if (state.currentChannel?.id !== id) return;
+  if (conTexto) await sincronizar(id);
+  if (state.currentChannel?.id !== id) return;
+
+  suscribirCanal(id);
   render();
+}
+
+// Abrir el chat privado con un amigo. El servidor comprueba que sean amigos y devuelve la
+// conversación, creándola la primera vez.
+async function abrirChatPrivado(p) {
+  if (!p) return;
+  try {
+    const ch = await api.abrirChatDirecto(p.id);
+    if (!ch?.id) return;
+    state.directos.set(ch.id, { ...ch, conNombre: p.display_name || p.username, otro: p });
+    await openChannel(ch.id);
+  } catch (e) { hooks.toast?.(e.message); }
 }
 
 function closeChannel() {
   if (state.channelUnsub) { state.channelUnsub(); state.channelUnsub = null; }
   state.currentChannel = null;
   render();
+}
+
+// ------------------------------------------------------------------
+// Borrar
+// ------------------------------------------------------------------
+async function borrarMensaje(id) {
+  try {
+    await api.deleteMessage(id);
+    // No esperamos al aviso de vuelta: se va de la pantalla ya.
+    await cache.olvidarMensajes([Number(id)]);
+    state.messages = state.messages.filter((m) => String(m.id) !== String(id));
+    render();
+  } catch (e) { hooks.toast?.(e.message); }
+}
+
+async function editarMensaje(id) {
+  const actual = state.messages.find((m) => String(m.id) === String(id));
+  if (!actual) return;
+  const texto = prompt('Editar el mensaje:', actual.body);
+  if (texto === null || texto.trim() === actual.body) return;
+  try { await api.editMessage(id, texto); } catch (e) { hooks.toast?.(e.message); }
+}
+
+// "Sacarlo de mi vista": borra la copia de esta PC y nada más. Es reversible: al volver a
+// abrir el chat se sincroniza de nuevo y vuelve todo.
+async function sacarDeMiVista(channelId) {
+  if (!confirm('Esto borra la conversación de esta computadora, no del servidor.\n\nSi volvés a abrir el chat, se descarga de nuevo. ¿Seguimos?')) return;
+  await cache.vaciarCanal(channelId);
+  state.messages = [];
+  render();
+  hooks.toast?.('Sacado de esta PC. Sigue en el servidor.');
+}
+
+// "Borrarlo para los dos": borra del servidor, y solo alcanza lo que escribiste vos.
+async function borrarParaLosDos(channelId) {
+  if (!confirm('Esto borra del servidor los mensajes que escribiste VOS en esta conversación.\n\nSe van de verdad y también desaparecen de la pantalla del otro. Lo que escribió la otra persona queda.\n\n¿Seguro?')) return;
+  try {
+    await api.deleteMyMessages(channelId, state.me.id);
+    state.messages = state.messages.filter((m) => m.author_id !== state.me.id);
+    render();
+    hooks.toast?.('Borrado para los dos.');
+  } catch (e) { hooks.toast?.(e.message); }
+}
+
+// Los botones de cada mensaje, que aparecen tanto en el cajón como en la pantalla grande.
+function bindAccionesMensaje(contenedor) {
+  if (!contenedor) return;
+  contenedor.querySelectorAll('[data-borrar]').forEach((b) => {
+    b.onclick = () => { if (confirm('¿Borrar este mensaje? Se va de verdad, para todos.')) borrarMensaje(b.dataset.borrar); };
+  });
+  contenedor.querySelectorAll('[data-editar]').forEach((b) => { b.onclick = () => editarMensaje(b.dataset.editar); });
 }
 
 // ---- Perfil ----
@@ -571,9 +694,15 @@ function bindMain() {
   });
   drawer.querySelectorAll('[data-accept]').forEach((b) => b.addEventListener('click', () => act(() => api.acceptFriendRequest(b.dataset.accept), 'Ahora son amigos')));
   drawer.querySelectorAll('[data-remove]').forEach((b) => b.addEventListener('click', () => act(() => api.removeFriendship(b.dataset.remove))));
-  drawer.querySelectorAll('[data-call]').forEach((b) => b.addEventListener('click', () => {
+  drawer.querySelectorAll('[data-call]').forEach((b) => b.addEventListener('click', (e) => {
+    e.stopPropagation();
     const p = state.friendships.map(otherSide).find((x) => x.id === b.dataset.call);
     if (p) callFriend(p);
+  }));
+  drawer.querySelectorAll('[data-chat]').forEach((el) => el.addEventListener('click', (e) => {
+    if (e.target.closest('[data-call]') || e.target.closest('[data-remove]')) return;
+    const p = state.friendships.map(otherSide).find((x) => x.id === el.dataset.chat);
+    if (p) abrirChatPrivado(p);
   }));
 
   // canales
@@ -588,7 +717,8 @@ function bindMain() {
     const input = q('#scMsg'); const text = input.value; input.value = '';
     try { await api.sendMessage(state.currentChannel.id, state.me.id, text); } catch (err) { hooks.toast?.(err.message); }
   });
-  const msgs = q('#scMessages'); if (msgs) msgs.scrollTop = msgs.scrollHeight;
+  const msgs = q('#scMessages');
+  if (msgs) { bindAccionesMensaje(msgs); msgs.scrollTop = msgs.scrollHeight; }
   drawer.querySelectorAll('[data-kick]').forEach((b) => b.addEventListener('click', () => act(() => api.leaveChannel(state.currentChannel.id, b.dataset.kick))));
   q('#scAddFriendBtn')?.addEventListener('click', () => act(() => api.addFriendToChannel(state.currentChannel.id, q('#scAddFriend').value), 'Amigo sumado'));
   q('#scDeleteChannel')?.addEventListener('click', () => { if (confirm(`¿Borrar el canal "${state.currentChannel.name}"?`)) act(async () => { await api.deleteChannel(state.currentChannel.id); closeChannel(); }); });
@@ -664,7 +794,8 @@ function renderSidebar() {
 
   // 2. Lista de Canales
   if (channelsList) {
-    const regularChannels = state.channels.filter((c) => !c.room_code?.startsWith('dm-'));
+    // Los chats privados no son canales de la lista: viven abajo, en la lista de amigos.
+    const regularChannels = state.channels.filter((c) => !esDirecto(c));
     if (!state.session) {
       channelsList.innerHTML = `<p class="sc-muted sc-tiny" style="padding: 0.5rem 0.6rem;">Iniciá sesión para ver canales.</p>`;
     } else if (!regularChannels.length) {
@@ -739,22 +870,16 @@ function renderSidebar() {
       if (!friends.length) {
         friendsList.innerHTML = `<p class="sc-muted sc-tiny" style="padding: 0.5rem 0.6rem;">Sin amigos. Agregá con +.</p>`;
       } else {
-        friendsList.innerHTML = friends.map(({ f, p }) => {
-          const isDmActive = Boolean(
-            state.currentChannel?.room_code?.startsWith('dm-') &&
-            state.currentChannel.room_code.includes(p.id)
-          );
-          return `
-            <div class="sidebar-friend-item ${isDmActive ? 'active' : ''}" data-sidebar-friend="${p.id}" title="Clic para abrir chat con ${esc(p.display_name || p.username)}">
-              ${statusDot(p)}
-              <div class="friend-info">
-                <span class="friend-name">${esc(p.display_name || p.username)}</span>
-                <span class="friend-handle">@${esc(p.username)}</span>
-              </div>
-              <button class="btn-friend-call" data-sidebar-call="${p.id}" title="Llamar" ${isOnline(p) ? '' : 'disabled'}>${ICONO_TELEFONO}</button>
+        friendsList.innerHTML = friends.map(({ f, p }) => `
+          <div class="sidebar-friend-item sc-clickable ${esDirecto(state.currentChannel) && state.currentChannel?.otro?.id === p.id ? 'active' : ''}" data-sidebar-dm="${p.id}" role="button" tabindex="0" title="Abrir chat privado con ${esc(p.display_name || p.username)}">
+            ${statusDot(p)}
+            <div class="friend-info">
+              <span class="friend-name">${esc(p.display_name || p.username)}</span>
+              <span class="friend-handle">@${esc(p.username)}</span>
             </div>
-          `;
-        }).join('');
+            <button class="btn-friend-call" data-sidebar-call="${p.id}" title="Llamar" ${isOnline(p) ? '' : 'disabled'}>${ICONO_TELEFONO}</button>
+          </div>
+        `).join('');
 
         friendsList.querySelectorAll('[data-sidebar-call]').forEach((b) => {
           b.addEventListener('click', (e) => {
@@ -764,12 +889,14 @@ function renderSidebar() {
           });
         });
 
-        friendsList.querySelectorAll('[data-sidebar-friend]').forEach((item) => {
-          item.addEventListener('click', (e) => {
-            if (e.target.closest('.btn-friend-call')) return;
-            const friend = friends.find((x) => x.p.id === item.dataset.sidebarFriend)?.p;
-            if (friend) openDmWithFriend(friend);
-          });
+        // El cuerpo del renglón abre la conversación privada; el teléfono sigue llamando.
+        friendsList.querySelectorAll('[data-sidebar-dm]').forEach((el) => {
+          const abrir = () => {
+            const friend = friends.find((x) => x.p.id === el.dataset.sidebarDm)?.p;
+            if (friend) abrirChatPrivado(friend);
+          };
+          el.addEventListener('click', (e) => { if (!e.target.closest('[data-sidebar-call]')) abrir(); });
+          el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); abrir(); } });
         });
       }
     }
@@ -867,9 +994,7 @@ function renderChat() {
   if (!state.currentChannel) return;
 
   const c = state.currentChannel;
-  const isDm = Boolean(c.room_code?.startsWith('dm-'));
-  const dmFriend = isDm ? getDmFriend(c) : null;
-
+  const dm = esDirecto(c);
   const icon = document.getElementById('chatChannelIcon');
   const title = document.getElementById('chatChannelTitle');
   const type = document.getElementById('chatChannelType');
@@ -877,39 +1002,37 @@ function renderChat() {
   const callBtn = document.getElementById('btnChatCall');
   const copyBtn = document.getElementById('btnChatCopyInvite');
   const closeBtn = document.getElementById('btnChatClose');
+  const vistaBtn = document.getElementById('btnChatVaciarLocal');
+  const ambosBtn = document.getElementById('btnChatBorrarAmbos');
   const messagesBox = document.getElementById('chatMessages');
-  const chatInput = document.getElementById('chatMessageInput');
+  const input = document.getElementById('chatMessageInput');
 
-  if (isDm && dmFriend) {
-    if (icon) icon.textContent = '@';
-    if (title) title.textContent = dmFriend.display_name || dmFriend.username;
-    if (type) type.textContent = `@${dmFriend.username} · Chat privado`;
-    if (copyBtn) copyBtn.style.display = 'none';
-    if (voiceBtn) voiceBtn.style.display = 'none';
-    if (callBtn) {
-      callBtn.style.display = 'inline-flex';
-      callBtn.disabled = !isOnline(dmFriend);
-      callBtn.title = isOnline(dmFriend) ? `Llamar a ${dmFriend.display_name || dmFriend.username}` : 'No está conectado';
-      callBtn.onclick = () => callFriend(dmFriend);
-    }
-    if (chatInput) chatInput.placeholder = `Mensaje para @${dmFriend.username}...`;
-  } else {
-    if (icon) icon.textContent = c.kind === 'voice' ? '🔊' : '#';
-    if (title) title.textContent = c.name;
-    if (type) type.textContent = c.kind === 'voice' ? 'Canal de voz' : 'Canal de texto';
-    if (copyBtn) copyBtn.style.display = 'inline-block';
-    if (callBtn) callBtn.style.display = 'none';
-    if (voiceBtn) {
-      voiceBtn.style.display = c.kind === 'voice' ? 'inline-block' : 'none';
-      voiceBtn.onclick = () => {
-        hooks.joinRoom?.(c.room_code);
-        hooks.toast?.(`Entrando a la sala de voz de ${c.name}`);
-      };
-    }
-    if (chatInput) chatInput.placeholder = `@ escriba aquí...`;
+  if (icon) icon.textContent = dm ? '@' : c.kind === 'voice' ? '🔊' : '#';
+  if (title) title.textContent = nombreCanal(c);
+  const arroba = dm ? (c.otro?.username || state.members.find((m) => m.user_id !== state.me?.id)?.profile?.username) : null;
+  if (type) type.textContent = dm ? (arroba ? `@${arroba} · Chat privado` : 'Chat privado') : c.kind === 'voice' ? 'Canal de voz' : 'Canal de texto';
+  if (input) input.placeholder = dm ? `Escribile a ${nombreCanal(c)}…` : '@ escriba aquí...';
+
+  if (voiceBtn) {
+    voiceBtn.style.display = !dm && c.kind === 'voice' ? 'inline-block' : 'none';
+    voiceBtn.onclick = () => {
+      hooks.joinRoom?.(c.room_code);
+      hooks.toast?.(`Entrando a la sala de voz de ${c.name}`);
+    };
   }
 
+  // En un chat privado, llamar a la persona sale de la misma cabecera.
+  const otro = dm ? c.otro || state.members.find((m) => m.user_id !== state.me?.id)?.profile : null;
+  if (callBtn) {
+    callBtn.style.display = dm ? 'inline-flex' : 'none';
+    callBtn.disabled = !otro || !isOnline(otro);
+    callBtn.title = otro && isOnline(otro) ? `Llamar a ${nombreCanal(c)}` : 'No está conectado';
+    callBtn.onclick = () => { if (otro) callFriend(otro); };
+  }
+
+  // Un chat privado no se comparte con un código: es de a dos y punto.
   if (copyBtn) {
+    copyBtn.style.display = dm ? 'none' : 'inline-block';
     copyBtn.onclick = () => {
       navigator.clipboard.writeText(c.invite_code).then(() => {
         hooks.toast?.('Código de invitación copiado');
@@ -917,15 +1040,29 @@ function renderChat() {
     };
   }
 
+  // Los dos borrados del chat privado, escritos sin eufemismos: uno es de esta PC y el otro
+  // es del servidor.
+  if (vistaBtn) {
+    vistaBtn.style.display = dm ? 'inline-block' : 'none';
+    vistaBtn.onclick = () => sacarDeMiVista(c.id);
+  }
+  if (ambosBtn) {
+    ambosBtn.style.display = dm ? 'inline-block' : 'none';
+    ambosBtn.onclick = () => borrarParaLosDos(c.id);
+  }
+
   if (closeBtn) {
     closeBtn.onclick = () => closeChannel();
   }
 
   if (messagesBox) {
-    if (!state.messages.length) {
+    if (c.kind === 'voice') {
+      messagesBox.innerHTML = `<p class="sc-empty">Es un canal de voz. Entrá a la sala con el botón de arriba.</p>`;
+    } else if (!state.messages.length) {
       messagesBox.innerHTML = `<p class="sc-empty">Sin mensajes todavía. ¡Sé el primero en escribir!</p>`;
     } else {
       messagesBox.innerHTML = state.messages.map(msgItem).join('');
+      bindAccionesMensaje(messagesBox);
       messagesBox.scrollTop = messagesBox.scrollHeight;
     }
   }

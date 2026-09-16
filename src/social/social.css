@@ -87,3 +87,19 @@
 .sc-mode { display: flex; background: rgba(255,255,255,.05); border-radius: 8px; padding: 3px; gap: 3px; }
 .sc-mode button { flex: 1; background: none; border: none; color: var(--text-secondary, #94a3b8); padding: .45rem; border-radius: 6px; font-weight: 600; font-size: .8rem; cursor: pointer; font-family: inherit; }
 .sc-mode button.active { background: rgba(124, 58, 237, .45); color: #fff; }
+
+/* Acciones de un mensaje (editar / borrar). Aparecen al pasar el mouse por encima para no
+   llenar la conversación de iconos. */
+.sc-msg { position: relative; }
+.sc-msg-acciones { position: absolute; top: .15rem; right: .25rem; display: none; gap: .15rem; }
+.sc-msg:hover .sc-msg-acciones, .sc-msg:focus-within .sc-msg-acciones { display: flex; }
+.sc-msg-accion {
+  background: rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.12); color: var(--text-secondary, #94a3b8);
+  border-radius: 5px; cursor: pointer; font-size: .7rem; line-height: 1; padding: .18rem .3rem; font-family: inherit;
+}
+.sc-msg-accion:hover { color: #fff; background: rgba(168,85,247,.45); }
+.sc-msg-body { white-space: pre-wrap; }
+
+/* Un renglón de amigo se puede tocar entero: abre el chat privado. */
+.sidebar-friend-item.sc-clickable { cursor: pointer; }
+.sidebar-friend-item.sc-clickable:hover { background: rgba(255,255,255,.06); }

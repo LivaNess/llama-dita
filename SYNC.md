@@ -26,6 +26,38 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 >
 > Queda el lock liberado para cualquier tarea siguiente.
 
+> **Para Antigravity y Juan, de Claude y Martín (16/09/2026). Nos cruzamos en los chats privados**
+>
+> Los dos hicimos la misma función al mismo tiempo y sin saberlo: vos en la `0.20.1B` y
+> nosotros en la `0.21.1A`. **Culpa nuestra**, que no anotamos el bloqueo en la tabla de arriba
+> antes de empezar. Nos lo apuntamos.
+>
+> **Quedó el modelo de la `0.21.1A`**, y no por gusto sino por tres cosas concretas:
+>
+> 1. **La migración 004 ya estaba aplicada a la base cuando llegó tu commit.** Ahora la política
+>    de alta de canales exige que el canal nazca en un espacio del que sos miembro, así que
+>    crear el chat privado desde la app, como lo hacía `openDmWithFriend`, hoy devuelve error.
+> 2. **En tu modelo el que abre la conversación queda de dueño del canal**, y la política de
+>    borrado le deja al dueño borrar mensajes ajenos. O sea que podía borrar lo que escribió el
+>    otro. Ahora la política excluye a propósito los privados: probado contra la base, el
+>    intento devuelve cero filas.
+> 3. **Si fallaba sumar al amigo al canal, el error se lo comía un `catch` vacío** y la
+>    conversación quedaba abierta para uno solo, sin forma de arreglarla desde la app.
+>
+> **De lo tuyo se quedó todo lo que no dependía del modelo**, que estaba bien: el botón de
+> llamar propio en la cabecera con su estado de "no está conectado", el subtítulo con el
+> arroba, el renglón del amigo resaltado cuando su chat está abierto, el menú contextual de
+> los canales con clic derecho, el arreglo de que tu propio mensaje muestre tu nombre aunque la
+> lista de miembros no haya cargado, los estilos y el nombre corregido de la sección.
+>
+> **Cómo funciona ahora, en dos renglones:** un chat privado es un canal de tipo `dm`, sin
+> espacio, con una clave única armada con los dos identificadores. Lo crea la función
+> `abrir_chat_directo(otro)` del servidor, que comprueba que sean amigos. Si los dos lo abren en
+> el mismo instante, sale uno solo.
+>
+> **Para la próxima, los dos:** anotar el bloqueo en la tabla de arriba antes de tocar nada. Es
+> literalmente para lo que está y hoy nos comimos el trabajo duplicado por no usarla.
+
 > **Para Juan, de Martín (16/09/2026). NOTAS DEL PARCHE `0.20.1A`**
 >
 > Juan, pasaron cosas. Esto es todo lo que cambió desde la última vez que la abriste, contado
@@ -179,6 +211,7 @@ Cronológico. Acá se lee qué significa cada área y foco (el número no es un 
 | `0.19.1A` | Claude | Escritorio / ícono del ejecutable | El logo va ahora adentro del .exe (antes solo estaba el de la ventana), más el instalador y el desinstalador. No llega por actualización automática: hay que reinstalar. |
 | `0.20.1A` | Claude | Cuentas / la sesión sobrevive a reinstalar | Copia de la sesión en `%LOCALAPPDATA%\Llamadita\`, fuera de la carpeta de la instalación. Si el navegador interno se quedó sin sesión, la app la restaura sola. |
 ---
+| `0.21.1A` | Claude | Chat / esqueleto e historial | Migración 004: espacios, chats privados de a dos (`kind='dm'` + `dm_key`), identificador de mensaje puesto por el cliente, edición, lápidas y retención. Caché local del historial en `src/social/cacheLocal.js` con sincronización por diferencia (se terminó el techo de 60 mensajes y el bajar todo cada vez). Borrado duro con lápida que viaja en vivo. Tocar a un amigo abre su chat privado. **Absorbe la `0.20.1B` de Antigravity**, que hizo lo mismo con otro modelo: se conservó su trabajo de pantalla y se descartó el modelo del `room_code` (ver recado). |
 
 ## ⚠️ Reglas para agentes
 1. **Build limpio**: nunca `git push` con `npm run build` roto.
@@ -189,7 +222,37 @@ Cronológico. Acá se lee qué significa cada área y foco (el número no es un 
 
 ---
 
-## 📍 Dónde estamos (cierre 2026-09-16, versión `0.20.1A`)
+## 📍 Dónde estamos (2026-09-16, versión `0.21.1A`)
+
+**Arrancó el primer tramo: que el chat ande bien.** Y se arrancó por los cimientos, no por las
+funciones lindas, que es lo que pedía `areas/chat-e-historial.md`.
+
+Lo que quedó hecho en esta tanda:
+
+- **La forma de los datos, de una sola vez** (migración 004, ya aplicada). Espacios, chats
+  privados, identificador de mensaje puesto por el cliente, edición, lápidas y retención. Un
+  solo cambio de esquema en vez de cinco parches más adelante.
+- **Los permisos, en la base y no en la pantalla.** Un canal nuevo solo nace en un espacio del
+  que sos miembro. Un chat privado solo se abre entre amigos, y ahí adentro **nadie puede
+  borrar lo que escribió el otro**, ni siquiera el que abrió la conversación. Probado contra
+  la base, no solo escrito.
+- **El historial vive en la PC de cada uno.** Abrir un canal ya no baja los últimos 60
+  mensajes: pinta lo que ya tenías y al servidor le pide solo lo que cambió. Se terminó el
+  techo de 60 y se terminó la bajada repetida.
+- **Borrar significa algo.** La fila se va de la base de verdad. Lo único que queda es una
+  lápida de unos 40 bytes, que es la que le avisa al que estaba desconectado. En los privados
+  hay dos botones distintos y escritos sin eufemismos.
+- **Chat privado con cada amigo**, tocando su nombre en la barra lateral.
+
+**Lo que sigue, en orden:** los adjuntos (el ayudante que firma las subidas y el reencodado de
+imágenes antes de subir, que es la decisión que más plata ahorra de toda la ficha), la
+retención y la purga automática, y recién después el buscador y las comodidades.
+
+**Sin probar todavía:** que el almacenamiento del historial sea duradero en la app empaquetada.
+En un navegador común devuelve *false*. No rompe nada (se vuelve a bajar), pero es uno de los
+puntos que la ficha del chat pedía verificar.
+
+## 📜 Dónde estábamos (cierre 2026-09-16, versión `0.20.1A`)
 
 **El hito arranca en 0** por decisión de Martín: el proyecto todavía no llegó a su primer hito,
 y sube a 1 solo cuando él o Juan lo digan.
