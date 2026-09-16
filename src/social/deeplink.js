@@ -1,17 +1,17 @@
 // El enlace del mail abre la app de escritorio.
 //
 // Cómo funciona:
-//  1. La app registra en Windows el esquema llamadita:// apuntando a su propio .exe.
-//  2. Al pedir el código, la app le dice a Supabase que vuelva a llamadita://auth.
-//  3. Windows abre la app con esa dirección como argumento; de ahí salen los tokens
-//     de la sesión y se entra sin escribir nada.
-//  4. Si la app ya estaba abierta, la segunda instancia deja los tokens en un archivo
-//     y se cierra sola; la que ya estaba los levanta. Así no quedan dos ventanas.
+//  1. La app registra en Windows el esquema llamadita:// apuntando a un script propio
+//     (`abrir-enlace.cmd`), NO al ejecutable. Abrir una segunda copia de la app no
+//     funciona: usa un puerto fijo y la segunda muere.
+//  2. El script deja la dirección en un archivo y, si la app no estaba abierta, la abre.
+//  3. La app lee ese archivo (al arrancar y cada segundo y medio), saca los tokens y
+//     entra la sesión.
+//  4. El mail no apunta directo a llamadita:// sino a la página del sitio /entrar/,
+//     porque los navegadores no saltan a una app desde una redirección del servidor.
 import { supabase } from '../supabase/client.js';
 
 const ESQUEMA = 'llamadita';
-// El mail vuelve a esta página del sitio, que es la que salta a la app.
-// (Los navegadores no saltan a una app desde la redirección del servidor.)
 export const REDIRECT_APP = 'https://llamadita.com.ar/entrar/';
 
 export const esEscritorio = () => typeof window.NL_PORT !== 'undefined';
@@ -27,28 +27,39 @@ async function neutralino() {
 }
 
 const rutaApp = () => (window.NL_PATH || '.');
-const archivoTraspaso = () => `${rutaApp()}/.tmp/auth-traspaso.json`;
-const archivoInstancia = () => `${rutaApp()}/.tmp/instancia.json`;
+const aWindows = (p) => p.split('/').join('\\');
+const archivoUrl = () => `${rutaApp()}/.tmp/enlace.txt`;
+const archivoScript = () => `${rutaApp()}/abrir-enlace.cmd`;
 
-// ---------------------------------------------------------------- Windows
-async function registrarEsquema(nl) {
-  // Se escribe en el usuario actual (HKCU): no pide permisos de administrador.
-  const exe = `${rutaApp()}\\Llama-dita.exe`;
+const SCRIPT = [
+  '@echo off',
+  'setlocal',
+  'set "URL=%~1"',
+  'if not exist "%~dp0.tmp" mkdir "%~dp0.tmp"',
+  '> "%~dp0.tmp\\enlace.txt" echo %URL%',
+  'tasklist /FI "IMAGENAME eq Llama-dita.exe" | find /I "Llama-dita.exe" >nul',
+  'if errorlevel 1 start "" "%~dp0Llama-dita.exe"',
+  'endlocal'
+].join('\r\n') + '\r\n';
+
+async function instalarScriptYEsquema(nl) {
+  try { await nl.filesystem.writeFile(archivoScript(), SCRIPT); } catch (_) { return; }
+  const cmd = aWindows(archivoScript());
   const base = `HKCU\\Software\\Classes\\${ESQUEMA}`;
-  const cmds = [
+  const ordenes = [
     `reg add "${base}" /ve /d "URL:Llama-dita" /f`,
     `reg add "${base}" /v "URL Protocol" /d "" /f`,
-    `reg add "${base}\\shell\\open\\command" /ve /d "\\"${exe}\\" \\"%1\\"" /f`
+    `reg add "${base}\\shell\\open\\command" /ve /d "cmd /c \\"\\"${cmd}\\" \\"%1\\"\\"" /f`
   ];
-  for (const c of cmds) {
-    try { await nl.os.execCommand(c); } catch (_) { /* si falla, queda el código como vía */ }
+  for (const o of ordenes) {
+    try { await nl.os.execCommand(o); } catch (_) { /* si falla, siempre queda el código */ }
   }
 }
 
 // ---------------------------------------------------------------- tokens
 function tokensDesde(url) {
   try {
-    const u = new URL(url);
+    const u = new URL(url.trim());
     const frag = new URLSearchParams((u.hash || '').replace(/^#/, ''));
     const qs = u.searchParams;
     const access_token = frag.get('access_token') || qs.get('access_token');
@@ -60,23 +71,21 @@ function tokensDesde(url) {
   return null;
 }
 
-async function aplicar(tokens) {
+async function revisarEnlace(nl, toast) {
+  let contenido = null;
+  try { contenido = await nl.filesystem.readFile(archivoUrl()); } catch (_) { return; }
+  try { await nl.filesystem.remove(archivoUrl()); } catch (_) {}
+  if (!contenido) return;
+
+  const enlace = contenido.match(new RegExp(`${ESQUEMA}://[^\\s"']+`, 'i'))?.[0];
+  if (!enlace) return;
+
+  const tokens = tokensDesde(enlace);
+  if (tokens?.error) { toast?.('Ese enlace ya no sirve. Pedí un código nuevo.'); return; }
+  if (!tokens) return;
+
   const { error } = await supabase.auth.setSession(tokens);
-  return !error;
-}
-
-async function leerJson(nl, ruta) {
-  try { return JSON.parse(await nl.filesystem.readFile(ruta)); } catch (_) { return null; }
-}
-
-async function borrar(nl, ruta) {
-  try { await nl.filesystem.remove(ruta); } catch (_) {}
-}
-
-async function hayOtraAbierta(nl) {
-  const inst = await leerJson(nl, archivoInstancia());
-  // Se considera viva si dejó señal hace menos de 15 segundos.
-  return !!inst && Date.now() - (inst.at || 0) < 15000;
+  toast?.(error ? 'El enlace ya fue usado o venció. Pedí un código nuevo.' : 'Entraste desde el enlace del mail');
 }
 
 // ---------------------------------------------------------------- arranque
@@ -86,37 +95,18 @@ export async function initDeepLink({ toast } = {}) {
 
   try { await nl.filesystem.createDirectory(`${rutaApp()}/.tmp`); } catch (_) { /* ya existe */ }
 
+  // Arranque en frío: la app se abrió por el enlace y el dato ya está esperando.
   const args = (window.NL_ARGS || []).join(' ');
-  const enlace = args.match(new RegExp(`${ESQUEMA}://[^\\s"']+`, 'i'))?.[0];
-
-  if (enlace) {
-    const tokens = tokensDesde(enlace);
-    if (tokens?.error) {
-      toast?.('El enlace venció. Pedí un código nuevo.');
-    } else if (tokens) {
-      if (await hayOtraAbierta(nl)) {
-        // Ya hay una ventana abierta: le dejo los tokens y me cierro.
-        try { await nl.filesystem.writeFile(archivoTraspaso(), JSON.stringify(tokens)); } catch (_) {}
-        await nl.app.exit();
-        return;
-      }
-      if (await aplicar(tokens)) toast?.('Entraste desde el enlace del mail');
+  const enArgs = args.match(new RegExp(`${ESQUEMA}://[^\\s"']+`, 'i'))?.[0];
+  if (enArgs) {
+    const tokens = tokensDesde(enArgs);
+    if (tokens && !tokens.error) {
+      const { error } = await supabase.auth.setSession(tokens);
+      if (!error) toast?.('Entraste desde el enlace del mail');
     }
   }
 
-  await registrarEsquema(nl);
-
-  // Señal de "esta ventana está viva" + revisión de traspasos de otra instancia.
-  const marcar = () => nl.filesystem.writeFile(archivoInstancia(), JSON.stringify({ at: Date.now() })).catch(() => {});
-  marcar();
-  setInterval(marcar, 5000);
-
-  setInterval(async () => {
-    const tokens = await leerJson(nl, archivoTraspaso());
-    if (!tokens) return;
-    await borrar(nl, archivoTraspaso());
-    if (await aplicar(tokens)) toast?.('Entraste desde el enlace del mail');
-  }, 2000);
-
-  window.addEventListener('beforeunload', () => { borrar(nl, archivoInstancia()); });
+  await instalarScriptYEsquema(nl);
+  await revisarEnlace(nl, toast);
+  setInterval(() => revisarEnlace(nl, toast), 1500);
 }
