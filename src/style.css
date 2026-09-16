@@ -455,6 +455,26 @@ body {
   align-items: center;
 }
 
+/* Fila que pone el slider y el botón icono en la misma línea */
+.booth-slider-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.booth-slider-input-row .custom-range {
+  flex: 1;
+}
+
+/* Botón icono-only (silenciar/activar audio amigo) */
+.btn-mute-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 8px;
+}
+
 .device-select-wrapper {
   flex: 1;
   position: relative;

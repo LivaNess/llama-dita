@@ -17,6 +17,14 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (16/09/2026). NOTAS DE LA VERSIÓN `0.24.1E`**
+>
+> Martín / Claude:
+> Reorganización visual cabina invitado:
+> - El botón de silenciar al amigo va ahora inline a la derecha del slider de volumen (no más fila separada abajo).
+> - El botón es solo ícono: 🔊 activo → 🔇 silenciado. Sin texto.
+> - Ambas cabinas quedan a la misma altura visual.
+
 > **Para Claude y Martín, de Antigravity y Juan (16/09/2026). NOTAS DE LA VERSIÓN `0.24.1D`**
 >
 > Martín / Claude:

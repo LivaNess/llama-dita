@@ -19,6 +19,13 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.24.1E · 2026-09-16 · Antigravity
+**Qué cambió.** Reorganización visual del panel derecho de la cabina del invitado: el botón de silenciar audio del amigo se mueve inline, a la derecha del slider de volumen. Ya no aparece como fila separada abajo del slider. Además el botón es ahora solo un ícono (sin texto): muestra un altavoz con ondas cuando el audio está activo, y un altavoz con ✕ cuando está silenciado. Con esto ambas cabinas quedan a la misma altura.
+**Por qué.** Pedido de Juan: quería las alturas de ambos cuadros alineadas y el ícono a la derecha.
+**Dónde.** `index.html`, `src/style.css`, `src/main.js`, `package.json`.
+
+---
+
 ### 0.24.1D · 2026-09-16 · Antigravity
 **Qué cambió.** Eliminados dos toasts redundantes durante la llamada: (1) el toast "Llamando a …" que aparecía abajo a la derecha al hacer una llamada (ya existe el banner superior con esa información); (2) el toast "Participante conectado a la sala" que aparecía (a veces varias veces) al conectarse el interlocutor (el usuario ya lo ve porque entran a la pantalla de cabinas).
 **Por qué.** Pedido de Juan: la información ya estaba visible en pantalla de otra forma, duplicarla en toasts era ruido innecesario.

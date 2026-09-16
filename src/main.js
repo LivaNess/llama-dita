@@ -36,7 +36,7 @@ const guestAvatarDisc = document.getElementById('guestAvatarDisc');
 const remoteVolumeRange = document.getElementById('remoteVolumeRange');
 const remoteVolumeVal = document.getElementById('remoteVolumeVal');
 const btnToggleRemoteAudio = document.getElementById('btnToggleRemoteAudio');
-const btnToggleRemoteAudioText = document.getElementById('btnToggleRemoteAudioText');
+const btnToggleRemoteAudioIcon = document.getElementById('btnToggleRemoteAudioIcon');
 const remoteAudioElement = document.getElementById('remoteAudioElement');
 const toastContainer = document.getElementById('toastContainer');
 
@@ -415,19 +415,24 @@ function toggleMic() {
 
 btnSidebarMic?.addEventListener('click', toggleMic);
 
+// SVG para ícono de audio activo (altavoz con ondas)
+const ICON_AUDIO_ON = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>`;
+// SVG para ícono de audio silenciado (altavoz con X)
+const ICON_AUDIO_MUTED = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>`;
+
 // Silenciar / Activar audio remoto (amigo)
 btnToggleRemoteAudio?.addEventListener('click', () => {
   isRemoteMuted = !isRemoteMuted;
   if (remoteAudioElement) remoteAudioElement.muted = isRemoteMuted;
 
   if (isRemoteMuted) {
-    btnToggleRemoteAudio.className = 'btn-control muted';
-    if (btnToggleRemoteAudioText) btnToggleRemoteAudioText.textContent = 'Activar audio';
-    showToast('Audio de tu amigo silenciado');
+    btnToggleRemoteAudio.className = 'btn-control btn-mute-icon muted';
+    if (btnToggleRemoteAudioIcon) btnToggleRemoteAudioIcon.innerHTML = ICON_AUDIO_MUTED;
+    btnToggleRemoteAudio.title = 'Activar audio de tu amigo';
   } else {
-    btnToggleRemoteAudio.className = 'btn-control';
-    if (btnToggleRemoteAudioText) btnToggleRemoteAudioText.textContent = 'Silenciar';
-    showToast('Audio de tu amigo activo');
+    btnToggleRemoteAudio.className = 'btn-control btn-mute-icon';
+    if (btnToggleRemoteAudioIcon) btnToggleRemoteAudioIcon.innerHTML = ICON_AUDIO_ON;
+    btnToggleRemoteAudio.title = 'Silenciar audio de tu amigo';
   }
 });
 
