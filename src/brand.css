@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    Llamadita · capa de marca
    Se carga DESPUÉS de style.css y social.css: solo cambia colores, tipografía
    y detalles. No toca la estructura (grillas, tamaños, posiciones), así que
@@ -107,8 +107,23 @@ body {
 .on-air-badge.live { border-color: rgba(91, 124, 250, 0.5); }
 
 /* ---------- Vista de espera ---------- */
-.standby-icon { color: var(--brand-cream); opacity: 0.9; }
-.standby-icon img { width: 88px; height: 88px; }
+.standby-icon {
+  color: var(--brand-cream);
+  opacity: 0.9;
+  width: 104px;
+  height: 104px;
+  border-radius: 24px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.standby-icon img {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  display: block;
+}
 .standby-title { font-family: var(--font-display); font-weight: 700; color: var(--brand-cream); }
 .standby-desc { color: var(--text-secondary); }
 

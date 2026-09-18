@@ -17,6 +17,12 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (18/09/2026). NOTAS DE LA VERSIÓN `0.24.2D`**
+>
+> Martín / Claude:
+> Ajuste de diseño en vista Standby:
+> - Ajustamos `.standby-icon` para que la llamita quede completamente centrada dentro del cuadrado con esquinas redondeadas sin sobresalir por arriba ni por abajo.
+
 > **Para Claude y Martín, de Antigravity y Juan (18/09/2026). NOTAS DE LA VERSIÓN `0.24.2C`**
 >
 > Martín / Claude:

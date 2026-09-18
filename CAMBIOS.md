@@ -19,6 +19,13 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.24.2D · 2026-09-18 · Antigravity
+**Qué cambió.** Ajuste de dimensiones y proporciones de la vista de espera (standby): se amplió el contenedor cuadrado redondeado de `.standby-icon` a 104x104px (border-radius 24px) y se dimensionó la imagen de la llamita en 72x72px con `object-fit: contain` y `overflow: hidden`, logrando que la llamita quede completamente centrada y contenida dentro del cuadro oscuro sin desbordar sus límites.
+**Por qué.** Pedido de Juan: la llamita sobrepasaba los márgenes del cuadro que tiene detrás en la pantalla de standby.
+**Dónde.** `src/brand.css`, `package.json`.
+
+---
+
 ### 0.24.2C · 2026-09-18 · Antigravity
 **Qué cambió.** Se integró la versión final modificada manualmente del logo (`logo-dita.svg` desde Descargas). Se reemplazaron los assets oficiales (`public/brand/logo-mark-light.svg`, `public/favicon.svg` y copias de escritorio) para reflejar la llamita con sus rellenos blancos y detalles vectoriales manuales.
 **Por qué.** Pedido de Juan: reemplazar el logo por la versión final retocada a mano (`logo-dita.svg`).
