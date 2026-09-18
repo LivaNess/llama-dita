@@ -1,4 +1,4 @@
-// Manejo del audio de Llama-dita.
+﻿// Manejo del audio de Llamadita.
 //
 // El nivel del micrófono (lo que mueve las barritas y decide si estás hablando) se mide
 // SOLO cuando alguien lo pregunta, o sea cuando hay una cabina en pantalla dibujándose.

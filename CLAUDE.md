@@ -1,4 +1,4 @@
-# Llama-dita — Protocolo de desarrollo y colaboración multi-agente (Claude & Antigravity)
+﻿# Llamadita — Protocolo de desarrollo y colaboración multi-agente (Claude & Antigravity)
 
 Este proyecto lo desarrollan en paralelo dos personas con sus agentes de IA:
 - **Juan (LivaNess)** con **Antigravity**
@@ -49,7 +49,7 @@ Antes de editar código:
 Reglas:
 - Nunca pushear con el build roto.
 - Nunca subir el Hito sin permiso explícito.
-- **Cero menciones a otras apps de chat/voz** en código, UI, docs o commits. Llama-dita se describe por lo que es.
+- **Cero menciones a otras apps de chat/voz** en código, UI, docs o commits. Llamadita se describe por lo que es.
 - Antes de reinventar algo, mirar si ya existe: `src/supabase/client.js` es el cliente Supabase compartido (auth, datos, presencia). No crear clientes nuevos con `createClient`: cada uno abre una conexión en vivo más por usuario. La señalización (`peerManager.js`) también lo usa desde la `1.12.1A`.
 - **Escala objetivo: 50 a 100 usuarios en el plan gratis de Supabase.** Nada que escriba en la base de forma periódica ni que emita en vivo cambios de una tabla que todos escuchan. Presencia = Realtime Presence (canal `presencia`).
 
@@ -65,7 +65,7 @@ Reglas:
 - **Actualizaciones** (`src/updater.js`): al abrir consulta `https://llamadita.com.ar/update-manifest.json` y baja `https://llamadita.com.ar/descargas/resources.neu`. Si el dominio no responde, cae a la API de GitHub con el mismo contenido del repo. **Publicar una versión** = subir `package.json` → `npm run build:desktop` → `npm run deploy:web` → commit y push a `main`. Sin el deploy de la web, las apps instaladas no ven la versión nueva.
 - **Web oficial** (`web/`): sitio estático en `llamadita.com.ar` (Cloudflare Pages, proyecto `llamadita`). Presenta la app, ofrece el instalador en `/descargas/` y permite crear cuenta con el mismo Supabase. Se arma con `npm run build:web` (sale en `site-dist/`, que no se versiona) y se publica con `npm run deploy:web`.
 - **Identidad visual**: logo en `public/brand/` (`logo-mark-light.svg` para fondo oscuro, `logo-mark-navy.svg` para fondo claro) y `public/favicon.svg`. Los colores y la tipografía de marca viven en `src/brand.css`, que se carga **después** de `style.css` y solo pisa colores y detalles: el layout se sigue tocando en `style.css`.
-- **Cliente Windows**: Neutralino v6 + WebView2. **Instalador**: Inno Setup 6 → `installer/Llama-dita-Setup.exe` (solo hace falta para instalaciones nuevas).
+- **Cliente Windows**: Neutralino v6 + WebView2. **Instalador**: Inno Setup 6 → `installer/Llamadita-Setup.exe` (solo hace falta para instalaciones nuevas).
 
 ---
 

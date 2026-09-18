@@ -1,4 +1,4 @@
-# Llama-dita — Registro de sincronización y estado de agentes
+# Llamadita — Registro de sincronización y estado de agentes
 
 Tablero de control compartido entre **Antigravity** (Juan) y **Claude** (Martín).
 Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versionado está definido en `VERSIONADO.md`.
@@ -16,6 +16,15 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 ---
 
 ## 📬 Recados entre nosotros
+
+> **Para Claude y Martín, de Antigravity y Juan (18/09/2026). NOTAS DE LA VERSIÓN `0.24.2A`**
+>
+> Martín / Claude:
+> Renombrado global del proyecto: **Llamadita** (sin guión) es el nombre oficial de ahora en más.
+> - 31 archivos actualizados en bulk: HTML, JS, CSS, docs, configs, scripts.
+> - El dominio de referencia es `www.llamadita.com.ar`. Ya no se menciona `llamadita.pages.dev` en UI/docs.
+> - El CORS del worker de adjuntos ahora acepta `llamadita.com.ar` y `www.llamadita.com.ar` además de `pages.dev` (que se mantiene por razones técnicas, no por display).
+> - El binario del desktop pasa a llamarse `Llamadita.exe` y el instalador `Llamadita-Setup.exe` (próxima build de Inno Setup lo hará efectivo).
 
 > **Para Claude y Martín, de Antigravity y Juan (16/09/2026). NOTAS DE LA VERSIÓN `0.24.1E`**
 >
@@ -397,7 +406,7 @@ Cronológico. Acá se lee qué significa cada área y foco (el número no es un 
 | `1.7.1A` | Claude | Escalabilidad (50-100 usuarios) | Presencia por Realtime Presence en vez de latidos en `profiles` (con 100 usuarios eran ~10.000 mensajes/min); `profiles` fuera de la publicación Realtime (migración 002). Acceso: "Ya tengo un código" para entrar aunque el mail no salga. Sesión guardada de una cuenta borrada ya no rompe el panel. |
 | `1.8.1A` | Antigravity | Interfaz / inicio canales y cabinas condicionales | Rediseño según boceto: barra lateral fija con canales (texto y voz), amigos con presencia y llamada directa, pie de usuario con avatar y botón de muteo sincronizado. Área central con vistas condicionales: chat de canal con input '@ escriba aquí...', cabinas de audio al conectar sesión, y standby limpio sin sesión. |
 | `1.9.1A` | Claude | Identidad visual | Capa de marca en `src/brand.css` (se carga después de `style.css`: solo colores, tipografía y detalles, no toca la estructura). Paleta del logo: azul marino #1C2B5A, azul #5B7CFA y crema #F4ECDC. Logo vectorial en `public/brand/` (variante clara y navy) + `public/favicon.svg`, usado en la barra lateral y en la vista de espera. Tipografía Outfit para títulos. |
-| `1.10.1A` | Claude | Web oficial | `web/` = sitio estático en llamadita.com.ar: presentación, descarga del instalador y registro de cuenta (mismo Supabase que la app, código de 6 dígitos). `scripts/build-web.mjs` arma `site-dist/` (copia `web/`, los logos y `installer/Llama-dita-Setup.exe` a `/descargas/`, e inyecta la versión). `npm run build:web` y `npm run deploy:web` (Cloudflare Pages, proyecto `llamadita`). |
+| `1.10.1A` | Claude | Web oficial | `web/` = sitio estático en llamadita.com.ar: presentación, descarga del instalador y registro de cuenta (mismo Supabase que la app, código de 6 dígitos). `scripts/build-web.mjs` arma `site-dist/` (copia `web/`, los logos y `installer/Llamadita-Setup.exe` a `/descargas/`, e inyecta la versión). `npm run build:web` y `npm run deploy:web` (Cloudflare Pages, proyecto `llamadita`). |
 | `1.10.1D` | Claude | Web oficial | Correcciones: `dist/` y `site-dist/` fuera del repositorio (el renglón del .gitignore se había pegado al anterior) y paquete de escritorio con la identidad visual nueva. Las versiones 1.10.1B y 1.10.1C quedaron solo en mensajes de commit: la única fuente sigue siendo package.json. |
 | `1.10.2A` | Claude | Mudanza al dominio propio | Todo lo que colgaba de `llamadita.pages.dev` o de GitHub pasa a `llamadita.com.ar`: el manifiesto y el paquete de actualización se publican con la web (`/update-manifest.json` y `/descargas/resources.neu`), el updater los toma de ahí (GitHub queda solo como respaldo mientras propaga el DNS), la dirección vieja redirige al dominio cuando este responde, y el instalador declara el sitio como página del editor. |
 | `1.10.3A` | Antigravity | Web oficial / diseño dark studio | Rediseño completo de la web oficial (`web/index.html` y `web/css/site.css`) adoptando la estética de la app de escritorio: paleta dark studio (#0A0F22), tarjetas glassmorphism, simulación de cabinas de audio con vúmetros y badges en vivo, inputs oscuros con foco azul eléctrico y logo claro. |

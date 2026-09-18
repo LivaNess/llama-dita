@@ -1,7 +1,7 @@
-// Arma la web oficial (llamadita.com.ar) en site-dist/.
+﻿// Arma la web oficial (llamadita.com.ar) en site-dist/.
 //  - web/            → páginas, estilos y registro
 //  - public/brand/   → logos      · public/favicon.svg
-//  - installer/Llama-dita-Setup.exe → /descargas/ (el instalador que se ofrece para bajar)
+//  - installer/Llamadita-Setup.exe → /descargas/ (el instalador que se ofrece para bajar)
 //  - version de package.json → reemplaza {{VERSION}} y escribe /version.json
 // Uso: npm run build:web    (publicar: npm run deploy:web)
 import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
@@ -18,19 +18,19 @@ cpSync(join(root, 'web'), out, { recursive: true });
 cpSync(join(root, 'public', 'brand'), join(out, 'brand'), { recursive: true });
 copyFileSync(join(root, 'public', 'favicon.svg'), join(out, 'favicon.svg'));
 
-const installer = join(root, 'installer', 'Llama-dita-Setup.exe');
+const installer = join(root, 'installer', 'Llamadita-Setup.exe');
 let sizeMb = '?';
 if (existsSync(installer)) {
   mkdirSync(join(out, 'descargas'), { recursive: true });
-  copyFileSync(installer, join(out, 'descargas', 'Llama-dita-Setup.exe'));
+  copyFileSync(installer, join(out, 'descargas', 'Llamadita-Setup.exe'));
   sizeMb = (statSync(installer).size / 1024 / 1024).toFixed(1).replace('.', ',');
 } else {
-  console.warn('AVISO: no existe installer/Llama-dita-Setup.exe; el botón de descarga va a dar 404.');
+  console.warn('AVISO: no existe installer/Llamadita-Setup.exe; el botón de descarga va a dar 404.');
 }
 
 // Actualizaciones de la app instalada: el manifiesto y el paquete viajan con la web.
 const manifiesto = join(root, 'desktop', 'update-manifest.json');
-const paquete = join(root, 'desktop', 'dist', 'Llama-dita', 'resources.neu');
+const paquete = join(root, 'desktop', 'dist', 'Llamadita', 'resources.neu');
 if (existsSync(manifiesto) && existsSync(paquete)) {
   copyFileSync(manifiesto, join(out, 'update-manifest.json'));
   mkdirSync(join(out, 'descargas'), { recursive: true });
@@ -41,6 +41,6 @@ if (existsSync(manifiesto) && existsSync(paquete)) {
 
 const indexPath = join(out, 'index.html');
 writeFileSync(indexPath, readFileSync(indexPath, 'utf8').replaceAll('{{VERSION}}', version).replaceAll('{{INSTALLER_SIZE_MB}}', sizeMb));
-writeFileSync(join(out, 'version.json'), JSON.stringify({ version, installer: '/descargas/Llama-dita-Setup.exe', builtAt: new Date().toISOString() }, null, 2) + '\n');
+writeFileSync(join(out, 'version.json'), JSON.stringify({ version, installer: '/descargas/Llamadita-Setup.exe', builtAt: new Date().toISOString() }, null, 2) + '\n');
 
 console.log(`Web lista en site-dist/ · versión ${version} · instalador ${sizeMb} MB`);

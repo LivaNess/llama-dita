@@ -1,13 +1,13 @@
-# Llama-dita
+﻿# Llamadita
 
 AplicaciÃ³n de comunicaciÃ³n de voz punto a punto (P2P) de baja latencia con anÃ¡lisis de seÃ±ales de audio en tiempo real y ejecuciÃ³n local en Windows.
 
 ## Descarga e InstalaciÃ³n
 
 1. Descargar el instalador de Windows:
-   - [Llama-dita-Setup.exe](installer/Llama-dita-Setup.exe)
+   - [Llamadita-Setup.exe](installer/Llamadita-Setup.exe)
 2. Ejecutar el archivo de instalaciÃ³n.
-3. La aplicaciÃ³n se instalarÃ¡ en el directorio local de usuario (`%LocalAppData%\Llama-dita`) y crearÃ¡ accesos directos en el Escritorio y el MenÃº Inicio.
+3. La aplicaciÃ³n se instalarÃ¡ en el directorio local de usuario (`%LocalAppData%\Llamadita`) y crearÃ¡ accesos directos en el Escritorio y el MenÃº Inicio.
 
 ## CaracterÃ­sticas TÃ©cnicas
 
@@ -41,7 +41,7 @@ La app instalada se actualiza sola, sin volver a bajar el instalador:
 ### Publicar una versión nueva
 
 1. Subí la versión en `package.json` (es la única fuente: el script la copia a `neutralino.config.json` e `installer.iss`).
-2. `npm run build:desktop` → deja `desktop/dist/Llama-dita/resources.neu` y `desktop/update-manifest.json`.
+2. `npm run build:desktop` → deja `desktop/dist/Llamadita/resources.neu` y `desktop/update-manifest.json`.
 3. `npm run deploy:web` → publica la web oficial con ese manifiesto y ese paquete. **Este paso es el que hace que las apps instaladas vean la versión nueva.**
 4. Commit y push a `main`.
 4. Opcional, solo si cambió el ejecutable o para instalaciones nuevas: `crear-instalador.bat` (necesita Inno Setup 6).
@@ -50,7 +50,7 @@ La app instalada se actualiza sola, sin volver a bajar el instalador:
 
 ```
 â”œâ”€â”€ desktop/           # ConfiguraciÃ³n y cÃ³digo fuente del cliente de escritorio
-â”œâ”€â”€ installer/         # Instalador ejecutable compilado (Llama-dita-Setup.exe)
+â”œâ”€â”€ installer/         # Instalador ejecutable compilado (Llamadita-Setup.exe)
 â”œâ”€â”€ src/               # MÃ³dulos centrales (DSP de audio, conexiÃ³n WebRTC y componentes)
 â”œâ”€â”€ installer.iss      # Script de compilaciÃ³n de Inno Setup
 â”œâ”€â”€ crear-instalador.bat # Script de compilaciÃ³n automatizada del instalador
@@ -86,7 +86,7 @@ Ejecutar el script:
 ```cmd
 crear-instalador.bat
 ```
-El archivo de instalaciÃ³n resultante se generarÃ¡ en `installer/Llama-dita-Setup.exe`.
+El archivo de instalaciÃ³n resultante se generarÃ¡ en `installer/Llamadita-Setup.exe`.
 
 ## Licencia
 

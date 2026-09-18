@@ -1,4 +1,4 @@
-{
+﻿{
   "$schema": "https://raw.githubusercontent.com/neutralinojs/neutralinojs/main/schemas/neutralino.config.schema.json",
   "applicationId": "com.llamadita.app",
   "version": "0.24.1E",
@@ -24,7 +24,7 @@
   ],
   "modes": {
     "window": {
-      "title": "Llama-dita",
+      "title": "Llamadita",
       "width": 1240,
       "height": 820,
       "minWidth": 800,
@@ -43,7 +43,7 @@
     }
   },
   "cli": {
-    "binaryName": "Llama-dita",
+    "binaryName": "Llamadita",
     "resourcesPath": "/resources/",
     "extensionsPath": "/extensions/",
     "clientLibrary": "/resources/js/neutralino.js",

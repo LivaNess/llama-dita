@@ -1,4 +1,4 @@
-# Roadmap de Llama-dita
+﻿# Roadmap de Llamadita
 
 A dónde va esto y en qué orden. Es el mapa largo: lo que se está haciendo ahora vive en
 `SYNC.md`, lo que ya se hizo en `CAMBIOS.md`.
@@ -14,7 +14,7 @@ pesa: en reposo se come entre 500 MB y 1 GB de memoria, hay reportes de más de 
 capa arriba del juego te cuesta cuadros por segundo. Encima cobra por calidad: en el plan
 gratis la pantalla va a 720p y 30 fps, y el audio del canal arranca en 64 kbps.
 
-**Llama-dita quiere ser la primera con el consumo de la segunda, y sin cobrar por calidad.**
+**Llamadita quiere ser la primera con el consumo de la segunda, y sin cobrar por calidad.**
 
 Las tres promesas, y en este orden:
 

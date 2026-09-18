@@ -1,4 +1,4 @@
-// Puente entre el enlace del mail y la app de escritorio.
+﻿// Puente entre el enlace del mail y la app de escritorio.
 //
 // Supabase verifica el enlace y manda acá con los tokens en el # de la dirección.
 // Desde acá se intenta abrir la app de dos maneras:
@@ -41,8 +41,8 @@ async function abrir() {
   const copiado = await copiar();
   try { window.location.href = destino; } catch (_) {}
   avisar(copiado
-    ? 'Listo. Volvé a la ventana de Llama-dita: entra sola en un par de segundos.'
-    : 'Abrí Llama-dita y, si no entra sola, pedí un código nuevo desde la app.');
+    ? 'Listo. Volvé a la ventana de Llamadita: entra sola en un par de segundos.'
+    : 'Abrí Llamadita y, si no entra sola, pedí un código nuevo desde la app.');
 }
 
 if (error) {

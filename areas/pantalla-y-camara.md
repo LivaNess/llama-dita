@@ -1,6 +1,6 @@
-# Área: Compartir pantalla y cámara web
+﻿# Área: Compartir pantalla y cámara web
 
-**Qué es esto:** la ficha de diseño del área de video de Llama-dita. No es código ni
+**Qué es esto:** la ficha de diseño del área de video de Llamadita. No es código ni
 autorización para escribirlo: es el mapa de qué entra, en qué orden se construye, qué hay
 que decidir antes de tocar nada y con qué se prueba.
 
@@ -413,7 +413,7 @@ dibuja, así que se congela o se pone negra. *Hay que verificar el comportamient
 Lo importante: el que mira tiene que leer "la ventana está minimizada", no quedarse mirando
 un cuadro congelado pensando que se colgó la app.
 
-**El que MIRA minimiza Llama-dita.** Acá está el ahorro que más se pasa por alto: si la app
+**El que MIRA minimiza Llamadita.** Acá está el ahorro que más se pasa por alto: si la app
 está minimizada o el video no se está viendo, **hay que desuscribirse**. Si no, seguimos
 bajando y descomprimiendo 4 Mbps para nadie. Es el mismo error que ya cometimos con los
 canvas, pero veinte veces más caro. Cuando volvés a mirar, te resuscribís.

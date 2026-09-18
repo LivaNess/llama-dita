@@ -1,4 +1,4 @@
-# Área: el cliente de escritorio y el ayudante nativo
+﻿# Área: el cliente de escritorio y el ayudante nativo
 
 Ficha de diseño. Es para pensar antes de escribir, no es código ni permiso para tocar el
 repositorio. Redactada el 16/09/2026 contra la versión `0.16.2A`.
@@ -12,7 +12,7 @@ repositorio. Redactada el 16/09/2026 contra la versión `0.16.2A`.
 
 | | Memoria de trabajo | Memoria propia | Procesador sin llamada |
 |---|---|---|---|
-| Llama-dita | 422 MB | 220 MB | 0,45 % |
+| Llamadita | 422 MB | 220 MB | 0,45 % |
 | La app pesada de la que nos queremos diferenciar | 1.077 MB | 1.217 MB | 0,20 % |
 
 Somos 5,5 veces más livianos en memoria propia, con el mismo gasto de procesador. Todo lo
@@ -30,7 +30,7 @@ de Windows.
 1. **El ayudante nativo**: el programita chiquito que corre al lado de la app, el protocolo
    con el que hablan, cuándo arranca, cuándo se muere y qué pasa si se cae.
 2. **Atajos globales**: apretar una tecla para hablar con el juego adelante, o sea con la
-   ventana de Llama-dita atrás y sin foco. Neutralino no lo trae.
+   ventana de Llamadita atrás y sin foco. Neutralino no lo trae.
 3. **Métricas reales de la máquina**: procesador, placa de video y memoria del *proceso
    nuestro*. Confirmado en el capítulo 9 de la investigación: la API de Neutralino da RAM
    total del sistema, datos del procesador, pantallas, discos y red, pero **no da uso de
@@ -360,7 +360,7 @@ Lo que baja el riesgo, en orden de importancia:
    usan los juegos y no es un gancho). Mi apuesta es que el intermedio es el correcto, pero es
    verificación, no certeza.
 3. **Que no escriba ejecutables nunca.**
-4. **Que se llame por su nombre.** `Llama-dita-ayudante.exe`, con la descripción del programa
+4. **Que se llame por su nombre.** `Llamadita-ayudante.exe`, con la descripción del programa
    y el publicador escritos adentro del binario. No `helper.exe`, no `svc.exe`.
 5. **Probar con al menos dos antivirus distintos** antes de publicar, no solo el de Windows.
 

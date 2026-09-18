@@ -1,9 +1,9 @@
-// Registro e ingreso desde la web oficial. Misma cuenta que la app (Supabase Auth, sin contraseña).
+﻿// Registro e ingreso desde la web oficial. Misma cuenta que la app (Supabase Auth, sin contraseña).
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/+esm';
 
 const SUPABASE_URL = 'https://mwzkrahindnheuheoycv.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_SiB6rCFCoaa6O4_g0_Sc2Q_gPhbcdXL';
-const DOWNLOAD_URL = '/descargas/Llama-dita-Setup.exe';
+const DOWNLOAD_URL = '/descargas/Llamadita-Setup.exe';
 
 const sb = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'implicit' }
@@ -152,7 +152,7 @@ function renderDone() {
     </form>
     <p class="msg" hidden></p>
     <div class="divider"></div>` : '<p class="hint">Estamos terminando de preparar tu perfil. Recargá en unos segundos.</p>'}
-    <a class="btn btn-primary" href="${DOWNLOAD_URL}" download>Bajar Llama-dita para Windows</a>
+    <a class="btn btn-primary" href="${DOWNLOAD_URL}" download>Bajar Llamadita para Windows</a>
     <p class="hint" style="margin-top:0.9rem">Abrí la app y entrá con este mismo mail. Te va a pedir un código nuevo.</p>
     <button class="link" type="button" id="logout">Cerrar sesión en esta página</button>`;
 

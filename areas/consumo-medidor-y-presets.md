@@ -1,4 +1,4 @@
-# Área: el medidor de consumo (el bench) y los cuatro presets
+﻿# Área: el medidor de consumo (el bench) y los cuatro presets
 
 **Qué es este documento.** La ficha de diseño del área, escrita antes de tocar código. No es
 el roadmap (eso está en `ROADMAP.md`) ni la investigación (está en
@@ -528,7 +528,7 @@ medidor abierto en pantalla.
   una clase de CSS, cuesta cero). Arrastrable, no: cuesta y no hace falta.
 - Si el panel está abierto 30 minutos guardando historial para un gráfico, la memoria crece.
   Por eso en la etapa 1 no hay gráfico: solo el último valor y el promedio de 3.
-- El nombre "Llamadita" para un perfil, adentro de una app que se llama Llama-dita, se lee
+- El nombre "Llamadita" para un perfil, adentro de una app que se llama Llamadita, se lee
   raro. Sugiero que en la interfaz aparezca como **"Llamadita (recomendado)"**. No toco los
   nombres, que ya están decididos.
 

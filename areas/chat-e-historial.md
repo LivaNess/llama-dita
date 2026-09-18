@@ -1,6 +1,6 @@
-# Área: El chat — mensajes, imágenes y archivos, historial, borrado y buscador
+﻿# Área: El chat — mensajes, imágenes y archivos, historial, borrado y buscador
 
-**Qué es esto:** la ficha de diseño del área de chat de Llama-dita. No es código ni
+**Qué es esto:** la ficha de diseño del área de chat de Llamadita. No es código ni
 autorización para escribirlo: es el mapa de qué entra, en qué orden, qué hay que decidir
 antes de tocar el teclado y con qué números se verifica después.
 

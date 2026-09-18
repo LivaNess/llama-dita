@@ -1,4 +1,4 @@
-# Fichas de área
+﻿# Fichas de área
 
 Seis análisis hechos en paralelo el 16/09/2026, uno por área, **antes** de construir. Cada uno
 responde lo mismo: qué entra y qué no en esa área, en qué orden se construye y por qué, qué
@@ -23,4 +23,4 @@ Son análisis, no órdenes: lo que digan se discute. Varias de sus conclusiones 
 (ver `CAMBIOS.md` de la `0.17.1A` en adelante) y otras están esperando decisión en la síntesis.
 
 El relevamiento de lo que hacen las otras aplicaciones vive **fuera del repositorio**, por la
-regla de no nombrarlas acá. Está en la máquina de Martín, en `llama-dita-notas/`.
+regla de no nombrarlas acá. Está en la máquina de Martín, en `Llamadita-notas/`.

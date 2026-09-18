@@ -1,5 +1,5 @@
-/* ==========================================================================
-   Llama-dita · capa de marca
+﻿/* ==========================================================================
+   Llamadita · capa de marca
    Se carga DESPUÉS de style.css y social.css: solo cambia colores, tipografía
    y detalles. No toca la estructura (grillas, tamaños, posiciones), así que
    convive con los cambios de layout sin pisarlos.

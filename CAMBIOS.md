@@ -1,4 +1,4 @@
-# Cambios de Llama-dita
+# Cambios de Llamadita
 
 Un renglón por versión publicada: qué se hizo, por qué, y cómo comprobar que quedó bien.
 Lo más nuevo arriba.
@@ -16,6 +16,13 @@ Lo más nuevo arriba.
 > ```
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
+
+---
+
+### 0.24.2A · 2026-09-18 · Antigravity
+**Qué cambió.** Renombrado del proyecto: el nombre oficial pasa a ser **Llamadita** (sin guión). Todos los archivos de código, documentación, configuración y web actualizados. Además, el dominio de referencia pasa a ser `www.llamadita.com.ar`; el dominio de Cloudflare Pages (`llamadita.pages.dev`) queda como origen CORS técnico pero ya no se menciona en la UI ni en los docs.
+**Por qué.** Pedido de Juan: quitar el guión del nombre y unificar las referencias al dominio oficial.
+**Dónde.** 31 archivos actualizados en bulk (`index.html`, `web/`, `src/`, `areas/`, docs, configs). `workers/adjuntos/cors.json` y `wrangler.toml` con `llamadita.com.ar` agregado. `package.json` bumpeado.
 
 ---
 
@@ -608,7 +615,7 @@ donde pegar un código.
 `toastContainer`) no son decorativos: si se tocan, la llamada deja de sonar.
 
 ### 1.15.1B · 2026-09-16 · Antigravity
-**Qué cambió.** Se agregó un cartel festivo en pantalla completa al iniciar la aplicación con saludo y felicitación por los 28 años de Martín (Dev & CEO de Llama-dita), con diseño dark studio conmemorativo, animación y botón para ingresar a la app.
+**Qué cambió.** Se agregó un cartel festivo en pantalla completa al iniciar la aplicación con saludo y felicitación por los 28 años de Martín (Dev & CEO de Llamadita), con diseño dark studio conmemorativo, animación y botón para ingresar a la app.
 **Por qué.** Pedido especial de Juan para celebrar el cumpleaños número 28 de Martín.
 **Dónde.** `index.html`, `src/brand.css`, `src/main.js`.
 **Cómo se verifica.** Abrir la aplicación: aparece el cartel de felicitación en pantalla completa con el mensaje para Martín y se cierra limpiamente al tocar el botón o presionar Escape.
@@ -624,7 +631,7 @@ veía). Se confirmó minimizando la ventana: ahí el gasto caía solo a 0,55%, l
 que todo el consumo era dibujo y no el motor de la aplicación.
 **Dónde.** `src/main.js`, el bucle `renderAudioMetrics` (área A).
 **Cómo se verifica.** Con la app abierta y sin llamada, mirar el uso de CPU del árbol de
-procesos de Llama-dita en el Administrador de tareas: tiene que estar por debajo del 1%.
+procesos de Llamadita en el Administrador de tareas: tiene que estar por debajo del 1%.
 **De paso quedó medida la app entera** (versión 1.15.1A, sin llamada, ventana a la vista):
 422 MB de memoria de trabajo y 220 MB de memoria privada, contra 1.077 MB y 1.217 MB de la
 otra. O sea **5,5 veces más liviana en memoria propia**, con el mismo gasto de procesador.
@@ -665,7 +672,7 @@ ventana y la barra de tareas. Para regenerarlos: abrir la app en el navegador, d
 `/favicon.svg` en un canvas del tamaño que haga falta y guardar el PNG.
 **Ojo.** El ícono del ejecutable en sí (el `.exe` en el Explorador) viene incrustado en el
 binario de Neutralino y no cambia con esto.
-**Además.** Se regeneró `installer/Llama-dita-Setup.exe` con esta versión (Inno Setup 6.7.3,
+**Además.** Se regeneró `installer/Llamadita-Setup.exe` con esta versión (Inno Setup 6.7.3,
 instalado en la PC de Martín en `%LOCALAPPDATA%\Programs\Inno Setup 6`). El Setup que había
 era de una versión vieja y no registraba el esquema `llamadita://`, así que en una
 instalación nueva el enlace del mail no abría la app. Se verifica instalando en una máquina

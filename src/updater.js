@@ -1,4 +1,4 @@
-// Actualizaciones de la app.
+﻿// Actualizaciones de la app.
 // - En escritorio (Neutralino): baja el resources.neu nuevo, lo instala y reinicia.
 // - En navegador: compara versión y ofrece recargar.
 //
@@ -11,7 +11,7 @@
 export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0';
 
 const SITIO = 'https://llamadita.com.ar';
-const REPO = 'LivaNess/llama-dita';
+const REPO = 'LivaNess/Llamadita';
 const API = `https://api.github.com/repos/${REPO}/contents`;
 
 const FUENTES = [
@@ -24,7 +24,7 @@ const FUENTES = [
   {
     nombre: 'github',
     manifest: `${API}/desktop/update-manifest.json?ref=main`,
-    paquete: `${API}/desktop/dist/Llama-dita/resources.neu?ref=main`,
+    paquete: `${API}/desktop/dist/Llamadita/resources.neu?ref=main`,
     headers: { Accept: 'application/vnd.github.raw' }
   }
 ];
@@ -138,7 +138,7 @@ function renderPopover() {
     : lastResult ? `Estás al día (v${APP_VERSION}).`
     : '';
   pop.innerHTML = `
-    <div class="upd-row"><strong>Llama-dita v${APP_VERSION}</strong><span class="upd-mode">${isDesktop() ? 'escritorio' : 'navegador'}</span></div>
+    <div class="upd-row"><strong>Llamadita v${APP_VERSION}</strong><span class="upd-mode">${isDesktop() ? 'escritorio' : 'navegador'}</span></div>
     <div class="upd-status">${status}</div>
     <div class="upd-row">
       ${lastResult?.available
@@ -187,7 +187,7 @@ function showBanner(version) {
   const el = document.createElement('div');
   el.id = 'updBanner';
   el.className = 'upd-banner';
-  el.innerHTML = `<span class="upd-banner-text">Hay una versión nueva de Llama-dita: v${esc(version)} (tenés la v${APP_VERSION}).</span>
+  el.innerHTML = `<span class="upd-banner-text">Hay una versión nueva de Llamadita: v${esc(version)} (tenés la v${APP_VERSION}).</span>
     <button class="btn-invite" id="updBannerGo">${isDesktop() ? 'Actualizar ahora' : 'Recargar'}</button>
     <button class="upd-later" id="updBannerLater">Después</button>`;
   document.body.appendChild(el);

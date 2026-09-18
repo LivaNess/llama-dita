@@ -1,4 +1,4 @@
-# Versionado · Llama-dita
+﻿# Versionado · Llamadita
 
 > **No es semver.** Es un rastreador de *en qué se está laburando*, pensado para trazabilidad: poder retroceder y aislar errores ("¿qué cambió en la 1.2.3B?"). Es el mismo esquema que usamos en todos nuestros proyectos.
 > El número vive en **un solo lugar**: `package.json` → `version`. Todo lo demás se sincroniza solo (ver abajo).

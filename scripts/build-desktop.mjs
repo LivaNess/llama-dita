@@ -1,8 +1,8 @@
-// Empaqueta la app de escritorio a partir del build de Vite (dist/).
+﻿// Empaqueta la app de escritorio a partir del build de Vite (dist/).
 //  1. Sincroniza la versión de package.json en neutralino.config.json e installer.iss
 //  2. Copia dist/ a desktop/resources/ (conserva icons/ y js/) e inyecta las globals de Neutralino
 //  3. Escribe desktop/update-manifest.json (lo que consulta el updater de la app)
-//  4. Corre `neu update` (si faltan los binarios) y `neu build` → desktop/dist/Llama-dita/resources.neu
+//  4. Corre `neu update` (si faltan los binarios) y `neu build` → desktop/dist/Llamadita/resources.neu
 // Uso: npm run build:desktop   (después, si hay Inno Setup: crear-instalador.bat)
 import { execSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -99,8 +99,8 @@ const scriptEnlace = [
   'set "URL=%~1"',
   'if not exist "%~dp0.tmp" mkdir "%~dp0.tmp"',
   '> "%~dp0.tmp' + String.fromCharCode(92) + 'enlace.txt" echo !URL!',
-  'tasklist /FI "IMAGENAME eq Llama-dita.exe" | find /I "Llama-dita.exe" >nul',
-  'if errorlevel 1 start "" "%~dp0Llama-dita.exe"',
+  'tasklist /FI "IMAGENAME eq Llamadita.exe" | find /I "Llamadita.exe" >nul',
+  'if errorlevel 1 start "" "%~dp0Llamadita.exe"',
   'endlocal'
 ].join(CR) + CR;
 writeFileSync(join(desktop, 'dist', cfg.cli.binaryName, 'abrir-enlace.cmd'), scriptEnlace);

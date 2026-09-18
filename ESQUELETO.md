@@ -1,4 +1,4 @@
-# Esqueleto de Llama-dita
+﻿# Esqueleto de Llamadita
 
 Mapa de qué es cada parte, dónde vive y con qué se conecta. Sirve para dos cosas: que
 cualquiera (persona o agente) entienda el proyecto sin leer todo el código, y que nadie
@@ -233,7 +233,7 @@ prueba y con qué hay que tener cuidado.
 | Cloudflare DNS | el dominio | zona `llamadita.com.ar` |
 | Cloudflare Email Routing | recibe los mails del dominio | misma zona |
 | Resend | manda los mails de ingreso | remitente `acceso@llamadita.com.ar` |
-| GitHub | el código | `LivaNess/llama-dita` |
+| GitHub | el código | `LivaNess/Llamadita` |
 
 ---
 

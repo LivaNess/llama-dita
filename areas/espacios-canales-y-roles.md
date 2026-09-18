@@ -1,6 +1,6 @@
-# Área: espacios, canales, roles y permisos
+﻿# Área: espacios, canales, roles y permisos
 
-**Qué es esto:** la ficha de diseño de la estructura social de Llama-dita. Quién existe,
+**Qué es esto:** la ficha de diseño de la estructura social de Llamadita. Quién existe,
 quién es amigo de quién, qué canales hay, quién puede entrar, quién puede hablar y quién
 puede echar a alguien. No es código: es lo que hay que decidir **antes** de escribir código.
 

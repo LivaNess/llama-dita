@@ -1,4 +1,4 @@
-// El enlace del mail abre la app de escritorio.
+﻿// El enlace del mail abre la app de escritorio.
 //
 // Cómo funciona:
 //  1. La app registra en Windows el esquema llamadita:// apuntando a un script propio
@@ -39,8 +39,8 @@ const SCRIPT = [
   'set "URL=%~1"',
   'if not exist "%~dp0.tmp" mkdir "%~dp0.tmp"',
   '> "%~dp0.tmp\\enlace.txt" echo !URL!',
-  'tasklist /FI "IMAGENAME eq Llama-dita.exe" | find /I "Llama-dita.exe" >nul',
-  'if errorlevel 1 start "" "%~dp0Llama-dita.exe"',
+  'tasklist /FI "IMAGENAME eq Llamadita.exe" | find /I "Llamadita.exe" >nul',
+  'if errorlevel 1 start "" "%~dp0Llamadita.exe"',
   'endlocal'
 ].join('\r\n') + '\r\n';
 
@@ -55,7 +55,7 @@ async function instalarScriptYEsquema(nl) {
   const cmd = aWindows(archivoScript());
   const base = `HKCU\\Software\\Classes\\${ESQUEMA}`;
   const ordenes = [
-    `reg add "${base}" /ve /d "URL:Llama-dita" /f`,
+    `reg add "${base}" /ve /d "URL:Llamadita" /f`,
     `reg add "${base}" /v "URL Protocol" /d "" /f`,
     `reg add "${base}\\shell\\open\\command" /ve /d "cmd /c \\"\\"${cmd}\\" \\"%1\\"\\"" /f`
   ];
