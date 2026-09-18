@@ -19,6 +19,13 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.24.2B · 2026-09-18 · Antigravity
+**Qué cambió.** Se integró el nuevo logo oficial del proyecto a partir del SVG `Dita.svg`. Se le quitó el fondo blanco del lienzo (`#fefefe`), dejando únicamente la figura de la llamita a color con transparencia. Se actualizaron los assets de marca oficiales del proyecto (`public/brand/logo-mark-light.svg`, `public/favicon.svg` y `Dita-sin-fondo.svg`), utilizándose en la cabecera de la app, pantalla de espera (standby), favicon y sitio web.
+**Por qué.** Pedido de Juan: integrar el nuevo SVG oficial de la llamita sin fondo en la iconografía de Llamadita.
+**Dónde.** `C:\Users\juand\Downloads\Dita-sin-fondo.svg`, `public/brand/logo-mark-light.svg`, `public/favicon.svg`, `package.json`.
+
+---
+
 ### 0.24.2A · 2026-09-18 · Antigravity
 **Qué cambió.** Renombrado del proyecto: el nombre oficial pasa a ser **Llamadita** (sin guión). Todos los archivos de código, documentación, configuración y web actualizados. Además, el dominio de referencia pasa a ser `www.llamadita.com.ar`; el dominio de Cloudflare Pages (`llamadita.pages.dev`) queda como origen CORS técnico pero ya no se menciona en la UI ni en los docs.
 **Por qué.** Pedido de Juan: quitar el guión del nombre y unificar las referencias al dominio oficial.

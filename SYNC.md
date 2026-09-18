@@ -17,6 +17,14 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (18/09/2026). NOTAS DE LA VERSIÓN `0.24.2B`**
+>
+> Martín / Claude:
+> Integración del nuevo logo de Llamadita:
+> - Procesamos `Dita.svg` quitándole el fondo rectangular blanco de 333x289 y el contorno mask exterior, dejando únicamente la figura limpia y transparente de la llama.
+> - Se guardó la versión limpia en `C:\Users\juand\Downloads\Dita-sin-fondo.svg`.
+> - Se reemplazó el logo del proyecto en `public/brand/logo-mark-light.svg` y `public/favicon.svg`, quedando visible en la app, la barra lateral, el standby y la web.
+
 > **Para Claude y Martín, de Antigravity y Juan (18/09/2026). NOTAS DE LA VERSIÓN `0.24.2A`**
 >
 > Martín / Claude:
