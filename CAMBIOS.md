@@ -19,6 +19,13 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.24.2C · 2026-09-18 · Antigravity
+**Qué cambió.** Se integró la versión final modificada manualmente del logo (`logo-dita.svg` desde Descargas). Se reemplazaron los assets oficiales (`public/brand/logo-mark-light.svg`, `public/favicon.svg` y copias de escritorio) para reflejar la llamita con sus rellenos blancos y detalles vectoriales manuales.
+**Por qué.** Pedido de Juan: reemplazar el logo por la versión final retocada a mano (`logo-dita.svg`).
+**Dónde.** `public/brand/logo-mark-light.svg`, `public/favicon.svg`, `package.json`.
+
+---
+
 ### 0.24.2B · 2026-09-18 · Antigravity
 **Qué cambió.** Se integró el nuevo logo oficial del proyecto a partir del SVG `Dita.svg`. Se le quitó el fondo blanco del lienzo (`#fefefe`), dejando únicamente la figura de la llamita a color con transparencia. Se actualizaron los assets de marca oficiales del proyecto (`public/brand/logo-mark-light.svg`, `public/favicon.svg` y `Dita-sin-fondo.svg`), utilizándose en la cabecera de la app, pantalla de espera (standby), favicon y sitio web.
 **Por qué.** Pedido de Juan: integrar el nuevo SVG oficial de la llamita sin fondo en la iconografía de Llamadita.

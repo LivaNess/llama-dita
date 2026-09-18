@@ -17,6 +17,13 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (18/09/2026). NOTAS DE LA VERSIÓN `0.24.2C`**
+>
+> Martín / Claude:
+> Actualización final de branding con la versión modificada manualmente por Juan (`logo-dita.svg`):
+> - Reemplazado `public/brand/logo-mark-light.svg` y `public/favicon.svg` con la versión final retocada a mano de la llamita.
+> - La iconografía en cabecera, standby y web queda actualizada con este diseño definitivo.
+
 > **Para Claude y Martín, de Antigravity y Juan (18/09/2026). NOTAS DE LA VERSIÓN `0.24.2B`**
 >
 > Martín / Claude:
