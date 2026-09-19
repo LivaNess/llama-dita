@@ -81,6 +81,44 @@ function unmuteChat(id) {
 
 let lastMessageSoundId = null;
 
+function notificarMensajeEscritorio(fila) {
+  if (!fila || fila.author_id === state.me?.id) return;
+  if (hooks.getNotificationsEnabled && !hooks.getNotificationsEnabled()) return;
+  if (isChatMuted(fila.channel_id) || isChatMuted(fila.author_id)) return;
+
+  // Si la ventana tiene el foco y estamos leyendo este mismo canal, no emitimos notificación nativa
+  if (document.hasFocus() && !document.hidden && state.currentChannel?.id === fila.channel_id) {
+    return;
+  }
+
+  const canal = state.channels?.find((c) => c.id === fila.channel_id);
+  const amigo = state.friendships
+    ?.map((f) => f.requester_id === state.me?.id ? f.addressee : f.requester)
+    ?.find((u) => u?.id === fila.author_id);
+  const miembro = state.members?.find((m) => m.user_id === fila.author_id)?.profile;
+  const autor = amigo || miembro;
+  const nombreAutor = autor?.display_name || autor?.username || 'Alguien';
+
+  let titulo = 'Llamadita';
+  if (canal) {
+    titulo = canal.kind === 'dm' ? nombreAutor : `${nombreAutor} (#${canal.name})`;
+  } else {
+    titulo = nombreAutor;
+  }
+
+  const cuerpo = fila.body
+    ? (fila.body.length > 85 ? fila.body.substring(0, 82) + '…' : fila.body)
+    : 'Envió un archivo adjunto';
+
+  hooks.showNativeDesktopNotification?.({
+    title: titulo,
+    body: cuerpo,
+    onClick: () => {
+      if (fila.channel_id) openChannel(fila.channel_id);
+    }
+  });
+}
+
 function onGlobalMessage(fila) {
   if (!fila || fila.author_id === state.me?.id) return;
   if (hooks.getNotificationsEnabled && !hooks.getNotificationsEnabled()) return;
@@ -88,6 +126,7 @@ function onGlobalMessage(fila) {
   if (lastMessageSoundId === fila.id) return;
   lastMessageSoundId = fila.id;
   hooks.playMessageSound?.();
+  notificarMensajeEscritorio(fila);
 }
 
 
@@ -354,6 +393,10 @@ function onIncomingCall(row) {
   const from = f ? otherSide(f) : { display_name: 'Alguien', username: '' };
   state.incomingCall = { ...row, from };
   hooks.startRingtone?.();
+  hooks.showNativeDesktopNotification?.({
+    title: 'Llamada entrante',
+    body: `${from.display_name || from.username || 'Un amigo'} te está llamando…`
+  });
   clearTimeout(state.ringTimer);
   state.ringTimer = setTimeout(() => answerCall('missed'), RING_TIMEOUT_MS);
   render();

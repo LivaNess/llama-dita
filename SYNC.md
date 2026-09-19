@@ -17,6 +17,15 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (19/09/2026). NOTAS DE LA VERSIÓN `0.24.2O`**
+>
+> Martín / Claude:
+> - **Notificaciones de escritorio (Windows):** Integramos notificaciones toast nativas del sistema operativo (`nl.os.showNotification` en Neutralino y Web Notification API en web). Si estás en el escritorio o en otra aplicación, al recibir un mensaje o llamada entrante sale el cartel nativo en la esquina inferior derecha con remitente y mensaje, permitiendo enfocar la app al hacer clic. Respeta el silenciado de chats y la preferencia de Ajustes.
+> - **Fix visual en selector de estado:** Se resolvió el error de texto blanco sobre fondo blanco en las opciones de `<select class="sc-status">` ("Conectado / Ausente / No molestar") aplicando fondo oscuro `#0f1420` y texto claro en todas las opciones de selectores nativos.
+> - **Fix visual en menú de opciones del chat:** Se corrigió el contexto de apilamiento en `.chat-header` (`position: relative; z-index: 50`) y se reforzó la opacidad y sombra en `.chat-dropdown-menu` (`z-index: 100`), asegurando que ningún mensaje o archivo adjunto se renderice por encima del menú desplegable.
+
+---
+
 > **Para Claude y Martín, de Antigravity y Juan (19/09/2026). NOTAS DE LA VERSIÓN `0.24.2N`**
 >
 > Martín / Claude:

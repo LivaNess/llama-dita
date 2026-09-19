@@ -17,6 +17,17 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.2O · 2026-09-19 · Antigravity
+**Qué cambió.** Notificaciones nativas de Windows/escritorio y correcciones visuales en menú de chat y selector de estado:
+- **Notificaciones nativas de Windows/escritorio:** Cuando llega un mensaje o una llamada entrante y la aplicación está en segundo plano o minimizada, se emite una notificación toast nativa en la esquina inferior derecha de la pantalla con el remitente y un extracto del texto (vía `NL.os.showNotification` en Windows Neutralino y Web Notification API en navegadores). Al hacer clic en la notificación, se enfoca la app y se abre el chat.
+- **Corrección de selector de estado:** Se corrigió el problema de texto blanco sobre fondo blanco en las opciones del selector de estado de usuario (`.sc-status option` y `select option`), asegurando fondo oscuro (`#0f1420`) y texto nítido en Windows y navegadores.
+- **Corrección de menú de opciones de chat:** Se solucionó el error de apilamiento donde los mensajes del chat y archivos adjuntos se dibujaban por encima del menú desplegable de opciones. Se aplicó `position: relative; z-index: 50` a `.chat-header` y fondo opaco sólido con elevación `z-index: 100` a `.chat-dropdown-menu`.
+**Por qué.** El usuario no recibía avisos del sistema al estar en el escritorio u otra app, el menú del chat quedaba tapado por los mensajes y las opciones del estado de usuario resultaban ilegibles.
+**Dónde.** `src/main.js`, `src/social/panel.js`, `src/social/social.css`, `src/style.css`, `package.json`.
+**Cómo se verifica.** Minimizar o perder foco en la app y enviar un mensaje: comprobar que Windows muestra la notificación toast nativa. Desplegar el selector de estado en el cajón de perfil y verificar opciones legibles. Abrir el menú de tres rayitas en un chat con mensajes y verificar que el menú queda 100% por encima de todos los mensajes.
+
+---
+
 ### 0.24.2N · 2026-09-19 · Antigravity
 **Qué cambió.** Aviso permanente de silenciado en todas las pantallas y actualizador con flecha verde reactiva:
 - **Aviso de silenciado universal:** La detección de habla mientras estás silenciado en una llamada activa ahora se ejecuta sin importar la vista abierta (canales de texto, chats privados, standby o cabina). Se desacopló del renderizado exclusivo de las tarjetas de cabina y se añadió un intervalo de respaldo a 60ms para no interrumpirse si la ventana queda en segundo plano.

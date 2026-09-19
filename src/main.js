@@ -699,10 +699,48 @@ window.addEventListener('DOMContentLoaded', () => {
     getRingtoneVolume: () => audioManager.ringtoneVolume,
     setRingtoneVolume: (v) => audioManager.setRingtoneVolume(v),
     getMessageVolume: () => audioManager.messageVolume,
-    setMessageVolume: (v) => audioManager.setMessageVolume(v)
+    setMessageVolume: (v) => audioManager.setMessageVolume(v),
+    showNativeDesktopNotification: (opts) => showNativeDesktopNotification(opts)
   });
   // Buscar actualizaciones al abrir (opcional) + popover en el tag de versión del header.
   initUpdater({ toast: showToast });
   // El enlace del mail abre la app (esquema llamadita://).
   initDeepLink({ toast: showToast });
 });
+
+// Notificaciones nativas del sistema operativo (Windows Neutralino o Web Notification API)
+async function showNativeDesktopNotification({ title, body, onClick }) {
+  // Si la aplicación ya está activa y en primer plano, no hace falta emitir notificación nativa
+  if (document.hasFocus() && !document.hidden) return;
+
+  // 1. Escritorio (Neutralino en Windows)
+  if (typeof window.NL_PORT !== 'undefined') {
+    try {
+      const nl = await import('@neutralinojs/lib');
+      if (nl?.os?.showNotification) {
+        await nl.os.showNotification(title, body || '', 'INFO');
+      }
+      return;
+    } catch (err) {
+      console.warn('Error emitiendo notificación nativa:', err);
+    }
+  }
+
+  // 2. Navegador web estándar
+  if (typeof window !== 'undefined' && 'Notification' in window) {
+    try {
+      if (Notification.permission === 'granted') {
+        const notif = new Notification(title, {
+          body: body || '',
+          icon: '/favicon.svg'
+        });
+        notif.onclick = () => {
+          window.focus?.();
+          if (onClick) onClick();
+        };
+      } else if (Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+    } catch (_) {}
+  }
+}

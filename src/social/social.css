@@ -306,6 +306,8 @@
   outline: none;
 }
 .sc-select:focus { border-color: #a855f7; }
+select option,
+.sc-status option,
 .sc-select option {
   background: #0f1420;
   color: #f8fafc;

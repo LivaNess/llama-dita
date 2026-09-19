@@ -509,6 +509,11 @@ body {
   color: var(--text-primary);
 }
 
+select option {
+  background: #0f1420;
+  color: #f8fafc;
+}
+
 .btn-control {
   display: inline-flex;
   align-items: center;
@@ -1236,6 +1241,8 @@ button.logo-tag { font: inherit; cursor: pointer; }
 }
 
 .chat-header {
+  position: relative;
+  z-index: 50;
   height: 64px;
   min-height: 64px;
   max-height: 64px;
@@ -1389,12 +1396,12 @@ button.logo-tag { font: inherit; cursor: pointer; }
   top: calc(100% + 6px);
   right: 0;
   z-index: 100;
-  background: #10172e;
-  border: 1px solid rgba(143, 166, 255, 0.22);
+  background: #0d1326;
+  border: 1px solid rgba(143, 166, 255, 0.3);
   border-radius: 8px;
   padding: 4px;
   min-width: 150px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(143, 166, 255, 0.12);
   animation: slide-in 0.12s ease;
 }
 
