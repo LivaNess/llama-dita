@@ -45,7 +45,9 @@ const channelChatView = document.getElementById('channelChatView');
 const studioBoothsView = document.getElementById('studioBoothsView');
 const standbyView = document.getElementById('standbyView');
 const btnSidebarMic = document.getElementById('btnSidebarMic');
-const btnLoopback = document.getElementById('btnLoopback');
+const btnDeafen = document.getElementById('btnDeafen');
+let isDeafened = false;
+let wasMutedBeforeDeafen = false;
 let currentActiveChannel = null;
 let isUserLoggedIn = false;
 
@@ -235,17 +237,55 @@ remoteVolumeRange?.addEventListener('input', (e) => {
   if (remoteAudioElement) remoteAudioElement.volume = val / 100;
 });
 
-// Monitor toggle (en el pie de usuario de la barra lateral)
-btnLoopback?.addEventListener('click', () => {
-  const isEnabled = audioManager.toggleLoopback();
-  if (isEnabled) {
-    btnLoopback.classList.add('active');
-    btnLoopback.title = 'Monitoreo local activo (escucharte)';
-    showToast('Monitoreo local activo');
+// Sincronización del botón de ensordecer (auriculares)
+function syncDeafenUi() {
+  if (btnDeafen) {
+    if (isDeafened) {
+      btnDeafen.className = 'sidebar-mic-btn muted';
+      btnDeafen.title = 'Des-ensordecer (volver a escuchar)';
+    } else {
+      btnDeafen.className = 'sidebar-mic-btn active';
+      btnDeafen.title = 'Ensordecer (dejar de escuchar y mutear)';
+    }
+  }
+}
+
+// Botón de ensordecer / des-ensordecer (pie de la barra lateral)
+btnDeafen?.addEventListener('click', () => {
+  isDeafened = !isDeafened;
+
+  if (isDeafened) {
+    // 1. Guardamos el estado previo del micrófono
+    wasMutedBeforeDeafen = audioManager.isMuted;
+
+    // 2. Silenciamos la salida de audio (dejar de escuchar al resto)
+    if (remoteAudioElement) remoteAudioElement.muted = true;
+
+    // 3. Mutear el micrófono siempre al ensordecer
+    if (!audioManager.isMuted) {
+      audioManager.setMute(true);
+      syncMicUi(true);
+      peerManager.sendData({ type: 'mute', muted: true });
+    }
+
+    syncDeafenUi();
+    showToast('Ensordecido (audio y micro silenciados)');
   } else {
-    btnLoopback.classList.remove('active');
-    btnLoopback.title = 'Monitoreo local (escucharte)';
-    showToast('Monitoreo local desactivado');
+    // Des-ensordecer: volver a escuchar al resto
+    // Respetamos si el usuario había silenciado a su amigo manualmente en cabina
+    if (remoteAudioElement) remoteAudioElement.muted = isRemoteMuted;
+
+    // Lógica del micrófono:
+    // "En caso de estar muteado previamente y no ensordecido, al momento de ensordecerte y des-ensordecerte no se activará el microfono.
+    //  En caso de no estar muteado y ensordecerte. Te muteara y al momento de des-ensordecerte también te vuelve a desmutear."
+    if (!wasMutedBeforeDeafen) {
+      audioManager.setMute(false);
+      syncMicUi(false);
+      peerManager.sendData({ type: 'mute', muted: false });
+    }
+
+    syncDeafenUi();
+    showToast('Des-ensordecido');
   }
 });
 
@@ -283,6 +323,7 @@ function setupNetworking() {
     remoteStream = stream;
     if (remoteAudioElement) {
       remoteAudioElement.srcObject = stream;
+      remoteAudioElement.muted = isDeafened || isRemoteMuted;
       remoteAudioElement.play().catch(() => {
         if (audioPermissionBanner) {
           audioPermissionBanner.style.display = 'flex';

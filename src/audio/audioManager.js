@@ -1,4 +1,4 @@
-﻿// Manejo del audio de Llamadita.
+// Manejo del audio de Llamadita.
 //
 // El nivel del micrófono (lo que mueve las barritas y decide si estás hablando) se mide
 // SOLO cuando alguien lo pregunta, o sea cuando hay una cabina en pantalla dibujándose.
@@ -167,8 +167,14 @@ class AudioManager {
 
   toggleMute() {
     if (!this.localStream) return false;
-    this.isMuted = !this.isMuted;
-    this.localStream.getAudioTracks().forEach(t => t.enabled = !this.isMuted);
+    return this.setMute(!this.isMuted);
+  }
+
+  setMute(mute) {
+    this.isMuted = !!mute;
+    if (this.localStream) {
+      this.localStream.getAudioTracks().forEach(t => t.enabled = !this.isMuted);
+    }
     return this.isMuted;
   }
 

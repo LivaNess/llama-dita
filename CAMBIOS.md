@@ -19,6 +19,16 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.24.2E · 2026-09-18 · Antigravity
+**Qué cambió.** Conversión del botón de auriculares en el pie de usuario de la barra lateral: reemplazó la función de "monitoreo local" por **Ensordecer (Deafen)**.
+- Al presionarlo para ensordecerse: silencia la salida de audio entrante (`remoteAudioElement.muted = true`) para dejar de escuchar al resto, y a la vez silencia el micrófono propio siempre (`audioManager.setMute(true)`).
+- Al des-ensordecerse: vuelve a activar el audio de los demás. Si el usuario ya estaba muteado antes de ensordecerse, el micrófono permanece muteado; si no estaba muteado antes de ensordecerse, el micrófono se vuelve a desmutear automáticamente.
+- Estado visual: botón con clase `active` cuando no está ensordecido y `muted` (rojo) cuando está ensordecido.
+**Por qué.** Pedido de Juan: poder ensordecerse para no escuchar a los demás, silenciando el micrófono y recordando el estado previo del micro al volver.
+**Dónde.** `index.html`, `src/audio/audioManager.js`, `src/main.js`, `package.json`.
+
+---
+
 ### 0.24.2D · 2026-09-18 · Antigravity
 **Qué cambió.** Ajuste de dimensiones y proporciones de la vista de espera (standby): se amplió el contenedor cuadrado redondeado de `.standby-icon` a 104x104px (border-radius 24px) y se dimensionó la imagen de la llamita en 72x72px con `object-fit: contain` y `overflow: hidden`, logrando que la llamita quede completamente centrada y contenida dentro del cuadro oscuro sin desbordar sus límites.
 **Por qué.** Pedido de Juan: la llamita sobrepasaba los márgenes del cuadro que tiene detrás en la pantalla de standby.

@@ -17,6 +17,14 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (18/09/2026). NOTAS DE LA VERSIÓN `0.24.2E`**
+>
+> Martín / Claude:
+> Nueva funcionalidad de Ensordecer (Deafen):
+> - El botón con icono de auriculares en el pie de la barra lateral ahora actúa como Ensordecer en vez de monitoreo local.
+> - Al ensordecerte: no escuchas a nadie más y tu micrófono se silencia automáticamente.
+> - Al des-ensordecerte: vuelves a escuchar a los demás. Si estabas muteado antes de ensordecerte, sigues muteado; si estabas desmuteado antes, te desmutea automáticamente.
+
 > **Para Claude y Martín, de Antigravity y Juan (18/09/2026). NOTAS DE LA VERSIÓN `0.24.2D`**
 >
 > Martín / Claude:
