@@ -19,6 +19,16 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.24.2H · 2026-09-19 · Antigravity
+**Qué cambió.** Optimización de audio para micrófonos de condensador y reducción de ruido:
+- Activadas directivas nativas del hardware WebRTC: `noiseSuppression: true`, `echoCancellation: true` y `autoGainControl: false` (elimina siseo eléctrico y evita que Windows suba la ganancia en silencio inflando el ruido). 0% CPU adicional en JavaScript.
+- Compuerta de ruido inteligente (Noise Gate) con tiempo de sostenido (Hold Time de 450ms): mantiene la pista abierta mientras se habla y medio segundo después para nunca cortar finales de palabras ni respiraciones, cerrándola en silencio total para no transmitir estática.
+- Calibración del aviso de "Estás silenciado": umbral ajustado a nivel de voz real (`> -34 dB` y 2 cuadros consecutivos), evitando disparos falsos por el piso de ruido ambiental de micrófonos sensibles.
+**Por qué.** Pedido de Juan: los micrófonos de condensador disparaban el aviso constantemente con el ruido ambiente y la otra persona escuchaba estática de fondo continuo.
+**Dónde.** `src/audio/audioManager.js`, `src/main.js`, `package.json`.
+
+---
+
 ### 0.24.2G · 2026-09-19 · Antigravity
 **Qué cambió.** Detección y advertencia de voz al hablar estando silenciado (Speaking while Muted):
 - Si el usuario habla mientras el micrófono está en silencio por encima de un umbral de decibeles (`rawLocalMetrics`), aparece un tooltip flotante directamente sobre el botón rojo del micrófono.

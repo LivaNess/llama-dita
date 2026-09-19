@@ -17,6 +17,13 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (19/09/2026). NOTAS DE LA VERSIÓN `0.24.2H`**
+>
+> Martín / Claude:
+> - Supresión de ruido nativa activada (`noiseSuppression: true`, `echoCancellation: true`, `autoGainControl: false`).
+> - Compuerta de ruido (Noise gate) con hold time de 450ms para evitar cortes en finales de palabras.
+> - Umbral de advertencia al hablar silenciado calibrado a voz real (> -34 dB, 2 cuadros) para evitar disparos en micrófonos de condensador.
+
 > **Para Claude y Martín, de Antigravity y Juan (19/09/2026). NOTAS DE LA VERSIÓN `0.24.2G`**
 >
 > Martín / Claude:

@@ -65,6 +65,7 @@ const MUTED_SPEECH_PHRASES = [
 
 let mutedPhraseIndex = 0;
 let mutedTooltipHideTimer = null;
+let mutedSpeechConsecutiveFrames = 0;
 let isDeafened = false;
 let wasMutedBeforeDeafen = false;
 let currentActiveChannel = null;
@@ -393,6 +394,12 @@ function renderAudioMetrics(ahora = 0) {
 
   const isSuspended = audioManager.audioCtx && audioManager.audioCtx.state === 'suspended';
 
+  // Obtenemos las métricas reales del micrófono para la puerta de ruido y detección de voz
+  const raw = audioManager.rawLocalMetrics;
+  if (raw && !audioManager.isMuted) {
+    audioManager.processNoiseGate(raw);
+  }
+
   // 1. Aura vocal del usuario local
   if (isSuspended) {
     if (audioPermissionBanner) audioPermissionBanner.style.display = 'flex';
@@ -403,12 +410,20 @@ function renderAudioMetrics(ahora = 0) {
       hostVocalAura.style.opacity = '0.08';
     }
 
-    // Detección de voz estando silenciado (umbral de decibeles/volumen)
-    const raw = audioManager.rawLocalMetrics;
-    if (raw && (raw.volume > 10 || raw.db > -45)) {
-      showSpeakingWhileMuted();
+    // Detección de voz estando silenciado:
+    // Umbral calibrado para voz real (> -34 dB o volumen > 18) y sostenido por 2 cuadros
+    // para evitar falsos positivos con respiración, tecleo o estática de condensador.
+    const isHumanSpeech = raw && (raw.volume > 18 || raw.db > -34);
+    if (isHumanSpeech) {
+      mutedSpeechConsecutiveFrames++;
+      if (mutedSpeechConsecutiveFrames >= 2) {
+        showSpeakingWhileMuted();
+      }
+    } else {
+      mutedSpeechConsecutiveFrames = 0;
     }
   } else {
+    mutedSpeechConsecutiveFrames = 0;
     const { volume, isSpeaking } = audioManager.localMetrics;
     if (isSpeaking) {
       hostAvatarDisc?.classList.add('active');

@@ -111,9 +111,20 @@ class AudioManager {
       this.localStream.getTracks().forEach(t => t.stop());
     }
 
-    // Constraints
+    // Constraints optimizados para micrófonos de calidad:
+    // Activamos cancelación de eco y supresión de ruido por hardware/C++ nativo (0% JS CPU)
+    // Desactivamos autoGainControl para que el sistema operativo no suba la ganancia en silencio.
+    const audioConstraints = {
+      noiseSuppression: true,
+      echoCancellation: true,
+      autoGainControl: false
+    };
+    if (deviceId) {
+      audioConstraints.deviceId = { exact: deviceId };
+    }
+
     const constraints = {
-      audio: deviceId ? { deviceId: { exact: deviceId } } : true,
+      audio: audioConstraints,
       video: false
     };
 
@@ -121,6 +132,8 @@ class AudioManager {
       this.localStream = await navigator.mediaDevices.getUserMedia(constraints);
       this.currentDeviceId = deviceId;
       this.isMuted = false;
+      this.lastVoiceDetectedAt = Date.now();
+      this.isGateOpen = true;
 
       // Clean previous nodes
       this.cleanupLocalNodes();
@@ -189,6 +202,33 @@ class AudioManager {
       this.localStream.getAudioTracks().forEach(t => t.enabled = !this.isMuted);
     }
     return this.isMuted;
+  }
+
+  // Puerta de ruido inteligente (Noise Gate):
+  // Si el usuario no está muteado manualmente, detecta si hay voz real.
+  // Cuando deja de hablar, mantiene la transmisión abierta 450ms (hold time)
+  // para que nunca se coman los finales de frases ni respiraciones, y luego
+  // silencia digitalmente la salida para evitar estática en el receptor.
+  processNoiseGate(rawMetrics) {
+    if (this.isMuted || !this.localStream) return;
+
+    const ahora = Date.now();
+    // Umbral de voz real: volumen > 10 o nivel > -38 dB
+    const voiceDetected = rawMetrics && (rawMetrics.volume > 10 || rawMetrics.db > -38);
+
+    if (voiceDetected) {
+      this.lastVoiceDetectedAt = ahora;
+      if (!this.isGateOpen) {
+        this.isGateOpen = true;
+        this.localStream.getAudioTracks().forEach(t => t.enabled = true);
+      }
+    } else {
+      // Hold time de 450ms tras dejar de hablar
+      if (this.isGateOpen && ahora - this.lastVoiceDetectedAt > 450) {
+        this.isGateOpen = false;
+        this.localStream.getAudioTracks().forEach(t => t.enabled = false);
+      }
+    }
   }
 
   toggleLoopback() {
