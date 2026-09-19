@@ -90,16 +90,52 @@
 .sc-mode button { flex: 1; background: none; border: none; color: var(--text-secondary, #94a3b8); padding: .45rem; border-radius: 6px; font-weight: 600; font-size: .8rem; cursor: pointer; font-family: inherit; }
 .sc-mode button.active { background: rgba(124, 58, 237, .45); color: #fff; }
 
-/* Acciones de un mensaje (editar / borrar). Aparecen al pasar el mouse por encima para no
-   llenar la conversación de iconos. */
-.sc-msg { position: relative; }
-.sc-msg-acciones { position: absolute; top: .15rem; right: .25rem; display: none; gap: .15rem; }
-.sc-msg:hover .sc-msg-acciones, .sc-msg:focus-within .sc-msg-acciones { display: flex; }
-.sc-msg-accion {
-  background: rgba(0,0,0,.35); border: 1px solid rgba(255,255,255,.12); color: var(--text-secondary, #94a3b8);
-  border-radius: 5px; cursor: pointer; font-size: .7rem; line-height: 1; padding: .18rem .3rem; font-family: inherit;
+/* Acciones de un mensaje (reaccionar, responder, fijar, editar, borrar).
+   Aparecen flotando abajo a la derecha en un contenedor pastilla para no tapar el nombre del autor ni el texto. */
+.sc-msg {
+  position: relative;
+  margin-bottom: 0.65rem;
 }
-.sc-msg-accion:hover { color: #fff; background: rgba(168,85,247,.45); }
+.sc-msg-acciones {
+  position: absolute;
+  bottom: -15px;
+  right: 8px;
+  z-index: 25;
+  display: none;
+  align-items: center;
+  gap: 3px;
+  background: #0d1326;
+  border: 1px solid rgba(143, 166, 255, 0.28);
+  border-radius: 20px;
+  padding: 3px 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(143, 166, 255, 0.1);
+  backdrop-filter: blur(12px);
+}
+.sc-msg:hover .sc-msg-acciones,
+.sc-msg:focus-within .sc-msg-acciones,
+.sc-msg-acciones.forzar-visible {
+  display: inline-flex;
+}
+.sc-msg-accion {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary, #94a3b8);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.78rem;
+  line-height: 1;
+  padding: 3px 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  transition: all 0.12s ease;
+}
+.sc-msg-accion:hover {
+  color: #fff;
+  background: rgba(143, 166, 255, 0.2);
+  transform: scale(1.1);
+}
 .sc-msg-body { white-space: pre-wrap; }
 
 /* Un renglón de amigo se puede tocar entero: abre el chat privado. */
@@ -233,13 +269,103 @@
 .sc-reacciones { display: flex; flex-wrap: wrap; gap: .25rem; margin-top: .3rem; }
 .sc-reaccion {
   background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1); color: #cbd5e1;
-  border-radius: 999px; padding: .1rem .4rem; font-size: .72rem; cursor: pointer; font-family: inherit;
+  border-radius: 999px; padding: .15rem .45rem; font-size: .75rem; cursor: pointer; font-family: inherit;
+  display: inline-flex; align-items: center; gap: .25rem; transition: background 0.12s, transform 0.12s;
 }
-.sc-reaccion:hover { background: rgba(255,255,255,.14); }
+.sc-reaccion:hover { background: rgba(255,255,255,.16); transform: scale(1.05); }
 .sc-reaccion.mia { background: rgba(168,85,247,.32); border-color: rgba(168,85,247,.6); color: #fff; }
-.sc-emojis { display: flex; gap: .1rem; }
-.sc-emoji { background: none; border: none; cursor: pointer; font-size: .82rem; padding: .1rem .12rem; border-radius: 4px; }
-.sc-emoji:hover { background: rgba(255,255,255,.14); }
+.sc-emojis { display: flex; align-items: center; gap: 2px; }
+.sc-emoji {
+  background: none; border: none; cursor: pointer; font-size: .88rem; padding: 2px 4px;
+  border-radius: 6px; display: inline-flex; align-items: center; justify-content: center;
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+.sc-emoji:hover { background: rgba(255,255,255,.18); transform: scale(1.18); }
+.sc-emoji-mas {
+  font-size: 0.95rem; font-weight: 700; color: #8fa6ff; padding: 0 5px; line-height: 1;
+}
+.sc-emoji-mas:hover { background: rgba(91,124,250,.22); color: #fff; transform: scale(1.18); }
+
+/* Paleta emergente de selección de emojis */
+.sc-emoji-picker-popover {
+  position: fixed;
+  z-index: 1000;
+  width: 290px;
+  background: #0d1326;
+  border: 1px solid rgba(143, 166, 255, 0.35);
+  border-radius: 12px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(143, 166, 255, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slide-in 0.15s ease;
+  user-select: none;
+}
+
+.sc-emoji-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sc-emoji-picker-close {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 2px 4px;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.sc-emoji-picker-close:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.sc-emoji-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  padding: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.sc-emoji-picker-grid::-webkit-scrollbar {
+  width: 5px;
+}
+
+.sc-emoji-picker-grid::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
+.sc-emoji-picker-item {
+  background: transparent;
+  border: none;
+  font-size: 1.25rem;
+  padding: 6px 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s ease, background 0.1s ease;
+}
+
+.sc-emoji-picker-item:hover {
+  background: rgba(91, 124, 250, 0.25);
+  transform: scale(1.2);
+}
 
 /* Mensaje fijado. */
 .sc-msg.fijado { border-left: 2px solid rgba(250,204,21,.8); }
@@ -258,9 +384,58 @@
   padding: .45rem .9rem; font-size: .78rem; color: var(--text-secondary, #94a3b8);
   border-top: 1px solid rgba(255,255,255,.06);
 }
-.chat-respondiendo { display: flex; align-items: center; gap: .5rem; }
-.chat-respondiendo[hidden], .chat-escribiendo[hidden], .chat-buscador[hidden], .chat-retencion[hidden] { display: none; }
-.chat-respondiendo-texto { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat-respondiendo {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  background: rgba(91, 124, 250, 0.1);
+  border-top: 1px solid rgba(91, 124, 250, 0.3);
+  border-left: 3px solid #5b7cfa;
+  animation: slide-in 0.15s ease;
+}
+.chat-respondiendo[hidden] { display: none !important; }
+.chat-respondiendo-icono {
+  color: #8fa6ff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  flex: none;
+}
+.chat-respondiendo-texto {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #e2e8f0;
+}
+.chat-respondiendo-texto strong {
+  color: #93c5fd;
+  font-weight: 600;
+}
+.chat-respondiendo-cancelar {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #cbd5e1;
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: all 0.15s ease;
+  flex: none;
+  font-family: inherit;
+}
+.chat-respondiendo-cancelar:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #fca5a5;
+}
+.chat-escribiendo[hidden], .chat-buscador[hidden], .chat-retencion[hidden] { display: none; }
 .chat-escribiendo { font-style: italic; }
 .chat-buscador { display: flex; align-items: center; gap: .5rem; }
 .chat-buscador input {

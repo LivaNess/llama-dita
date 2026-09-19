@@ -17,6 +17,18 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.2P · 2026-09-19 · Antigravity
+**Qué cambió.** Rediseño del menú de chat, barra flotante de reacciones con selector de emojis y barra de vista previa de respuestas:
+- **Rediseño del menú de opciones del chat:** Se amplió el ancho del menú desplegable (`min-width: 220px; width: max-content; white-space: nowrap`), evitando que "Borrar lo mío para los dos" se parta en dos renglones. Se añadieron textos en alto contraste (`#e2e8f0`), íconos suaves en azul (#8fa6ff), acciones destructivas en rojo (#fca5a5) y una línea divisoria limpia entre opciones normales y de borrado.
+- **Barra flotante de reacciones sin solapamiento:** La barra de acciones del mensaje (`.sc-msg-acciones`) ahora flota en la esquina inferior derecha (`bottom: -15px; right: 8px`) como pastilla independiente sobre fondo `#0d1326` con borde sutil y sombra. Nunca más tapa el nombre del autor ni el texto del mensaje.
+- **Selector completo de emojis (+):** Se agregó el botón `+` en la botonera rápida de reacciones que despliega una paleta popover con más de 80 emojis clasificados. Solo admite reacciones con emojis válidos (sin textos arbitrarios) y permite sumar o retirar reacciones fácilmente con un solo clic.
+- **Barra de respuesta con cancelación:** Al pulsar "Responder" (↩), se renderiza de inmediato sobre el campo de escritura la barra con el autor, el extracto del mensaje citado y un botón visible `✕ Cancelar` que restablece el modo de mensaje regular si se decide no responder.
+**Por qué.** El menú de chat se veía apretado y con saltos de línea incómodos, la botonera de reacciones tapaba el nombre del usuario emisor impidiendo leerlo, no se podía elegir un emoji fuera de los 6 por defecto, y responder a un mensaje no ofrecía confirmación visual antes de enviarlo ni forma de cancelar.
+**Dónde.** `index.html`, `src/style.css`, `src/social/social.css`, `src/social/panel.js`, `package.json`.
+**Cómo se verifica.** Abrir un chat y desplegar el menú de tres líneas: comprobar tamaño amplio, legibilidad y divisor. Pasar el cursor sobre un mensaje: notar que la barra de reacciones flota abajo a la derecha sin tapar el remitente. Tocar el botón `+` y elegir cualquier emoji: comprobar que se suma a las reacciones del mensaje. Tocar responder (↩): verificar que arriba del input aparece la barra azul con el autor y extracto, y hacer clic en `✕ Cancelar` para verificar que se cancela la respuesta.
+
+---
+
 ### 0.24.2O · 2026-09-19 · Antigravity
 **Qué cambió.** Notificaciones nativas de Windows/escritorio y correcciones visuales en menú de chat y selector de estado:
 - **Notificaciones nativas de Windows/escritorio:** Cuando llega un mensaje o una llamada entrante y la aplicación está en segundo plano o minimizada, se emite una notificación toast nativa en la esquina inferior derecha de la pantalla con el remitente y un extracto del texto (vía `NL.os.showNotification` en Windows Neutralino y Web Notification API en navegadores). Al hacer clic en la notificación, se enfoca la app y se abre el chat.

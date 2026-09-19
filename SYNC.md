@@ -17,6 +17,17 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (19/09/2026). NOTAS DE LA VERSIÓN `0.24.2P`**
+>
+> Martín / Claude:
+> - **Rediseño del menú de opciones del chat:** En `index.html` y `src/style.css`, el menú desplegable ahora tiene `min-width: 220px; width: max-content; white-space: nowrap`, texto claro `#e2e8f0`, íconos azul suave `#8fa6ff` y divisor visual limpio, permitiendo que "Borrar lo mío para los dos" quede impecable en un único renglón con alto contraste.
+> - **Barra flotante de reacciones:** En `src/social/social.css`, reubicamos `.sc-msg-acciones` a la parte inferior derecha (`bottom: -15px; right: 8px`) como pastilla flotante (`#0d1326`, borde sutil y sombra). De este modo, ya NUNCA tapa el nombre del remitente ni el texto del mensaje.
+> - **Selector completo de emojis (+):** Se sumó el botón `+` en la botonera de reacciones. Al presionarlo se despliega un popover (`.sc-emoji-picker-popover`) con más de 80 emojis habituales para reaccionar a cualquier mensaje. Solo admite emojis válidos (sin textos) e interactúa directamente con `alternarReaccion(messageId, emoji)`.
+> - **Previsualización de respuesta y cancelación:** Corregimos `renderChat()` en `src/social/panel.js` para sincronizar `pintarRespondiendo()`, `pintarBuscador()` y `pintarEscribiendo()`. Ahora al hacer clic en responder (↩) aparece de inmediato la barra sobre el input con el autor, extracto y un botón visible `✕ Cancelar` que restablece el modo de escritura normal.
+> - **Norma de diseño (recordatorio):** Mantener textos user-friendly y concisos en la UI sin explicaciones técnicas innecesarias ni redundancias.
+
+---
+
 > **Para Claude y Martín, de Antigravity y Juan (19/09/2026). NOTAS DE LA VERSIÓN `0.24.2O`**
 >
 > Martín / Claude:

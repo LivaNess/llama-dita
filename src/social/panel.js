@@ -725,7 +725,7 @@ function msgItem(m) {
     ${reaccionesItem(m)}
     <small class="sc-msg-time">${hora}${m.edited_at ? ' · editado' : ''}</small>
     ${editando ? '' : `<div class="sc-msg-acciones">
-      <div class="sc-emojis">${EMOJIS_RAPIDOS.map((e) => `<button type="button" class="sc-emoji" data-reaccion="${esc(m.id)}" data-emoji="${e}" title="Reaccionar">${e}</button>`).join('')}</div>
+      <div class="sc-emojis">${EMOJIS_RAPIDOS.map((e) => `<button type="button" class="sc-emoji" data-reaccion="${esc(m.id)}" data-emoji="${e}" title="Reaccionar">${e}</button>`).join('')}<button type="button" class="sc-emoji sc-emoji-mas" data-abrir-emojis="${esc(m.id)}" title="Más emojis">+</button></div>
       <button type="button" class="sc-msg-accion" data-responder="${esc(m.id)}" title="Responder">\u21a9</button>
       ${puedoFijar ? `<button type="button" class="sc-msg-accion" data-fijar="${esc(m.id)}" title="${m.fijado ? 'Soltarlo' : 'Fijarlo'}">\ud83d\udccc</button>` : ''}
       ${mine && m.body ? `<button type="button" class="sc-msg-accion" data-editar="${esc(m.id)}" title="Editar el texto">✎</button>` : ''}
@@ -915,6 +915,7 @@ function suscribirCanal(id) {
 }
 
 async function openChannel(id) {
+  cerrarSelectorEmojis();
   const c = buscarCanal(id);
   if (!c) return;
   if (c.id !== state.currentChannel?.id) {
@@ -946,7 +947,7 @@ async function openChannel(id) {
   render();
 }
 
-// Abrir el chat privado con un amigo. El servidor comprueba que sean amigos y devuelve la
+// Abre un chat privado con un perfil. Si ya existia el canal, va directo a esa
 // conversación, creándola la primera vez.
 async function abrirChatPrivado(p) {
   if (!p) return;
@@ -959,6 +960,7 @@ async function abrirChatPrivado(p) {
 }
 
 function closeChannel() {
+  cerrarSelectorEmojis();
   if (state.channelUnsub) { state.channelUnsub(); state.channelUnsub = null; }
   cerrarEscritura();
   state.currentChannel = null;
@@ -1358,7 +1360,7 @@ function bindAccionesMensaje(contenedor) {
   contenedor.querySelectorAll('[data-responder]').forEach((b) => {
     b.onclick = () => {
       state.respondiendoA = state.messages.find((m) => String(m.id) === String(b.dataset.responder)) || null;
-      render();
+      pintarRespondiendo();
       document.getElementById('chatMessageInput')?.focus();
     };
   });
@@ -1373,6 +1375,13 @@ function bindAccionesMensaje(contenedor) {
 
   contenedor.querySelectorAll('[data-reaccion]').forEach((b) => {
     b.onclick = () => alternarReaccion(b.dataset.reaccion, b.dataset.emoji);
+  });
+
+  contenedor.querySelectorAll('[data-abrir-emojis]').forEach((b) => {
+    b.onclick = (e) => {
+      e.stopPropagation();
+      abrirSelectorEmojis(b.dataset.abrirEmojis, b);
+    };
   });
 
   // Ir al mensaje citado: se lo lleva a la vista y se lo marca un segundo.
@@ -1408,6 +1417,108 @@ async function alternarReaccion(messageId, emoji) {
     try { m.reacciones = await api.reaccionesDe(messageId); } catch (_) {}
     render();
   }
+}
+
+const LISTA_EMOJIS_PICKER = [
+  '😀','😃','😄','😁','😆','😅','🤣','😂','🙂','🙃','😉','😊','😇','🥰','😍','🤩','😘','😗',
+  '😋','😛','😜','🤪','😝','🤑','🤗','🤭','🤫','🤔','🤐','🤨','😐','😑','😶','😏','😒','🙄','😬',
+  '😮','😲','😳','🥺','😦','😧','😨','😰','😥','😢','😭','😱','😖','😣','😞','😓','😩','😫','😤','😡','😠','🤬',
+  '😎','🤓','🧐','🥳','🤠','🤡','👻','💀','👽','🤖',
+  '👍','👎','👊','✊','🤛','🤜','👏','🙌','👐','🤲','🤝','🙏','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','👇','☝️','✋','🤚','🖐️','🖖','👋','👌','🤌','🤏',
+  '❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❤️‍🔥','❣️','💕','💞','💓','💗','💖','💘','💝',
+  '🔥','✨','⭐','🌟','💥','🎉','🎊','🎈','🏆','🥇','🚀','💯','👀','🧠','⚡','💡','🎯','🍕','🍻','☕'
+];
+
+let selectorEmojisActivo = null;
+
+function cerrarSelectorEmojis() {
+  if (selectorEmojisActivo) {
+    try { selectorEmojisActivo.popover.remove(); } catch (_) {}
+    try { selectorEmojisActivo.parentAcciones?.classList.remove('forzar-visible'); } catch (_) {}
+    document.removeEventListener('pointerdown', selectorEmojisActivo.onPointerDown);
+    document.removeEventListener('keydown', selectorEmojisActivo.onKeyDown);
+    selectorEmojisActivo = null;
+  }
+}
+
+function abrirSelectorEmojis(messageId, triggerBtn) {
+  if (selectorEmojisActivo && selectorEmojisActivo.messageId === messageId) {
+    cerrarSelectorEmojis();
+    return;
+  }
+  cerrarSelectorEmojis();
+
+  const parentAcciones = triggerBtn.closest('.sc-msg-acciones');
+  parentAcciones?.classList.add('forzar-visible');
+
+  const popover = document.createElement('div');
+  popover.className = 'sc-emoji-picker-popover';
+  popover.innerHTML = `
+    <div class="sc-emoji-picker-header">
+      <span>Reaccionar</span>
+      <button type="button" class="sc-emoji-picker-close" title="Cerrar">✕</button>
+    </div>
+    <div class="sc-emoji-picker-grid">
+      ${LISTA_EMOJIS_PICKER.map((emoji) => `<button type="button" class="sc-emoji-picker-item" data-pick-emoji="${emoji}">${emoji}</button>`).join('')}
+    </div>
+  `;
+
+  document.body.appendChild(popover);
+
+  const rect = triggerBtn.getBoundingClientRect();
+  const popoverWidth = 290;
+  const popoverHeight = 270;
+
+  let top = rect.top - popoverHeight - 8;
+  if (top < 10) {
+    top = rect.bottom + 8;
+  }
+
+  let left = rect.right - popoverWidth;
+  if (left < 10) {
+    left = 10;
+  } else if (left + popoverWidth > window.innerWidth - 10) {
+    left = window.innerWidth - popoverWidth - 10;
+  }
+
+  popover.style.top = `${Math.max(10, Math.round(top))}px`;
+  popover.style.left = `${Math.max(10, Math.round(left))}px`;
+
+  const onPointerDown = (e) => {
+    if (!popover.contains(e.target) && !triggerBtn.contains(e.target)) {
+      cerrarSelectorEmojis();
+    }
+  };
+
+  const onKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      cerrarSelectorEmojis();
+    }
+  };
+
+  popover.querySelector('.sc-emoji-picker-close').onclick = () => cerrarSelectorEmojis();
+
+  popover.querySelectorAll('[data-pick-emoji]').forEach((btn) => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      const emoji = btn.dataset.pickEmoji;
+      cerrarSelectorEmojis();
+      alternarReaccion(messageId, emoji);
+    };
+  });
+
+  setTimeout(() => {
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+  }, 10);
+
+  selectorEmojisActivo = {
+    messageId,
+    popover,
+    parentAcciones,
+    onPointerDown,
+    onKeyDown
+  };
 }
 
 // ---- Perfil ----
@@ -2445,6 +2556,9 @@ function renderChat() {
   }
 
   renderBandeja();
+  pintarRespondiendo();
+  pintarBuscador();
+  pintarEscribiendo();
 
   if (messagesBox) {
     if (state.busqueda) {
@@ -2473,11 +2587,18 @@ function pintarRespondiendo() {
   if (!caja) return;
   const m = state.respondiendoA;
   if (!m) { caja.hidden = true; caja.innerHTML = ''; return; }
-  const resumen = m.body ? m.body.slice(0, 120) : (m.adjuntos?.length ? 'un archivo' : '');
+  const resumen = m.body ? m.body.slice(0, 100) : (m.adjuntos?.length ? 'un archivo' : '');
   caja.hidden = false;
-  caja.innerHTML = `<span class="chat-respondiendo-texto">Respondi\u00e9ndole a <strong>${esc(autorDe(m))}</strong>: ${esc(resumen)}</span>
-    <button type="button" class="sc-ghost sc-small" id="chatRespondiendoCancelar" title="Cancelar">✕</button>`;
-  caja.querySelector('#chatRespondiendoCancelar').onclick = () => { state.respondiendoA = null; render(); };
+  caja.innerHTML = `
+    <span class="chat-respondiendo-icono">↩</span>
+    <span class="chat-respondiendo-texto">Respondi\u00e9ndole a <strong>${esc(autorDe(m))}</strong>: \u201c${esc(resumen)}${m.body && m.body.length > 100 ? '\u2026' : ''}\u201d</span>
+    <button type="button" class="chat-respondiendo-cancelar" id="chatRespondiendoCancelar" title="Cancelar respuesta">\u2715 Cancelar</button>
+  `;
+  caja.querySelector('#chatRespondiendoCancelar').onclick = () => {
+    state.respondiendoA = null;
+    pintarRespondiendo();
+    document.getElementById('chatMessageInput')?.focus();
+  };
 }
 
 function pintarBuscador() {
