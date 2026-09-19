@@ -19,6 +19,13 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.24.2F · 2026-09-18 · Antigravity
+**Qué cambió.** Al estar ensordecido, hacer clic en el botón de micrófono para desmutearse ahora también des-ensordece automáticamente al usuario (reactiva el audio entrante para escuchar nuevamente a los demás y restablece el estado visual del botón de auriculares a activo).
+**Por qué.** Pedido de Juan: si estás ensordecido y decidís hablar desmuteándote, tiene sentido que también vuelvas a escuchar al resto inmediatamente.
+**Dónde.** `src/main.js`, `package.json`.
+
+---
+
 ### 0.24.2E · 2026-09-18 · Antigravity
 **Qué cambió.** Conversión del botón de auriculares en el pie de usuario de la barra lateral: reemplazó la función de "monitoreo local" por **Ensordecer (Deafen)**.
 - Al presionarlo para ensordecerse: silencia la salida de audio entrante (`remoteAudioElement.muted = true`) para dejar de escuchar al resto, y a la vez silencia el micrófono propio siempre (`audioManager.setMute(true)`).

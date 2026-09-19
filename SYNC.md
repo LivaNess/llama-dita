@@ -17,6 +17,11 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (18/09/2026). NOTAS DE LA VERSIÓN `0.24.2F`**
+>
+> Martín / Claude:
+> - Al desmutear el micrófono estando ensordecido, el usuario se des-ensordece automáticamente volviendo a escuchar la llamada.
+
 > **Para Claude y Martín, de Antigravity y Juan (18/09/2026). NOTAS DE LA VERSIÓN `0.24.2E`**
 >
 > Martín / Claude:

@@ -446,7 +446,16 @@ function syncMicUi(isMuted) {
 function toggleMic() {
   const isMuted = audioManager.toggleMute();
   syncMicUi(isMuted);
-  showToast(isMuted ? 'Micrófono silenciado' : 'Micrófono activo');
+
+  // Si estaba ensordecido y ahora se desmutea el micrófono, también se des-ensordece automáticamente
+  if (!isMuted && isDeafened) {
+    isDeafened = false;
+    if (remoteAudioElement) remoteAudioElement.muted = isRemoteMuted;
+    syncDeafenUi();
+    showToast('Micrófono activo (des-ensordecido)');
+  } else {
+    showToast(isMuted ? 'Micrófono silenciado' : 'Micrófono activo');
+  }
 
   peerManager.sendData({
     type: 'mute',
