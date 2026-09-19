@@ -368,3 +368,50 @@
   cursor: pointer;
   height: 6px;
 }
+
+/* Sonidos y Notificaciones */
+.sc-sound-row {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+.sc-sound-row .sc-select {
+  flex: 1;
+}
+.sc-sound-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sc-sound-info strong {
+  font-size: .84rem;
+  color: #f8fafc;
+}
+.sc-sound-btn {
+  background: rgba(168, 85, 247, 0.14);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  color: #c084fc;
+  border-radius: 8px;
+  padding: .5rem .85rem;
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .35rem;
+  transition: all .15s ease;
+  white-space: nowrap;
+}
+.sc-sound-btn:hover {
+  background: rgba(168, 85, 247, 0.28);
+  color: #fff;
+  border-color: rgba(168, 85, 247, 0.6);
+}
+.sc-sound-btn.active {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #f87171;
+}
+

@@ -153,6 +153,7 @@ function toggleDrawer(force) {
     if (drawer) drawer.hidden = true;
     if (overlay) overlay.hidden = true;
     stopMeterLoop();
+    stopTestRingtone();
     return;
   }
   const open = force ?? drawer.hidden;
@@ -163,6 +164,7 @@ function toggleDrawer(force) {
   if (userBtn) userBtn.classList.toggle('active', open);
   if (!open) {
     stopMeterLoop();
+    stopTestRingtone();
   } else if (state.tab === 'ajustes') {
     startMeterLoop();
   }
@@ -231,6 +233,7 @@ function safeRender() {
 }
 
 function onLogout() {
+  hooks.stopRingtone?.();
   state.unsub.forEach((u) => { try { u(); } catch (_) {} });
   state.unsub = [];
   clearInterval(state.heartbeat);
@@ -300,6 +303,7 @@ function onIncomingCall(row) {
   const f = state.friendships.find((x) => x.status === 'accepted' && (x.requester_id === row.caller_id || x.addressee_id === row.caller_id));
   const from = f ? otherSide(f) : { display_name: 'Alguien', username: '' };
   state.incomingCall = { ...row, from };
+  hooks.startRingtone?.();
   clearTimeout(state.ringTimer);
   state.ringTimer = setTimeout(() => answerCall('missed'), RING_TIMEOUT_MS);
   render();
@@ -307,6 +311,7 @@ function onIncomingCall(row) {
 
 function onIncomingCallUpdate(row) {
   if (state.incomingCall && row.id === state.incomingCall.id && row.status !== 'ringing') {
+    hooks.stopRingtone?.();
     state.incomingCall = null;
     clearTimeout(state.ringTimer);
     render();
@@ -314,6 +319,7 @@ function onIncomingCallUpdate(row) {
 }
 
 async function answerCall(status) {
+  hooks.stopRingtone?.();
   const call = state.incomingCall;
   if (!call) return;
   clearTimeout(state.ringTimer);
@@ -710,12 +716,15 @@ async function sincronizar(channelId) {
   state.messages = mezclar(state.messages, mensajes, lapidas);
 }
 
-async function llegoMensaje(channelId, fila) {
+async function llegoMensaje(channelId, fila, isUpdate = false) {
   // Ya mando: los puntitos se apagan ahora y no a los 7 segundos.
   if (fila.author_id && state.escribiendo.has(fila.author_id)) {
     clearTimeout(state.escribiendo.get(fila.author_id).timer);
     state.escribiendo.delete(fila.author_id);
     pintarEscribiendo();
+  }
+  if (!isUpdate && fila.author_id && state.me?.id && fila.author_id !== state.me.id) {
+    hooks.playMessageSound?.();
   }
   const perfil = state.members.find((m) => m.user_id === fila.author_id)?.profile;
   const m = { ...fila, author: perfil ? { username: perfil.username, display_name: perfil.display_name } : null };
@@ -792,8 +801,8 @@ async function llegoBorrado(channelId, lapida) {
 function suscribirCanal(id) {
   if (state.channelUnsub) state.channelUnsub();
   state.channelUnsub = api.subscribe('chan-' + id, [
-    { table: 'messages', event: 'INSERT', filter: `channel_id=eq.${id}`, cb: (p) => llegoMensaje(id, p.new) },
-    { table: 'messages', event: 'UPDATE', filter: `channel_id=eq.${id}`, cb: (p) => llegoMensaje(id, p.new) },
+    { table: 'messages', event: 'INSERT', filter: `channel_id=eq.${id}`, cb: (p) => llegoMensaje(id, p.new, false) },
+    { table: 'messages', event: 'UPDATE', filter: `channel_id=eq.${id}`, cb: (p) => llegoMensaje(id, p.new, true) },
     { table: 'message_tombstones', event: 'INSERT', filter: `channel_id=eq.${id}`, cb: (p) => llegoBorrado(id, p.new) },
     { table: 'attachments', event: 'INSERT', filter: `channel_id=eq.${id}`, cb: (p) => llegoAdjunto(id, p.new) },
     // Las altas se filtran por canal. Las bajas no se pueden filtrar (el aviso de una fila
@@ -1331,6 +1340,22 @@ function stopMeterLoop() {
   }
 }
 
+let isTestingRingtone = false;
+function stopTestRingtone() {
+  if (isTestingRingtone) {
+    isTestingRingtone = false;
+    hooks.stopRingtone?.();
+    const btn = drawer?.querySelector('#btnTestRingtone');
+    if (btn) {
+      btn.classList.remove('active');
+      const icon = btn.querySelector('.sc-sound-btn-icon');
+      const label = btn.querySelector('.sc-sound-btn-label');
+      if (icon) icon.textContent = '▶';
+      if (label) label.textContent = 'Probar';
+    }
+  }
+}
+
 function startMeterLoop() {
   stopMeterLoop();
   if (state.tab !== 'ajustes' || !drawer || drawer.hidden) return;
@@ -1402,6 +1427,7 @@ async function populateAudioInputs(selectEl) {
 function settingsView() {
   const thresholdDb = hooks.getVoiceThreshold ? hooks.getVoiceThreshold() : -34;
   const thresholdPct = Math.max(0, Math.min(100, Math.round(((thresholdDb + 55) / 52) * 100)));
+  const msgSound = hooks.getMessageSoundType ? hooks.getMessageSoundType() : 'bubble';
 
   return `<div class="sc-settings">
     <div class="sc-settings-group">
@@ -1438,6 +1464,44 @@ function settingsView() {
         La <b>línea roja</b> marca dónde se activa el micrófono. Calibralo para que el ruido de tu habitación quede a la izquierda (silencio) y tu voz la sobrepase al hablar (verde). En silencio, la compuerta corta la estática automáticamente.
       </p>
     </div>
+
+    <div class="sc-settings-group">
+      <div class="sc-settings-title">
+        <span>Tono de llamada entrante</span>
+      </div>
+      <div class="sc-sound-row">
+        <div class="sc-sound-info">
+          <strong>Llamadita Clásica</strong>
+          <span class="sc-muted sc-tiny">Marimba melódica (WAV)</span>
+        </div>
+        <button type="button" id="btnTestRingtone" class="sc-sound-btn ${isTestingRingtone ? 'active' : ''}">
+          <span class="sc-sound-btn-icon">${isTestingRingtone ? '⏹' : '▶'}</span>
+          <span class="sc-sound-btn-label">${isTestingRingtone ? 'Detener' : 'Probar'}</span>
+        </button>
+      </div>
+      <p class="sc-muted sc-tiny">Suena en bucle cuando un amigo te hace una llamada directa.</p>
+    </div>
+
+    <div class="sc-settings-group">
+      <div class="sc-settings-title">
+        <span>Sonido de mensaje</span>
+      </div>
+      <div class="sc-sound-row">
+        <select id="scMsgSound" class="sc-select">
+          <option value="bubble" ${msgSound === 'bubble' ? 'selected' : ''}>Burbuja (Pop suave)</option>
+          <option value="mini_dna" ${msgSound === 'mini_dna' ? 'selected' : ''}>Mini ADN (Do# - Re#)</option>
+          <option value="wood" ${msgSound === 'wood' ? 'selected' : ''}>Toque de Madera / Marimba</option>
+          <option value="droplet" ${msgSound === 'droplet' ? 'selected' : ''}>Gota de agua</option>
+          <option value="chime" ${msgSound === 'chime' ? 'selected' : ''}>Campana de Cristal</option>
+          <option value="coin" ${msgSound === 'coin' ? 'selected' : ''}>Moneda Arcade 8-bit</option>
+          <option value="none" ${msgSound === 'none' ? 'selected' : ''}>Silencio (Desactivado)</option>
+        </select>
+        <button type="button" id="btnTestMsgSound" class="sc-sound-btn" title="Escuchar sonido">
+          <span>▶</span>
+        </button>
+      </div>
+      <p class="sc-muted sc-tiny">Sonido ultra-corto y nítido para avisar nuevos mensajes.</p>
+    </div>
   </div>`;
 }
 
@@ -1447,7 +1511,10 @@ function bindMain() {
   q('#scClose')?.addEventListener('click', () => toggleDrawer(false));
   drawer.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => {
     state.tab = b.dataset.tab;
-    if (state.tab !== 'ajustes') stopMeterLoop();
+    if (state.tab !== 'ajustes') {
+      stopMeterLoop();
+      stopTestRingtone();
+    }
     render();
   }));
   q('#scStatus')?.addEventListener('change', async (e) => { state.me.status = e.target.value; state.presence?.track({ status: myStatus() }); await api.setStatus(state.me.id, e.target.value); });
@@ -1475,6 +1542,34 @@ function bindMain() {
       const pct = Math.max(0, Math.min(100, Math.round(((db + 55) / 52) * 100)));
       if (threshMarker) threshMarker.style.left = `${pct}%`;
       if (threshLabel) threshLabel.textContent = `Corte: ${db} dB`;
+    });
+
+    const btnRingtone = q('#btnTestRingtone');
+    btnRingtone?.addEventListener('click', () => {
+      if (isTestingRingtone) {
+        stopTestRingtone();
+      } else {
+        isTestingRingtone = true;
+        hooks.startRingtone?.();
+        btnRingtone.classList.add('active');
+        const icon = btnRingtone.querySelector('.sc-sound-btn-icon');
+        const label = btnRingtone.querySelector('.sc-sound-btn-label');
+        if (icon) icon.textContent = '⏹';
+        if (label) label.textContent = 'Detener';
+      }
+    });
+
+    const msgSoundSelect = q('#scMsgSound');
+    msgSoundSelect?.addEventListener('change', (e) => {
+      const val = e.target.value;
+      if (hooks.setMessageSoundType) hooks.setMessageSoundType(val);
+      if (hooks.playMessageSound) hooks.playMessageSound(val);
+    });
+
+    const btnTestMsg = q('#btnTestMsgSound');
+    btnTestMsg?.addEventListener('click', () => {
+      const val = msgSoundSelect ? msgSoundSelect.value : (hooks.getMessageSoundType?.() || 'bubble');
+      if (hooks.playMessageSound) hooks.playMessageSound(val);
     });
 
     startMeterLoop();

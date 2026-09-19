@@ -1,4 +1,4 @@
-﻿// Arma la web oficial (llamadita.com.ar) en site-dist/.
+// Arma la web oficial (llamadita.com.ar) en site-dist/.
 //  - web/            → páginas, estilos y registro
 //  - public/brand/   → logos      · public/favicon.svg
 //  - installer/Llamadita-Setup.exe → /descargas/ (el instalador que se ofrece para bajar)
@@ -16,6 +16,9 @@ rmSync(out, { recursive: true, force: true });
 mkdirSync(out, { recursive: true });
 cpSync(join(root, 'web'), out, { recursive: true });
 cpSync(join(root, 'public', 'brand'), join(out, 'brand'), { recursive: true });
+if (existsSync(join(root, 'public', 'sounds'))) {
+  cpSync(join(root, 'public', 'sounds'), join(out, 'sounds'), { recursive: true });
+}
 copyFileSync(join(root, 'public', 'favicon.svg'), join(out, 'favicon.svg'));
 
 const installer = join(root, 'installer', 'Llamadita-Setup.exe');

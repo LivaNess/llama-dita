@@ -68,6 +68,13 @@ class AudioManager {
     this.isLoopbackEnabled = false;
     this.lastVoiceDetectedAt = Date.now();
     this.isGateOpen = true;
+
+    // Sonidos de la aplicación
+    this.ringtoneAudio = null;
+    this.messageSoundType = 'bubble';
+    try {
+      this.messageSoundType = localStorage.getItem('llamadita_msg_sound') || 'bubble';
+    } catch (_) {}
   }
 
   // El nivel se calcula en el momento en que se lee, no todo el tiempo.
@@ -99,6 +106,186 @@ class AudioManager {
   isVoiceDetected(rawMetrics) {
     if (!rawMetrics) return false;
     return rawMetrics.db >= this.voiceThresholdDb;
+  }
+
+  // --- Manejo de Sonidos (Ringtone y Mensajes) ---
+  startRingtone() {
+    try {
+      if (!this.ringtoneAudio) {
+        this.ringtoneAudio = new Audio('/sounds/ringtone.wav');
+        this.ringtoneAudio.loop = true;
+      }
+      this.ringtoneAudio.currentTime = 0;
+      this.ringtoneAudio.volume = 0.9;
+      const playPromise = this.ringtoneAudio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(err => {
+          console.warn('[AudioManager] No se pudo reproducir ringtone automáticamente:', err);
+        });
+      }
+    } catch (err) {
+      console.warn('[AudioManager] Error iniciando ringtone:', err);
+    }
+  }
+
+  stopRingtone() {
+    try {
+      if (this.ringtoneAudio) {
+        this.ringtoneAudio.pause();
+        this.ringtoneAudio.currentTime = 0;
+      }
+    } catch (err) {
+      console.warn('[AudioManager] Error deteniendo ringtone:', err);
+    }
+  }
+
+  setMessageSoundType(type) {
+    this.messageSoundType = type;
+    try {
+      localStorage.setItem('llamadita_msg_sound', type);
+    } catch (_) {}
+  }
+
+  playMessageSound(type = this.messageSoundType) {
+    if (type === 'none' || !type) return;
+    try {
+      const ctx = this.getAudioContext();
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
+      const now = ctx.currentTime + 0.01;
+      const out = ctx.createGain();
+      out.gain.value = 0.85;
+      out.connect(ctx.destination);
+
+      if (type === 'bubble') {
+        // Pop suave y burbujeante estilo app moderna (130ms)
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const baseFreq = 480;
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(baseFreq * 1.8, now);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.9, now + 0.06);
+
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.8, now + 0.005);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+        osc.connect(gain);
+        gain.connect(out);
+        osc.start(now);
+        osc.stop(now + 0.13);
+
+      } else if (type === 'mini_dna') {
+        // Mini ADN: Do#5 (554Hz) -> Re#5 (622Hz)
+        const playNote = (f, t, d, v) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(f, t);
+          gain.gain.setValueAtTime(0, t);
+          gain.gain.linearRampToValueAtTime(v, t + 0.004);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + d);
+          osc.connect(gain);
+          gain.connect(out);
+          osc.start(t);
+          osc.stop(t + d);
+        };
+        playNote(554.37, now, 0.09, 0.6);
+        playNote(622.25, now + 0.08, 0.16, 0.7);
+
+      } else if (type === 'wood') {
+        // Toque cálido percusivo de marimba / madera (110ms)
+        const f = 740;
+        const osc = ctx.createOscillator();
+        const oscHarm = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(f, now);
+        oscHarm.type = 'sine';
+        oscHarm.frequency.setValueAtTime(f * 2.8, now);
+
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.85, now + 0.003);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
+
+        osc.connect(gain);
+        oscHarm.connect(gain);
+        gain.connect(out);
+
+        osc.start(now);
+        oscHarm.start(now);
+        osc.stop(now + 0.12);
+        oscHarm.stop(now + 0.12);
+
+      } else if (type === 'droplet') {
+        // Gota de agua (160ms)
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const f = 620;
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(f * 0.7, now);
+        osc.frequency.exponentialRampToValueAtTime(f * 1.5, now + 0.04);
+        osc.frequency.exponentialRampToValueAtTime(f * 1.1, now + 0.15);
+
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.75, now + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+
+        osc.connect(gain);
+        gain.connect(out);
+
+        osc.start(now);
+        osc.stop(now + 0.17);
+
+      } else if (type === 'chime') {
+        // Doble campana cristalina: Mi5 (659Hz) -> Sol#5 (830Hz)
+        const playBell = (f, t, d) => {
+          const osc1 = ctx.createOscillator();
+          const osc2 = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc1.type = 'sine';
+          osc2.type = 'sine';
+          osc1.frequency.setValueAtTime(f, t);
+          osc2.frequency.setValueAtTime(f * 2.01, t);
+          gain.gain.setValueAtTime(0, t);
+          gain.gain.linearRampToValueAtTime(0.5, t + 0.003);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + d);
+          osc1.connect(gain);
+          osc2.connect(gain);
+          gain.connect(out);
+          osc1.start(t);
+          osc2.start(t);
+          osc1.stop(t + d);
+          osc2.stop(t + d);
+        };
+        playBell(659.25, now, 0.14);
+        playBell(830.61, now + 0.09, 0.22);
+
+      } else if (type === 'coin') {
+        // Moneda retro 8-bit
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(987.77, now);
+        osc.frequency.setValueAtTime(1318.51, now + 0.05);
+
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.35, now + 0.004);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+
+        osc.connect(gain);
+        gain.connect(out);
+
+        osc.start(now);
+        osc.stop(now + 0.19);
+      }
+    } catch (err) {
+      console.warn('[AudioManager] Error reproduciendo sonido de mensaje:', err);
+    }
   }
 
   // Get or initialize AudioContext

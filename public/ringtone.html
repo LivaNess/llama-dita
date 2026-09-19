@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Llamadita · Sound Studio</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card: #0f172a;
+      --border: rgba(255, 255, 255, 0.08);
+      --accent: #a855f7;
+      --accent-glow: rgba(168, 85, 247, 0.35);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --note-e5: #f43f5e;
+      --note-cs5: #38bdf8;
+      --note-ds5: #34d399;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+    .container {
+      width: 100%;
+      max-width: 720px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    .header {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .badge {
+      background: rgba(168, 85, 247, 0.15);
+      color: #c084fc;
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      padding: 0.25rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    h1 { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.02em; }
+    p.sub { color: var(--muted); font-size: 0.9rem; }
+
+    /* Top Navigation Tabs */
+    .studio-tabs {
+      display: flex;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 4px;
+      gap: 4px;
+    }
+    .tab-btn {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--muted);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.15s;
+    }
+    .tab-btn:hover { color: #fff; background: rgba(255, 255, 255, 0.05); }
+    .tab-btn.active {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.35), rgba(124, 58, 237, 0.45));
+      border: 1px solid rgba(168, 85, 247, 0.5);
+      color: #fff;
+      box-shadow: 0 0 15px var(--accent-glow);
+    }
+
+    /* Panels */
+    .tab-panel { display: flex; flex-direction: column; gap: 1.25rem; }
+    .tab-panel[hidden] { display: none; }
+
+    /* Piano Roll Visualizer */
+    .piano-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.25rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+    .piano-roll {
+      display: grid;
+      grid-template-rows: repeat(3, 34px);
+      gap: 6px;
+      background: #060910;
+      border-radius: 10px;
+      padding: 10px;
+      border: 1px solid rgba(255,255,255,0.05);
+      position: relative;
+      overflow: hidden;
+    }
+    .piano-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .row-label {
+      width: 50px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--muted);
+      font-family: monospace;
+    }
+    .row-track {
+      flex: 1;
+      height: 100%;
+      background: rgba(255,255,255,0.02);
+      border-radius: 6px;
+      position: relative;
+    }
+    .note-block {
+      position: absolute;
+      top: 3px;
+      bottom: 3px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      padding-left: 8px;
+      font-size: 0.7rem;
+      font-weight: 800;
+      color: #fff;
+      transition: transform 0.1s, filter 0.1s, box-shadow 0.1s;
+    }
+    .note-block.active {
+      transform: scaleY(1.1);
+      filter: brightness(1.3);
+    }
+    .note-1 { left: 4%; width: 26%; background: var(--note-e5); box-shadow: 0 0 12px rgba(244, 63, 94, 0.4); }
+    .note-2 { left: 34%; width: 22%; background: var(--note-cs5); box-shadow: 0 0 12px rgba(56, 189, 248, 0.4); }
+    .note-3 { left: 60%; width: 36%; background: var(--note-ds5); box-shadow: 0 0 12px rgba(52, 211, 153, 0.4); }
+
+    /* Message Cards */
+    .msg-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 0.75rem;
+    }
+    .msg-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      transition: all 0.15s;
+      position: relative;
+      text-align: left;
+    }
+    .msg-card:hover { border-color: rgba(168, 85, 247, 0.4); transform: translateY(-2px); }
+    .msg-card.active {
+      border-color: var(--accent);
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.12), rgba(15, 23, 42, 0.95));
+      box-shadow: 0 0 15px rgba(168, 85, 247, 0.25);
+    }
+    .msg-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .msg-card-title {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .msg-card-badge {
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--muted);
+    }
+    .msg-card.active .msg-card-badge {
+      background: rgba(168, 85, 247, 0.25);
+      color: #c084fc;
+    }
+    .msg-card-desc {
+      font-size: 0.76rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    /* Controls Grid */
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    .control-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .control-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: flex;
+      justify-content: space-between;
+    }
+    .val-text { color: #fff; }
+
+    /* Button Groups */
+    .btn-group {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+    }
+    .opt-btn {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 0.6rem 0.5rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+    .opt-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .opt-btn.active {
+      background: linear-gradient(135deg, rgba(168,85,247,0.3), rgba(124,58,237,0.4));
+      border-color: var(--accent);
+      color: #fff;
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    /* Actions Bar */
+    .actions {
+      display: flex;
+      gap: 0.75rem;
+    }
+    .btn-play {
+      flex: 2;
+      background: linear-gradient(135deg, #7c3aed, #a855f7);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 0.9rem 1.2rem;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 6px 20px rgba(168, 85, 247, 0.4);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .btn-play:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(168, 85, 247, 0.5); }
+    .btn-play.playing { background: linear-gradient(135deg, #ef4444, #f87171); box-shadow: 0 6px 20px rgba(239,68,68,0.4); }
+
+    .btn-secondary {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border);
+      color: #fff;
+      border-radius: 12px;
+      padding: 0.9rem;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+    .btn-secondary:hover { background: rgba(255, 255, 255, 0.12); border-color: rgba(255, 255, 255, 0.25); }
+
+    .footer-note {
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .footer-note b { color: #fff; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <span class="badge">Audio Branding</span>
+      <h1>Llamadita Sound Studio</h1>
+      <p class="sub">Diseño sonoro para Llamadas y Notificaciones de Chat</p>
+    </div>
+
+    <!-- Pestañas Principales -->
+    <nav class="studio-tabs">
+      <button class="tab-btn active" id="tabBtnCall">
+        <span>📞 Llamada Entrante (Ringtone)</span>
+      </button>
+      <button class="tab-btn" id="tabBtnMsg">
+        <span>💬 Sonido de Mensaje (Chat)</span>
+      </button>
+    </nav>
+
+    <!-- ============================================== -->
+    <!-- PANEL 1: LLAMADA (RINGTONE)                     -->
+    <!-- ============================================== -->
+    <div class="tab-panel" id="panelCall">
+      <!-- Visualizador Piano Roll -->
+      <div class="piano-card">
+        <div class="piano-roll">
+          <div class="piano-row">
+            <span class="row-label">Mi 5</span>
+            <div class="row-track">
+              <div class="note-block note-1" id="noteE5">Mi5 (659 Hz)</div>
+            </div>
+          </div>
+          <div class="piano-row">
+            <span class="row-label">Re# 5</span>
+            <div class="row-track">
+              <div class="note-block note-3" id="noteDs5">Re#5 (622 Hz)</div>
+            </div>
+          </div>
+          <div class="piano-row">
+            <span class="row-label">Do# 5</span>
+            <div class="row-track">
+              <div class="note-block note-2" id="noteCs5">Do#5 (554 Hz)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controles Ringtone -->
+      <div class="controls-grid">
+        <div class="control-box">
+          <span class="control-label">Timbre del Instrumento</span>
+          <div class="btn-group">
+            <button class="opt-btn active" data-inst="marimba">🪵 Marimba cálida</button>
+            <button class="opt-btn" data-inst="rhodes">🎹 Rhodes Lo-Fi</button>
+            <button class="opt-btn" data-inst="glock">✨ Glockenspiel</button>
+            <button class="opt-btn" data-inst="pluck">🎧 Discord Pluck</button>
+            <button class="opt-btn" data-inst="chiptune">👾 Nintendo 8-Bit</button>
+            <button class="opt-btn" data-inst="dreamy">☁️ Dreamy FM</button>
+          </div>
+        </div>
+
+        <div class="control-box">
+          <span class="control-label">Modo</span>
+          <div class="btn-group">
+            <button class="opt-btn active" data-mode="ringtone">📞 Bucle de Llamada</button>
+            <button class="opt-btn" data-mode="oneshot">🔔 Una sola vez</button>
+          </div>
+          <label style="display:flex;align-items:center;gap:8px;font-size:0.8rem;color:var(--muted);cursor:pointer;margin-top:4px;">
+            <input type="checkbox" id="chkHarmony" checked />
+            <span>Colchón armónico suave (Pad)</span>
+          </label>
+        </div>
+
+        <div class="control-box">
+          <div class="control-label">
+            <span>Velocidad (BPM)</span>
+            <span class="val-text" id="bpmVal">128 BPM</span>
+          </div>
+          <input type="range" id="rngBpm" min="90" max="180" value="128" />
+          
+          <div class="control-label" style="margin-top:8px;">
+            <span>Espacio / Reverb</span>
+            <span class="val-text" id="reverbVal">45%</span>
+          </div>
+          <input type="range" id="rngReverb" min="0" max="100" value="45" />
+        </div>
+
+        <div class="control-box">
+          <div class="control-label">
+            <span>Octava</span>
+            <span class="val-text" id="octVal">Octava 5 (Normal)</span>
+          </div>
+          <div class="btn-group">
+            <button class="opt-btn" data-oct="4">Baja (4)</button>
+            <button class="opt-btn active" data-oct="5">Normal (5)</button>
+            <button class="opt-btn" data-oct="6">Brillante (6)</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botonera Ringtone -->
+      <div class="actions">
+        <button class="btn-play" id="btnPlayCall">
+          <span id="playIconCall">▶</span> <span id="playTextCall">Escuchar Ringtone</span>
+        </button>
+        <button class="btn-secondary" id="btnDownloadCall" title="Descargar audio de llamada en formato .WAV">
+          ⬇ Descargar WAV
+        </button>
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- PANEL 2: SONIDOS DE MENSAJE                     -->
+    <!-- ============================================== -->
+    <div class="tab-panel" id="panelMsg" hidden>
+      <div class="msg-cards-grid">
+        <!-- Variante 1: Pop Burbuja -->
+        <div class="msg-card active" data-msg-preset="bubble">
+          <div class="msg-card-head">
+            <span class="msg-card-title">🫧 1. Llama Bubble</span>
+            <span class="msg-card-badge">120 ms</span>
+          </div>
+          <p class="msg-card-desc">Pop elástico dulce y redondo (estilo Apple/Telegram). Muy amigable para mensajes frecuentes.</p>
+        </div>
+
+        <!-- Variante 2: Mini ADN -->
+        <div class="msg-card" data-msg-preset="mini_dna">
+          <div class="msg-card-head">
+            <span class="msg-card-title">🎵 2. Mini ADN (Do# ➔ Re#)</span>
+            <span class="msg-card-badge">200 ms</span>
+          </div>
+          <p class="msg-card-desc">Las dos notas de cierre de la llamada en micro-salto ascendente. Conecta con la melodía principal.</p>
+        </div>
+
+        <!-- Variante 3: Marimba Tap -->
+        <div class="msg-card" data-msg-preset="wood">
+          <div class="msg-card-head">
+            <span class="msg-card-title">🪵 3. Marimba Tap</span>
+            <span class="msg-card-badge">150 ms</span>
+          </div>
+          <p class="msg-card-desc">Percusión orgánica de barra de madera (estilo Slack). Seco, elegante y no interrumpe.</p>
+        </div>
+
+        <!-- Variante 4: Gotita -->
+        <div class="msg-card" data-msg-preset="droplet">
+          <div class="msg-card-head">
+            <span class="msg-card-title">💧 4. Water Droplet</span>
+            <span class="msg-card-badge">180 ms</span>
+          </div>
+          <p class="msg-card-desc">Modulación de tono con resonancia líquida. Súper fresca y moderna.</p>
+        </div>
+
+        <!-- Variante 5: Campana Doble -->
+        <div class="msg-card" data-msg-preset="chime">
+          <div class="msg-card-head">
+            <span class="msg-card-title">✨ 5. Cristal Chime</span>
+            <span class="msg-card-badge">260 ms</span>
+          </div>
+          <p class="msg-card-desc">Doble campana armónica cristalina (Mi5 ➔ Sol#5). Muy clara en ambientes ruidosos.</p>
+        </div>
+
+        <!-- Variante 6: Coin 8-Bit -->
+        <div class="msg-card" data-msg-preset="coin">
+          <div class="msg-card-head">
+            <span class="msg-card-title">👾 6. Pixel Coin</span>
+            <span class="msg-card-badge">140 ms</span>
+          </div>
+          <p class="msg-card-desc">Micro arpegio retro dulce estilo consola portátil. Dinámico y simpático.</p>
+        </div>
+      </div>
+
+      <!-- Ajustes de Mensaje -->
+      <div class="controls-grid">
+        <div class="control-box">
+          <div class="control-label">
+            <span>Tono / Altura</span>
+            <span class="val-text" id="msgPitchVal">Normal</span>
+          </div>
+          <input type="range" id="rngMsgPitch" min="-6" max="6" value="0" step="1" />
+          <p style="font-size:0.72rem;color:var(--muted);margin-top:2px;">Ajustá si preferís un sonido más grave o más agudo.</p>
+        </div>
+
+        <div class="control-box">
+          <div class="control-label">
+            <span>Volumen / Punch</span>
+            <span class="val-text" id="msgVolVal">85%</span>
+          </div>
+          <input type="range" id="rngMsgVol" min="20" max="100" value="85" />
+          <p style="font-size:0.72rem;color:var(--muted);margin-top:2px;">Nivel de salida para que no aturda con auriculares puestos.</p>
+        </div>
+      </div>
+
+      <!-- Botonera Mensajes -->
+      <div class="actions">
+        <button class="btn-play" id="btnPlayMsg">
+          ▶ Probar Sonido de Mensaje
+        </button>
+        <button class="btn-secondary" id="btnBurstMsg" title="Prueba qué tan bien suena cuando te mandan 3 mensajes seguidos">
+          ⚡ Ráfaga (3 mensajes)
+        </button>
+        <button class="btn-secondary" id="btnDownloadMsg" title="Descargar audio de mensaje en .WAV">
+          ⬇ Descargar WAV
+        </button>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      💡 <b>Tip de audio UI:</b> Los sonidos de mensaje deben durar menos de <b>300 ms</b> y tener un ataque inmediato para que no se empasten si una persona escribe varias oraciones rápidas seguidas.
+    </div>
+  </div>
+
+  <script>
+    // Audio Context
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    // Tab Switcher
+    const tabBtnCall = document.getElementById('tabBtnCall');
+    const tabBtnMsg = document.getElementById('tabBtnMsg');
+    const panelCall = document.getElementById('panelCall');
+    const panelMsg = document.getElementById('panelMsg');
+
+    tabBtnCall.addEventListener('click', () => {
+      tabBtnCall.classList.add('active');
+      tabBtnMsg.classList.remove('active');
+      panelCall.hidden = false;
+      panelMsg.hidden = true;
+      stopCallPlayback();
+    });
+
+    tabBtnMsg.addEventListener('click', () => {
+      tabBtnMsg.classList.add('active');
+      tabBtnCall.classList.remove('active');
+      panelMsg.hidden = false;
+      panelCall.hidden = true;
+      stopCallPlayback();
+    });
+
+    // ==============================================
+    // LOGICA DE LLAMADA (RINGTONE)
+    // ==============================================
+    let isCallPlaying = false;
+    let callLoopTimer = null;
+    let selectedInstrument = 'marimba';
+    let selectedMode = 'ringtone';
+    let selectedOctave = 5;
+    let bpm = 128;
+    let reverbAmount = 0.45;
+
+    const BASE_FREQS = { E: 659.25, Cs: 554.37, Ds: 622.25 };
+
+    function getFreqs() {
+      const mult = Math.pow(2, selectedOctave - 5);
+      return {
+        E: BASE_FREQS.E * mult,
+        Cs: BASE_FREQS.Cs * mult,
+        Ds: BASE_FREQS.Ds * mult
+      };
+    }
+
+    const btnPlayCall = document.getElementById('btnPlayCall');
+    const playIconCall = document.getElementById('playIconCall');
+    const playTextCall = document.getElementById('playTextCall');
+    const btnDownloadCall = document.getElementById('btnDownloadCall');
+    const noteE5 = document.getElementById('noteE5');
+    const noteCs5 = document.getElementById('noteCs5');
+    const noteDs5 = document.getElementById('noteDs5');
+
+    document.querySelectorAll('[data-inst]').forEach(b => {
+      b.addEventListener('click', () => {
+        document.querySelectorAll('[data-inst]').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        selectedInstrument = b.dataset.inst;
+        if (isCallPlaying && selectedMode === 'ringtone') restartCallLoop();
+      });
+    });
+
+    document.querySelectorAll('[data-mode]').forEach(b => {
+      b.addEventListener('click', () => {
+        document.querySelectorAll('[data-mode]').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        selectedMode = b.dataset.mode;
+        if (isCallPlaying) restartCallLoop();
+      });
+    });
+
+    document.querySelectorAll('[data-oct]').forEach(b => {
+      b.addEventListener('click', () => {
+        document.querySelectorAll('[data-oct]').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        selectedOctave = Number(b.dataset.oct);
+        document.getElementById('octVal').textContent = `Octava ${selectedOctave} (${selectedOctave === 5 ? 'Normal' : selectedOctave === 4 ? 'Baja' : 'Brillante'})`;
+        if (isCallPlaying && selectedMode === 'ringtone') restartCallLoop();
+      });
+    });
+
+    document.getElementById('rngBpm').addEventListener('input', (e) => {
+      bpm = Number(e.target.value);
+      document.getElementById('bpmVal').textContent = `${bpm} BPM`;
+    });
+
+    document.getElementById('rngReverb').addEventListener('input', (e) => {
+      reverbAmount = Number(e.target.value) / 100;
+      document.getElementById('reverbVal').textContent = `${e.target.value}%`;
+    });
+
+    function createReverbBuffer(ctx, duration = 1.8, decay = 2.5) {
+      const rate = ctx.sampleRate;
+      const length = rate * duration;
+      const impulse = ctx.createBuffer(2, length, rate);
+      const left = impulse.getChannelData(0);
+      const right = impulse.getChannelData(1);
+
+      for (let i = 0; i < length; i++) {
+        const n = i / length;
+        const env = Math.pow(1 - n, decay);
+        left[i] = (Math.random() * 2 - 1) * env;
+        right[i] = (Math.random() * 2 - 1) * env;
+      }
+      return impulse;
+    }
+
+    function playTone(ctx, dest, freq, time, duration, inst) {
+      const now = time;
+      if (inst === 'marimba') {
+        const osc = ctx.createOscillator();
+        const oscHarm = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const harmGain = ctx.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, now);
+        oscHarm.type = 'sine';
+        oscHarm.frequency.setValueAtTime(freq * 3.02, now);
+
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.7, now + 0.005);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration * 0.9);
+
+        harmGain.gain.setValueAtTime(0.3, now);
+        harmGain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
+        osc.connect(gain);
+        oscHarm.connect(harmGain);
+        harmGain.connect(gain);
+        gain.connect(dest);
+
+        osc.start(now);
+        oscHarm.start(now);
+        osc.stop(now + duration);
+        oscHarm.stop(now + duration);
+      } else if (inst === 'rhodes') {
+        const carrier = ctx.createOscillator();
+        const modulator = ctx.createOscillator();
+        const modGain = ctx.createGain();
+        const masterGain = ctx.createGain();
+
+        carrier.type = 'sine';
+        carrier.frequency.setValueAtTime(freq, now);
+        modulator.type = 'sine';
+        modulator.frequency.setValueAtTime(freq * 4, now);
+
+        modGain.gain.setValueAtTime(freq * 1.5, now);
+        modGain.gain.exponentialRampToValueAtTime(1, now + duration * 0.7);
+
+        masterGain.gain.setValueAtTime(0, now);
+        masterGain.gain.linearRampToValueAtTime(0.5, now + 0.01);
+        masterGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+        modulator.connect(modGain);
+        modGain.connect(carrier.frequency);
+        carrier.connect(masterGain);
+        masterGain.connect(dest);
+
+        carrier.start(now);
+        modulator.start(now);
+        carrier.stop(now + duration);
+        modulator.stop(now + duration);
+      } else if (inst === 'glock') {
+        const osc = ctx.createOscillator();
+        const oscHigh = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now);
+        oscHigh.type = 'sine';
+        oscHigh.frequency.setValueAtTime(freq * 2.76, now);
+
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.5, now + 0.003);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration * 1.4);
+
+        osc.connect(gain);
+        oscHigh.connect(gain);
+        gain.connect(dest);
+
+        osc.start(now);
+        oscHigh.start(now);
+        osc.stop(now + duration * 1.5);
+        oscHigh.stop(now + duration * 1.5);
+      } else if (inst === 'pluck') {
+        const osc = ctx.createOscillator();
+        const filter = ctx.createBiquadFilter();
+        const gain = ctx.createGain();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(freq, now);
+
+        filter.type = 'lowpass';
+        filter.Q.value = 4;
+        filter.frequency.setValueAtTime(freq * 8, now);
+        filter.frequency.exponentialRampToValueAtTime(freq * 1.2, now + duration * 0.6);
+
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.4, now + 0.008);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration * 0.8);
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(dest);
+
+        osc.start(now);
+        osc.stop(now + duration);
+      } else if (inst === 'chiptune') {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(freq, now);
+
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.25, now + 0.005);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration * 0.6);
+
+        osc.connect(gain);
+        gain.connect(dest);
+
+        osc.start(now);
+        osc.stop(now + duration);
+      } else if (inst === 'dreamy') {
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc1.type = 'sine';
+        osc2.type = 'triangle';
+        osc1.frequency.setValueAtTime(freq, now);
+        osc2.frequency.setValueAtTime(freq * 1.004, now);
+
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.45, now + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration * 1.2);
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(dest);
+
+        osc1.start(now);
+        osc2.start(now);
+        osc1.stop(now + duration * 1.2);
+        osc2.stop(now + duration * 1.2);
+      }
+    }
+
+    function playBackgroundChord(ctx, dest, time, duration) {
+      const notes = [138.59, 207.65, 329.63];
+      notes.forEach(f => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(f, time);
+
+        gain.gain.setValueAtTime(0, time);
+        gain.gain.linearRampToValueAtTime(0.08, time + 0.15);
+        gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+
+        osc.connect(gain);
+        gain.connect(dest);
+
+        osc.start(time);
+        osc.stop(time + duration);
+      });
+    }
+
+    function scheduleCallSequence(ctx, masterOut, startTime) {
+      const freqs = getFreqs();
+      const beat = 60 / bpm;
+
+      const t1 = startTime;
+      const t2 = startTime + beat * 1.25;
+      const t3 = startTime + beat * 2.35;
+
+      const dur1 = beat * 1.1;
+      const dur2 = beat * 0.9;
+      const dur3 = beat * 2.5;
+
+      const dryGain = ctx.createGain();
+      dryGain.gain.value = 1.0 - reverbAmount * 0.35;
+      dryGain.connect(masterOut);
+
+      const wetGain = ctx.createGain();
+      wetGain.gain.value = reverbAmount * 0.7;
+
+      const convolver = ctx.createConvolver();
+      convolver.buffer = createReverbBuffer(ctx, 1.8, 2.2);
+      convolver.connect(wetGain);
+      wetGain.connect(masterOut);
+
+      const instBus = ctx.createGain();
+      instBus.connect(dryGain);
+      instBus.connect(convolver);
+
+      const withHarmony = document.getElementById('chkHarmony').checked;
+      if (withHarmony && selectedMode === 'ringtone') {
+        playBackgroundChord(ctx, instBus, t1, beat * 5);
+      }
+
+      playTone(ctx, instBus, freqs.E, t1, dur1, selectedInstrument);
+      playTone(ctx, instBus, freqs.Cs, t2, dur2, selectedInstrument);
+      playTone(ctx, instBus, freqs.Ds, t3, dur3, selectedInstrument);
+
+      if (ctx === audioCtx) {
+        const delay1 = Math.max(0, (t1 - ctx.currentTime) * 1000);
+        const delay2 = Math.max(0, (t2 - ctx.currentTime) * 1000);
+        const delay3 = Math.max(0, (t3 - ctx.currentTime) * 1000);
+
+        setTimeout(() => highlightNote(noteE5, dur1 * 1000), delay1);
+        setTimeout(() => highlightNote(noteCs5, dur2 * 1000), delay2);
+        setTimeout(() => highlightNote(noteDs5, dur3 * 1000), delay3);
+      }
+
+      return (t3 - startTime) + dur3 + 0.5;
+    }
+
+    function highlightNote(el, durMs) {
+      if (!el) return;
+      el.classList.add('active');
+      setTimeout(() => el.classList.remove('active'), Math.min(durMs, 600));
+    }
+
+    function startCallPlayback() {
+      initAudio();
+      isCallPlaying = true;
+      btnPlayCall.classList.add('playing');
+      playIconCall.textContent = '⏹';
+      playTextCall.textContent = 'Detener';
+      playCallLoopStep();
+    }
+
+    function stopCallPlayback() {
+      isCallPlaying = false;
+      if (callLoopTimer) {
+        clearTimeout(callLoopTimer);
+        callLoopTimer = null;
+      }
+      btnPlayCall.classList.remove('playing');
+      playIconCall.textContent = '▶';
+      playTextCall.textContent = 'Escuchar Ringtone';
+      document.querySelectorAll('.note-block').forEach(n => n.classList.remove('active'));
+    }
+
+    function playCallLoopStep() {
+      if (!isCallPlaying) return;
+      const duration = scheduleCallSequence(audioCtx, audioCtx.destination, audioCtx.currentTime + 0.05);
+
+      if (selectedMode === 'ringtone') {
+        callLoopTimer = setTimeout(() => {
+          if (isCallPlaying) playCallLoopStep();
+        }, (duration + 2.0) * 1000);
+      } else {
+        callLoopTimer = setTimeout(() => stopCallPlayback(), duration * 1000);
+      }
+    }
+
+    function restartCallLoop() {
+      if (callLoopTimer) clearTimeout(callLoopTimer);
+      if (isCallPlaying) playCallLoopStep();
+    }
+
+    btnPlayCall.addEventListener('click', () => {
+      if (isCallPlaying) stopCallPlayback();
+      else startCallPlayback();
+    });
+
+    btnDownloadCall.addEventListener('click', async () => {
+      btnDownloadCall.textContent = '⏳ Generando...';
+      btnDownloadCall.disabled = true;
+
+      const sampleRate = 44100;
+      const beat = 60 / bpm;
+      const lengthSeconds = Math.max(3.5, beat * 4.5 + 2.0);
+      const offlineCtx = new OfflineAudioContext(2, sampleRate * lengthSeconds, sampleRate);
+
+      scheduleCallSequence(offlineCtx, offlineCtx.destination, 0.05);
+      const renderedBuffer = await offlineCtx.startRendering();
+
+      const wavBlob = bufferToWave(renderedBuffer, renderedBuffer.length);
+      downloadBlob(wavBlob, `llamadita-ringtone-${selectedInstrument}.wav`);
+
+      btnDownloadCall.textContent = '⬇ Descargar WAV';
+      btnDownloadCall.disabled = false;
+    });
+
+    // ==============================================
+    // LOGICA DE SONIDOS DE MENSAJE (CHAT)
+    // ==============================================
+    let selectedMsgPreset = 'bubble';
+    let msgPitchOffset = 0; // en semitonos (-6 a +6)
+    let msgVolume = 0.85;
+
+    document.querySelectorAll('[data-msg-preset]').forEach(c => {
+      c.addEventListener('click', () => {
+        document.querySelectorAll('[data-msg-preset]').forEach(x => x.classList.remove('active'));
+        c.classList.add('active');
+        selectedMsgPreset = c.dataset.msgPreset;
+        // Reproducir preescucha inmediata al hacer click en la tarjeta
+        initAudio();
+        playSingleMessageSound(audioCtx, audioCtx.destination, audioCtx.currentTime + 0.02);
+      });
+    });
+
+    document.getElementById('rngMsgPitch').addEventListener('input', (e) => {
+      msgPitchOffset = Number(e.target.value);
+      const sign = msgPitchOffset > 0 ? '+' : '';
+      document.getElementById('msgPitchVal').textContent = msgPitchOffset === 0 ? 'Normal' : `${sign}${msgPitchOffset} st`;
+    });
+
+    document.getElementById('rngMsgVol').addEventListener('input', (e) => {
+      msgVolume = Number(e.target.value) / 100;
+      document.getElementById('msgVolVal').textContent = `${e.target.value}%`;
+    });
+
+    // Síntesis específica de cada tipo de mensaje
+    function playSingleMessageSound(ctx, masterDest, startTime) {
+      const now = startTime;
+      const pitchMult = Math.pow(2, msgPitchOffset / 12);
+      const out = ctx.createGain();
+      out.gain.value = msgVolume;
+      out.connect(masterDest);
+
+      if (selectedMsgPreset === 'bubble') {
+        // Pop de burbuja: tono con caída de frecuencia rápida y pop resonante
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const baseFreq = 480 * pitchMult;
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(baseFreq * 1.8, now);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.9, now + 0.06);
+
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.8, now + 0.005);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+        osc.connect(gain);
+        gain.connect(out);
+
+        osc.start(now);
+        osc.stop(now + 0.13);
+        return 0.14;
+
+      } else if (selectedMsgPreset === 'mini_dna') {
+        // Mini ADN: Do#5 (554Hz) -> Re#5 (622Hz) en dos notas ágiles
+        const f1 = 554.37 * pitchMult;
+        const f2 = 622.25 * pitchMult;
+
+        // Nota 1
+        playMsgChimeNote(ctx, out, f1, now, 0.09, 0.6);
+        // Nota 2
+        playMsgChimeNote(ctx, out, f2, now + 0.08, 0.16, 0.7);
+        return 0.25;
+
+      } else if (selectedMsgPreset === 'wood') {
+        // Marimba / Wood tap percusivo
+        const f = 740 * pitchMult;
+        const osc = ctx.createOscillator();
+        const oscHarm = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(f, now);
+        oscHarm.type = 'sine';
+        oscHarm.frequency.setValueAtTime(f * 2.8, now);
+
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.85, now + 0.003);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
+
+        osc.connect(gain);
+        oscHarm.connect(gain);
+        gain.connect(out);
+
+        osc.start(now);
+        oscHarm.start(now);
+        osc.stop(now + 0.12);
+        oscHarm.stop(now + 0.12);
+        return 0.13;
+
+      } else if (selectedMsgPreset === 'droplet') {
+        // Gota de agua: barrido ascendente y caída limpia
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const f = 620 * pitchMult;
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(f * 0.7, now);
+        osc.frequency.exponentialRampToValueAtTime(f * 1.5, now + 0.04);
+        osc.frequency.exponentialRampToValueAtTime(f * 1.1, now + 0.15);
+
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.75, now + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+
+        osc.connect(gain);
+        gain.connect(out);
+
+        osc.start(now);
+        osc.stop(now + 0.17);
+        return 0.18;
+
+      } else if (selectedMsgPreset === 'chime') {
+        // Doble campana cristalina: Mi5 (659Hz) -> Sol#5 (830Hz)
+        const f1 = 659.25 * pitchMult;
+        const f2 = 830.61 * pitchMult;
+
+        playMsgBellNote(ctx, out, f1, now, 0.14);
+        playMsgBellNote(ctx, out, f2, now + 0.09, 0.22);
+        return 0.32;
+
+      } else if (selectedMsgPreset === 'coin') {
+        // Coin 8-bit retro
+        const f1 = 987.77 * pitchMult; // B5
+        const f2 = 1318.51 * pitchMult; // E6
+
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(f1, now);
+        osc.frequency.setValueAtTime(f2, now + 0.05);
+
+        gain.gain.setValueAtTime(0, now);
+        gain.gain.linearRampToValueAtTime(0.35, now + 0.004);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+
+        osc.connect(gain);
+        gain.connect(out);
+
+        osc.start(now);
+        osc.stop(now + 0.19);
+        return 0.20;
+      }
+      return 0.2;
+    }
+
+    function playMsgChimeNote(ctx, dest, freq, time, duration, vol = 0.5) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, time);
+
+      gain.gain.setValueAtTime(0, time);
+      gain.gain.linearRampToValueAtTime(vol, time + 0.004);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+
+      osc.connect(gain);
+      gain.connect(dest);
+      osc.start(time);
+      osc.stop(time + duration);
+    }
+
+    function playMsgBellNote(ctx, dest, freq, time, duration) {
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc1.type = 'sine';
+      osc2.type = 'sine';
+      osc1.frequency.setValueAtTime(freq, time);
+      osc2.frequency.setValueAtTime(freq * 2.01, time);
+
+      gain.gain.setValueAtTime(0, time);
+      gain.gain.linearRampToValueAtTime(0.5, time + 0.003);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(dest);
+
+      osc1.start(time);
+      osc2.start(time);
+      osc1.stop(time + duration);
+      osc2.stop(time + duration);
+    }
+
+    // Botón Probar 1 Mensaje
+    const btnPlayMsg = document.getElementById('btnPlayMsg');
+    btnPlayMsg.addEventListener('click', () => {
+      initAudio();
+      playSingleMessageSound(audioCtx, audioCtx.destination, audioCtx.currentTime + 0.02);
+    });
+
+    // Botón Simular Ráfaga (3 mensajes rápidos)
+    const btnBurstMsg = document.getElementById('btnBurstMsg');
+    btnBurstMsg.addEventListener('click', () => {
+      initAudio();
+      const t0 = audioCtx.currentTime + 0.02;
+      playSingleMessageSound(audioCtx, audioCtx.destination, t0);
+      playSingleMessageSound(audioCtx, audioCtx.destination, t0 + 0.28);
+      playSingleMessageSound(audioCtx, audioCtx.destination, t0 + 0.56);
+    });
+
+    // Descargar WAV de Mensaje
+    const btnDownloadMsg = document.getElementById('btnDownloadMsg');
+    btnDownloadMsg.addEventListener('click', async () => {
+      btnDownloadMsg.textContent = '⏳ Generando...';
+      btnDownloadMsg.disabled = true;
+
+      const sampleRate = 44100;
+      const lengthSeconds = 0.65;
+      const offlineCtx = new OfflineAudioContext(2, sampleRate * lengthSeconds, sampleRate);
+
+      playSingleMessageSound(offlineCtx, offlineCtx.destination, 0.02);
+      const renderedBuffer = await offlineCtx.startRendering();
+
+      const wavBlob = bufferToWave(renderedBuffer, renderedBuffer.length);
+      downloadBlob(wavBlob, `llamadita-msg-${selectedMsgPreset}.wav`);
+
+      btnDownloadMsg.textContent = '⬇ Descargar WAV';
+      btnDownloadMsg.disabled = false;
+    });
+
+    // Helper Descarga Blob
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // PCM WAV Encoder Helper
+    function bufferToWave(abuffer, len) {
+      let numOfChan = abuffer.numberOfChannels,
+          length = len * numOfChan * 2 + 44,
+          out = new DataView(new ArrayBuffer(length)),
+          channels = [], i, sample,
+          offset = 0,
+          pos = 0;
+
+      function setUint16(data) { out.setUint16(pos, data, true); pos += 2; }
+      function setUint32(data) { out.setUint32(pos, data, true); pos += 4; }
+
+      setUint32(0x46464952); // "RIFF"
+      setUint32(length - 8);
+      setUint32(0x45564157); // "WAVE"
+
+      setUint32(0x20746d66); // "fmt "
+      setUint32(16);
+      setUint16(1);          // PCM
+      setUint16(numOfChan);
+      setUint32(abuffer.sampleRate);
+      setUint32(abuffer.sampleRate * 2 * numOfChan);
+      setUint16(numOfChan * 2);
+      setUint16(16);
+
+      setUint32(0x61746164); // "data"
+      setUint32(length - pos - 4);
+
+      for (i = 0; i < abuffer.numberOfChannels; i++) {
+        channels.push(abuffer.getChannelData(i));
+      }
+
+      while (offset < len) {
+        for (i = 0; i < numOfChan; i++) {
+          sample = Math.max(-1, Math.min(1, channels[i][offset]));
+          sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767) | 0;
+          out.setInt16(pos, sample, true);
+          pos += 2;
+        }
+        offset++;
+      }
+
+      return new Blob([out], { type: "audio/wav" });
+    }
+  </script>
+</body>
+</html>

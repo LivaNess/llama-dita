@@ -669,7 +669,12 @@ window.addEventListener('DOMContentLoaded', () => {
     getVoiceThreshold: () => audioManager.voiceThresholdDb,
     setVoiceThreshold: (db) => audioManager.setVoiceThreshold(db),
     getRawMetrics: () => audioManager.rawLocalMetrics,
-    isVoiceDetected: (rawMetrics) => audioManager.isVoiceDetected(rawMetrics)
+    isVoiceDetected: (rawMetrics) => audioManager.isVoiceDetected(rawMetrics),
+    startRingtone: () => audioManager.startRingtone(),
+    stopRingtone: () => audioManager.stopRingtone(),
+    playMessageSound: (type) => audioManager.playMessageSound(type),
+    getMessageSoundType: () => audioManager.messageSoundType,
+    setMessageSoundType: (type) => audioManager.setMessageSoundType(type)
   });
   // Buscar actualizaciones al abrir (opcional) + popover en el tag de versión del header.
   initUpdater({ toast: showToast });

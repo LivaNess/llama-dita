@@ -17,6 +17,15 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.2K · 2026-09-19 · Antigravity
+**Qué cambió.** Incorporación del sistema de audio y ringtones oficiales de Llamadita:
+- Se añadió como ringtone de llamada entrante oficial el audio descargado `llamadita-marimba-ringtone.wav` en `public/sounds/ringtone.wav`, el cual suena en bucle al recibir una llamada directa y se detiene al contestar, rechazar o vencer el tiempo de timbrado.
+- Se implementó una paleta de tonos cortos, limpios y ligeros generados proceduralmente con Web Audio API (cero bloat, cero sonidos de IA, latencia instantánea) para notificaciones de mensajes entrantes de chat: Burbuja, Mini ADN (Do#-Re#), Toque de madera / Marimba, Gota de agua, Campana de cristal, Moneda 8-bit, o Silencio.
+- En la pestaña "Ajustes" del cajón social se incorporaron los controles para probar el ringtone en tiempo real y seleccionar/probar el tono de mensaje preferido, guardándolo en `localStorage`.
+**Por qué.** Personalizar la experiencia auditiva de Llamadita con identidad propia, ringtone melódico y avisos de chat breves sin sobrecargar la aplicación con dependencias pesadas ni audios genéricos de IA.
+**Dónde.** `src/audio/audioManager.js`, `src/main.js`, `src/social/panel.js`, `src/social/social.css`, `public/sounds/ringtone.wav`, `scripts/build-web.mjs`.
+**Cómo se verifica.** Abrir Ajustes (click en avatar -> Ajustes), probar el botón "Probar ringtone" (reproduce en bucle y se detiene con "Detener"), cambiar el selector de sonido de mensaje (emite la preescucha instantánea), y al recibir un mensaje o llamada entrante se reproduce el tono correspondiente.
+
 ---
 
 ### 0.24.2J · 2026-09-19 · Antigravity

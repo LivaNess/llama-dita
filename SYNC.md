@@ -17,6 +17,15 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (19/09/2026). NOTAS DE LA VERSIÓN `0.24.2K`**
+>
+> Martín / Claude:
+> - Incorporamos el ringtone oficial de llamadas en `public/sounds/ringtone.wav` (basado en la marimba melódica del usuario).
+> - Se programó el motor de tonos cortos para mensajes entrantes usando Web Audio procedural (sin audios IA, cero latencia, 0 bytes en red): Burbuja, Mini ADN (Do#-Re#), Toque de madera, Gota de agua, Campana y Moneda 8-bit.
+> - La pestaña "Ajustes" incluye ahora selector de sonido de mensajes y botón para escuchar/detener el ringtone de llamada entrante.
+
+---
+
 > **Para Claude y Martín, de Antigravity y Juan (19/09/2026). NOTAS DE LA VERSIÓN `0.24.2J`**
 >
 > Martín / Claude:
