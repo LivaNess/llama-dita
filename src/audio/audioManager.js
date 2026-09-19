@@ -72,8 +72,17 @@ class AudioManager {
     // Sonidos de la aplicación
     this.ringtoneAudio = null;
     this.messageSoundType = 'bubble';
+    this.notificationsEnabled = true;
+    this.ringtoneVolume = 0.85;
+    this.messageVolume = 0.85;
     try {
       this.messageSoundType = localStorage.getItem('llamadita_msg_sound') || 'bubble';
+      const savedNotify = localStorage.getItem('llamadita_notifications_enabled');
+      if (savedNotify !== null) this.notificationsEnabled = savedNotify !== 'false';
+      const savedRingVol = localStorage.getItem('llamadita_ringtone_vol');
+      if (savedRingVol !== null && !isNaN(Number(savedRingVol))) this.ringtoneVolume = Number(savedRingVol);
+      const savedMsgVol = localStorage.getItem('llamadita_msg_vol');
+      if (savedMsgVol !== null && !isNaN(Number(savedMsgVol))) this.messageVolume = Number(savedMsgVol);
     } catch (_) {}
   }
 
@@ -109,6 +118,30 @@ class AudioManager {
   }
 
   // --- Manejo de Sonidos (Ringtone y Mensajes) ---
+  setNotificationsEnabled(enabled) {
+    this.notificationsEnabled = !!enabled;
+    try {
+      localStorage.setItem('llamadita_notifications_enabled', String(this.notificationsEnabled));
+    } catch (_) {}
+  }
+
+  setRingtoneVolume(vol) {
+    this.ringtoneVolume = Math.max(0, Math.min(1, Number(vol)));
+    if (this.ringtoneAudio) {
+      this.ringtoneAudio.volume = this.ringtoneVolume;
+    }
+    try {
+      localStorage.setItem('llamadita_ringtone_vol', String(this.ringtoneVolume));
+    } catch (_) {}
+  }
+
+  setMessageVolume(vol) {
+    this.messageVolume = Math.max(0, Math.min(1, Number(vol)));
+    try {
+      localStorage.setItem('llamadita_msg_vol', String(this.messageVolume));
+    } catch (_) {}
+  }
+
   startRingtone() {
     try {
       if (!this.ringtoneAudio) {
@@ -116,7 +149,7 @@ class AudioManager {
         this.ringtoneAudio.loop = true;
       }
       this.ringtoneAudio.currentTime = 0;
-      this.ringtoneAudio.volume = 0.9;
+      this.ringtoneAudio.volume = this.ringtoneVolume;
       const playPromise = this.ringtoneAudio.play();
       if (playPromise !== undefined) {
         playPromise.catch(err => {
@@ -147,7 +180,7 @@ class AudioManager {
   }
 
   playMessageSound(type = this.messageSoundType) {
-    if (type === 'none' || !type) return;
+    if (!this.notificationsEnabled || type === 'none' || !type) return;
     try {
       const ctx = this.getAudioContext();
       if (ctx.state === 'suspended') {
@@ -155,7 +188,7 @@ class AudioManager {
       }
       const now = ctx.currentTime + 0.01;
       const out = ctx.createGain();
-      out.gain.value = 0.85;
+      out.gain.value = this.messageVolume;
       out.connect(ctx.destination);
 
       if (type === 'bubble') {

@@ -17,6 +17,15 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (19/09/2026). NOTAS DE LA VERSIÓN `0.24.2M`**
+>
+> Martín / Claude:
+> - **Notificaciones globales:** Se añadió suscripción Realtime a `messages` en `subscribeAll`, de modo que los mensajes entrantes de canales y DMs emiten el sonido de aviso incluso si el usuario está fuera de esa conversación o en la vista de bienvenida.
+> - **Silenciado con clic derecho:** Menú contextual en canales y amigos con opciones de silencio por 1 hora, 1 día, 1 semana o Siempre, con persistencia local en `localStorage` e indicador 🔕.
+> - **Volumen y toggle de notificaciones en Ajustes:** Se sumaron deslizadores para volumen de llamada y volumen de mensajes, además de un checkbox para activar o desactivar notificaciones de sonido globalmente.
+
+---
+
 > **Para Claude y Martín, de Antigravity y Juan (19/09/2026). NOTAS DE LA VERSIÓN `0.24.2L` — NUEVA NORMA DE INTERFAZ**
 >
 > Martín / Claude:

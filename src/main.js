@@ -674,7 +674,13 @@ window.addEventListener('DOMContentLoaded', () => {
     stopRingtone: () => audioManager.stopRingtone(),
     playMessageSound: (type) => audioManager.playMessageSound(type),
     getMessageSoundType: () => audioManager.messageSoundType,
-    setMessageSoundType: (type) => audioManager.setMessageSoundType(type)
+    setMessageSoundType: (type) => audioManager.setMessageSoundType(type),
+    getNotificationsEnabled: () => audioManager.notificationsEnabled,
+    setNotificationsEnabled: (v) => audioManager.setNotificationsEnabled(v),
+    getRingtoneVolume: () => audioManager.ringtoneVolume,
+    setRingtoneVolume: (v) => audioManager.setRingtoneVolume(v),
+    getMessageVolume: () => audioManager.messageVolume,
+    setMessageVolume: (v) => audioManager.setMessageVolume(v)
   });
   // Buscar actualizaciones al abrir (opcional) + popover en el tag de versión del header.
   initUpdater({ toast: showToast });

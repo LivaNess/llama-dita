@@ -1587,6 +1587,22 @@ button.logo-tag { font: inherit; cursor: pointer; }
   color: #fca5a5;
 }
 
+.channel-context-menu .menu-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 4px 0;
+}
+
+.channel-context-menu .submenu-header {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+  padding: 5px 10px 3px;
+}
+
+
 /* ------------------------------------------------------------------
    Panel de Login integrado en la tarjeta central (Sin sesión activa)
 ------------------------------------------------------------------ */

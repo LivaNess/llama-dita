@@ -42,6 +42,55 @@ const state = {
 let hooks = {};
 let root, drawer, overlay, headerBtn;
 
+// --- Silenciado de Chats y Canales ---
+let mutedChats = {};
+try {
+  mutedChats = JSON.parse(localStorage.getItem('llamadita_muted_chats') || '{}');
+} catch (_) {
+  mutedChats = {};
+}
+
+function saveMutedChats() {
+  try {
+    localStorage.setItem('llamadita_muted_chats', JSON.stringify(mutedChats));
+  } catch (_) {}
+}
+
+function isChatMuted(id) {
+  if (!id) return false;
+  const until = mutedChats[String(id)];
+  if (!until) return false;
+  if (until === 'always' || until === Infinity || until > Date.now()) return true;
+  delete mutedChats[String(id)];
+  saveMutedChats();
+  return false;
+}
+
+function muteChat(id, duration) {
+  if (!id) return;
+  const until = (duration === 'always' || duration === Infinity) ? 'always' : Date.now() + duration;
+  mutedChats[String(id)] = until;
+  saveMutedChats();
+}
+
+function unmuteChat(id) {
+  if (!id) return;
+  delete mutedChats[String(id)];
+  saveMutedChats();
+}
+
+let lastMessageSoundId = null;
+
+function onGlobalMessage(fila) {
+  if (!fila || fila.author_id === state.me?.id) return;
+  if (hooks.getNotificationsEnabled && !hooks.getNotificationsEnabled()) return;
+  if (isChatMuted(fila.channel_id) || isChatMuted(fila.author_id)) return;
+  if (lastMessageSoundId === fila.id) return;
+  lastMessageSoundId = fila.id;
+  hooks.playMessageSound?.();
+}
+
+
 // El emoji de telefono en Windows se dibuja rosa: el boton de llamar parecia de colgar.
 // Icono vectorial que toma el color del boton (verde) en vez de traer el suyo.
 const ICONO_TELEFONO = `<svg class="sc-icono-tel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`;
@@ -251,7 +300,8 @@ function subscribeAll(uid) {
     { table: 'channel_members', cb: () => refreshChannels().then(render) },
     { table: 'call_invites', event: 'INSERT', filter: `callee_id=eq.${uid}`, cb: (p) => onIncomingCall(p.new) },
     { table: 'call_invites', event: 'UPDATE', filter: `caller_id=eq.${uid}`, cb: (p) => onOutgoingCallUpdate(p.new) },
-    { table: 'call_invites', event: 'UPDATE', filter: `callee_id=eq.${uid}`, cb: (p) => onIncomingCallUpdate(p.new) }
+    { table: 'call_invites', event: 'UPDATE', filter: `callee_id=eq.${uid}`, cb: (p) => onIncomingCallUpdate(p.new) },
+    { table: 'messages', event: 'INSERT', cb: (p) => onGlobalMessage(p.new) }
   ]));
 }
 
@@ -724,7 +774,14 @@ async function llegoMensaje(channelId, fila, isUpdate = false) {
     pintarEscribiendo();
   }
   if (!isUpdate && fila.author_id && state.me?.id && fila.author_id !== state.me.id) {
-    hooks.playMessageSound?.();
+    if (hooks.getNotificationsEnabled && !hooks.getNotificationsEnabled()) {
+      // Notificaciones desactivadas
+    } else if (isChatMuted(channelId) || isChatMuted(fila.author_id)) {
+      // Chat silenciado
+    } else if (lastMessageSoundId !== fila.id) {
+      lastMessageSoundId = fila.id;
+      hooks.playMessageSound?.();
+    }
   }
   const perfil = state.members.find((m) => m.user_id === fila.author_id)?.profile;
   const m = { ...fila, author: perfil ? { username: perfil.username, display_name: perfil.display_name } : null };
@@ -1428,6 +1485,9 @@ function settingsView() {
   const thresholdDb = hooks.getVoiceThreshold ? hooks.getVoiceThreshold() : -34;
   const thresholdPct = Math.max(0, Math.min(100, Math.round(((thresholdDb + 55) / 52) * 100)));
   const msgSound = hooks.getMessageSoundType ? hooks.getMessageSoundType() : 'bubble';
+  const notifyEnabled = hooks.getNotificationsEnabled ? hooks.getNotificationsEnabled() : true;
+  const ringVol = hooks.getRingtoneVolume ? hooks.getRingtoneVolume() : 0.85;
+  const msgVol = hooks.getMessageVolume ? hooks.getMessageVolume() : 0.85;
 
   return `<div class="sc-settings">
     <div class="sc-settings-group">
@@ -1478,12 +1538,23 @@ function settingsView() {
           <span class="sc-sound-btn-label">${isTestingRingtone ? 'Detener' : 'Probar'}</span>
         </button>
       </div>
+      <div class="sc-vol-row">
+        <span>Volumen de llamada</span>
+        <span id="scRingtoneVolLabel">${Math.round(ringVol * 100)}%</span>
+      </div>
+      <div class="sc-slider-row">
+        <input type="range" id="scRingtoneVol" class="sc-slider" min="0" max="100" step="1" value="${Math.round(ringVol * 100)}" />
+      </div>
     </div>
 
     <div class="sc-settings-group">
       <div class="sc-settings-title">
         <span>Sonido de mensaje</span>
       </div>
+      <label class="sc-toggle-row">
+        <span>Notificaciones de sonido</span>
+        <input type="checkbox" id="scNotifyEnabled" ${notifyEnabled ? 'checked' : ''} />
+      </label>
       <div class="sc-sound-row">
         <select id="scMsgSound" class="sc-select">
           <option value="bubble" ${msgSound === 'bubble' ? 'selected' : ''}>Burbuja (Pop suave)</option>
@@ -1497,6 +1568,13 @@ function settingsView() {
         <button type="button" id="btnTestMsgSound" class="sc-sound-btn" title="Escuchar sonido">
           <span>▶</span>
         </button>
+      </div>
+      <div class="sc-vol-row">
+        <span>Volumen de mensaje</span>
+        <span id="scMsgVolLabel">${Math.round(msgVol * 100)}%</span>
+      </div>
+      <div class="sc-slider-row">
+        <input type="range" id="scMsgVol" class="sc-slider" min="0" max="100" step="1" value="${Math.round(msgVol * 100)}" />
       </div>
     </div>
   </div>`;
@@ -1556,6 +1634,19 @@ function bindMain() {
       }
     });
 
+    const ringVolSlider = q('#scRingtoneVol');
+    const ringVolLabel = q('#scRingtoneVolLabel');
+    ringVolSlider?.addEventListener('input', (e) => {
+      const pct = Number(e.target.value);
+      if (hooks.setRingtoneVolume) hooks.setRingtoneVolume(pct / 100);
+      if (ringVolLabel) ringVolLabel.textContent = `${pct}%`;
+    });
+
+    const notifyCheck = q('#scNotifyEnabled');
+    notifyCheck?.addEventListener('change', (e) => {
+      if (hooks.setNotificationsEnabled) hooks.setNotificationsEnabled(e.target.checked);
+    });
+
     const msgSoundSelect = q('#scMsgSound');
     msgSoundSelect?.addEventListener('change', (e) => {
       const val = e.target.value;
@@ -1567,6 +1658,14 @@ function bindMain() {
     btnTestMsg?.addEventListener('click', () => {
       const val = msgSoundSelect ? msgSoundSelect.value : (hooks.getMessageSoundType?.() || 'bubble');
       if (hooks.playMessageSound) hooks.playMessageSound(val);
+    });
+
+    const msgVolSlider = q('#scMsgVol');
+    const msgVolLabel = q('#scMsgVolLabel');
+    msgVolSlider?.addEventListener('input', (e) => {
+      const pct = Number(e.target.value);
+      if (hooks.setMessageVolume) hooks.setMessageVolume(pct / 100);
+      if (msgVolLabel) msgVolLabel.textContent = `${pct}%`;
     });
 
     startMeterLoop();
@@ -1762,10 +1861,12 @@ function renderSidebar() {
       channelsList.innerHTML = regularChannels.map((c) => {
         const isActive = state.currentChannel?.id === c.id;
         const icon = c.kind === 'voice' ? '🔊' : '#';
+        const muted = isChatMuted(c.id);
         return `
-          <button class="sidebar-channel-item ${isActive ? 'active' : ''}" data-sidebar-channel="${c.id}" title="${esc(c.name)} (${c.kind === 'voice' ? 'Voz' : 'Texto'}) · Clic derecho para opciones">
+          <button class="sidebar-channel-item ${isActive ? 'active' : ''}" data-sidebar-channel="${c.id}" title="${esc(c.name)} (${c.kind === 'voice' ? 'Voz' : 'Texto'})${muted ? ' · Silenciado' : ''} · Clic derecho para opciones">
             <span class="channel-kind">${icon}</span>
             <span class="channel-name">${esc(c.name)}</span>
+            ${muted ? `<span class="sc-chat-muted-icon" title="Notificaciones silenciadas">🔕</span>` : ''}
           </button>
         `;
       }).join('');
@@ -1831,14 +1932,16 @@ function renderSidebar() {
         friendsList.innerHTML = friends.map(({ f, p }) => {
           const isSelected = esDirecto(state.currentChannel) && state.currentChannel?.otro?.id === p.id;
           const inCall = hooks.isCallActiveWith ? hooks.isCallActiveWith(p) : false;
+          const muted = isChatMuted(p.id);
           return `
-            <div class="sidebar-friend-item sc-clickable ${isSelected ? 'active' : ''}" data-sidebar-dm="${p.id}" role="button" tabindex="0" title="${isSelected ? 'Cerrar chat' : 'Abrir chat privado'} con ${esc(p.display_name || p.username)}">
+            <div class="sidebar-friend-item sc-clickable ${isSelected ? 'active' : ''}" data-sidebar-dm="${p.id}" role="button" tabindex="0" title="${isSelected ? 'Cerrar chat' : 'Abrir chat privado'} con ${esc(p.display_name || p.username)}${muted ? ' · Silenciado' : ''} · Clic derecho para opciones">
               ${fotoDe(p)}
               ${statusDot(p)}
               <div class="friend-info">
                 <span class="friend-name">${esc(p.display_name || p.username)}</span>
                 <span class="friend-handle">@${esc(p.username)}</span>
               </div>
+              ${muted ? `<span class="sc-chat-muted-icon" title="Notificaciones silenciadas">🔕</span>` : ''}
               ${inCall ? `
                 <button class="btn-friend-call in-call" data-sidebar-hangup="${p.id}" title="Colgar llamada">${ICONO_COLGAR}</button>
               ` : `
@@ -1865,6 +1968,11 @@ function renderSidebar() {
 
         // El cuerpo del renglón abre o cierra la conversación privada si ya está abierta
         friendsList.querySelectorAll('[data-sidebar-dm]').forEach((el) => {
+          const friendId = el.dataset.sidebarDm;
+          const friend = friends.find((x) => x.p.id === friendId)?.p;
+          if (friend) {
+            el.addEventListener('contextmenu', (e) => showFriendContextMenu(e, friend));
+          }
           const alternar = () => {
             const friendId = el.dataset.sidebarDm;
             if (esDirecto(state.currentChannel) && state.currentChannel?.otro?.id === friendId) {
@@ -1909,53 +2017,236 @@ function showChannelContextMenu(e, channel) {
   menu.id = 'channelContextMenu';
   menu.className = 'channel-context-menu';
 
-  menu.innerHTML = `
-    <button type="button" data-action="copy">
-      <span>📋 Copiar invitación</span>
-    </button>
-    ${isOwner ? `
-      <button type="button" data-action="delete" class="danger">
-        <span>🗑️ Eliminar canal</span>
-      </button>
-    ` : `
-      <button type="button" data-action="leave" class="danger">
-        <span>🚪 Salir del canal</span>
-      </button>
-    `}
-  `;
+  const isMuted = isChatMuted(channel.id);
 
-  document.body.appendChild(menu);
-  const x = Math.min(e.clientX, window.innerWidth - 190);
-  const y = Math.min(e.clientY, window.innerHeight - 90);
-  menu.style.left = `${x}px`;
-  menu.style.top = `${y}px`;
+  function renderMainMenu() {
+    menu.innerHTML = `
+      <button type="button" data-action="copy">
+        <span>📋 Copiar invitación</span>
+      </button>
+      <div class="menu-divider"></div>
+      ${isMuted ? `
+        <button type="button" data-action="unmute">
+          <span>🔔 Reactivar notificaciones</span>
+        </button>
+      ` : `
+        <button type="button" data-action="mute-menu">
+          <span>🔕 Silenciar notificaciones ›</span>
+        </button>
+      `}
+      <div class="menu-divider"></div>
+      ${isOwner ? `
+        <button type="button" data-action="delete" class="danger">
+          <span>🗑️ Eliminar canal</span>
+        </button>
+      ` : `
+        <button type="button" data-action="leave" class="danger">
+          <span>🚪 Salir del canal</span>
+        </button>
+      `}
+    `;
+    bindMenuEvents();
+  }
 
-  menu.querySelector('[data-action="copy"]')?.addEventListener('click', () => {
-    menu.remove();
-    navigator.clipboard.writeText(channel.invite_code).then(() => {
-      hooks.toast?.('Código de invitación copiado');
+  function renderMuteMenu() {
+    menu.innerHTML = `
+      <div class="submenu-header">Silenciar notificaciones</div>
+      <button type="button" data-mute-duration="3600000"><span>⏱️ Por 1 hora</span></button>
+      <button type="button" data-mute-duration="86400000"><span>📅 Por 1 día</span></button>
+      <button type="button" data-mute-duration="604800000"><span>📆 Por 1 semana</span></button>
+      <button type="button" data-mute-duration="always"><span>🔕 Siempre</span></button>
+      <div class="menu-divider"></div>
+      <button type="button" data-action="back"><span>← Volver</span></button>
+    `;
+    bindSubmenuEvents();
+  }
+
+  function bindMenuEvents() {
+    menu.querySelector('[data-action="copy"]')?.addEventListener('click', () => {
+      menu.remove();
+      navigator.clipboard.writeText(channel.invite_code).then(() => {
+        hooks.toast?.('Código de invitación copiado');
+      });
     });
-  });
 
-  menu.querySelector('[data-action="delete"]')?.addEventListener('click', () => {
-    menu.remove();
-    if (confirm(`¿Seguro que querés eliminar el canal "${channel.name}"?`)) {
-      act(async () => {
-        await api.deleteChannel(channel.id);
-        if (state.currentChannel?.id === channel.id) closeChannel();
-      }, 'Canal eliminado');
-    }
-  });
+    menu.querySelector('[data-action="unmute"]')?.addEventListener('click', () => {
+      menu.remove();
+      unmuteChat(channel.id);
+      hooks.toast?.('Notificaciones reactivadas');
+      render();
+    });
 
-  menu.querySelector('[data-action="leave"]')?.addEventListener('click', () => {
-    menu.remove();
-    if (confirm(`¿Seguro que querés salir del canal "${channel.name}"?`)) {
-      act(async () => {
-        await api.leaveChannel(channel.id, state.me.id);
-        if (state.currentChannel?.id === channel.id) closeChannel();
-      }, 'Saliste del canal');
+    menu.querySelector('[data-action="mute-menu"]')?.addEventListener('click', () => {
+      renderMuteMenu();
+    });
+
+    menu.querySelector('[data-action="delete"]')?.addEventListener('click', () => {
+      menu.remove();
+      if (confirm(`¿Seguro que querés eliminar el canal "${channel.name}"?`)) {
+        act(async () => {
+          await api.deleteChannel(channel.id);
+          if (state.currentChannel?.id === channel.id) closeChannel();
+        }, 'Canal eliminado');
+      }
+    });
+
+    menu.querySelector('[data-action="leave"]')?.addEventListener('click', () => {
+      menu.remove();
+      if (confirm(`¿Seguro que querés salir del canal "${channel.name}"?`)) {
+        act(async () => {
+          await api.leaveChannel(channel.id, state.me.id);
+          if (state.currentChannel?.id === channel.id) closeChannel();
+        }, 'Saliste del canal');
+      }
+    });
+  }
+
+  function bindSubmenuEvents() {
+    menu.querySelectorAll('[data-mute-duration]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const dur = btn.dataset.muteDuration === 'always' ? 'always' : Number(btn.dataset.muteDuration);
+        muteChat(channel.id, dur);
+        hooks.toast?.('Canal silenciado');
+        render();
+        menu.remove();
+      });
+    });
+    menu.querySelector('[data-action="back"]')?.addEventListener('click', () => {
+      renderMainMenu();
+    });
+  }
+
+  renderMainMenu();
+  document.body.appendChild(menu);
+
+  const x = Math.min(e.clientX, window.innerWidth - 210);
+  const y = Math.min(e.clientY, window.innerHeight - 170);
+  menu.style.left = `${Math.max(10, x)}px`;
+  menu.style.top = `${Math.max(10, y)}px`;
+
+  const dismiss = (evt) => {
+    if (!menu.contains(evt.target)) {
+      menu.remove();
+      document.removeEventListener('pointerdown', dismiss);
+      document.removeEventListener('keydown', onKeyDown);
     }
-  });
+  };
+  const onKeyDown = (evt) => {
+    if (evt.key === 'Escape') {
+      menu.remove();
+      document.removeEventListener('pointerdown', dismiss);
+      document.removeEventListener('keydown', onKeyDown);
+    }
+  };
+  setTimeout(() => {
+    document.addEventListener('pointerdown', dismiss);
+    document.addEventListener('keydown', onKeyDown);
+  }, 10);
+}
+
+// ------------------------------------------------------------------
+// Menú Contextual para Amigos (Clic derecho en sidebar)
+// ------------------------------------------------------------------
+function showFriendContextMenu(e, friend) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  document.getElementById('channelContextMenu')?.remove();
+
+  const menu = document.createElement('div');
+  menu.id = 'channelContextMenu';
+  menu.className = 'channel-context-menu';
+
+  const isMuted = isChatMuted(friend.id);
+
+  function renderMainMenu() {
+    menu.innerHTML = `
+      <button type="button" data-action="chat">
+        <span>💬 Abrir chat privado</span>
+      </button>
+      <button type="button" data-action="call">
+        <span>📞 Llamar</span>
+      </button>
+      <div class="menu-divider"></div>
+      ${isMuted ? `
+        <button type="button" data-action="unmute">
+          <span>🔔 Reactivar notificaciones</span>
+        </button>
+      ` : `
+        <button type="button" data-action="mute-menu">
+          <span>🔕 Silenciar notificaciones ›</span>
+        </button>
+      `}
+      <div class="menu-divider"></div>
+      <button type="button" data-action="remove-friend" class="danger">
+        <span>🗑️ Eliminar de amigos</span>
+      </button>
+    `;
+    bindMenuEvents();
+  }
+
+  function renderMuteMenu() {
+    menu.innerHTML = `
+      <div class="submenu-header">Silenciar notificaciones</div>
+      <button type="button" data-mute-duration="3600000"><span>⏱️ Por 1 hora</span></button>
+      <button type="button" data-mute-duration="86400000"><span>📅 Por 1 día</span></button>
+      <button type="button" data-mute-duration="604800000"><span>📆 Por 1 semana</span></button>
+      <button type="button" data-mute-duration="always"><span>🔕 Siempre</span></button>
+      <div class="menu-divider"></div>
+      <button type="button" data-action="back"><span>← Volver</span></button>
+    `;
+    bindSubmenuEvents();
+  }
+
+  function bindMenuEvents() {
+    menu.querySelector('[data-action="chat"]')?.addEventListener('click', () => {
+      menu.remove();
+      abrirChatPrivado(friend);
+    });
+    menu.querySelector('[data-action="call"]')?.addEventListener('click', () => {
+      menu.remove();
+      callFriend(friend);
+    });
+    menu.querySelector('[data-action="unmute"]')?.addEventListener('click', () => {
+      menu.remove();
+      unmuteChat(friend.id);
+      hooks.toast?.('Notificaciones reactivadas');
+      render();
+    });
+    menu.querySelector('[data-action="mute-menu"]')?.addEventListener('click', () => {
+      renderMuteMenu();
+    });
+    menu.querySelector('[data-action="remove-friend"]')?.addEventListener('click', () => {
+      menu.remove();
+      const f = state.friendships.find((x) => x.requester_id === friend.id || x.addressee_id === friend.id);
+      if (f && confirm(`¿Seguro que querés eliminar a ${friend.display_name || friend.username} de tus amigos?`)) {
+        act(() => api.removeFriendship(f.id));
+      }
+    });
+  }
+
+  function bindSubmenuEvents() {
+    menu.querySelectorAll('[data-mute-duration]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const dur = btn.dataset.muteDuration === 'always' ? 'always' : Number(btn.dataset.muteDuration);
+        muteChat(friend.id, dur);
+        hooks.toast?.('Chat silenciado');
+        render();
+        menu.remove();
+      });
+    });
+    menu.querySelector('[data-action="back"]')?.addEventListener('click', () => {
+      renderMainMenu();
+    });
+  }
+
+  renderMainMenu();
+  document.body.appendChild(menu);
+
+  const x = Math.min(e.clientX, window.innerWidth - 210);
+  const y = Math.min(e.clientY, window.innerHeight - 170);
+  menu.style.left = `${Math.max(10, x)}px`;
+  menu.style.top = `${Math.max(10, y)}px`;
 
   const dismiss = (evt) => {
     if (!menu.contains(evt.target)) {

@@ -17,6 +17,17 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.2M · 2026-09-19 · Antigravity
+**Qué cambió.** Notificaciones globales fuera del chat, control de volumen y silenciado de chats con clic derecho:
+- **Notificaciones globales:** Se agregó suscripción global a `messages` en Realtime, permitiendo que suenen las notificaciones de mensajes entrantes aunque el usuario se encuentre fuera del canal o chat directo (ej. en otro canal, en la vista inicial de bienvenida o en Ajustes).
+- **Silenciado de chats y amigos con clic derecho:** Menú contextual al hacer clic derecho en canales o amigos de la barra lateral con opciones de silenciado por **1 hora**, **1 día**, **1 semana** o **Siempre**, con persistencia en `localStorage`, expiración automática, opción para reactivar y distintivo visual (🔕).
+- **Controles de sonido en Ajustes:** Deslizador de volumen para timbre de llamadas (0%–100%), interruptor para activar/desactivar notificaciones sonoras, y deslizador de volumen para sonidos de mensajes (0%–100%), respetando la norma de cero textos redundantes.
+**Por qué.** Permitir que el usuario se entere de nuevos mensajes sin estar obligado a mirar el chat específico, silenciar chats molestos por el tiempo deseado y calibrar el volumen del timbre y notificaciones.
+**Dónde.** `src/audio/audioManager.js`, `src/main.js`, `src/social/panel.js`, `src/social/social.css`, `src/style.css`.
+**Cómo se verifica.** Abrir Ajustes (avatar -> Ajustes) y probar regular los volúmenes y el switch de notificaciones. Hacer clic derecho sobre un canal o amigo y silenciar por 1 hora (comprobar que aparece el ícono 🔕 y no suena al recibir mensajes). Desactivar el silencio y comprobar que vuelve a sonar.
+
+---
+
 ### 0.24.2L · 2026-09-19 · Antigravity
 **Qué cambió.** Limpieza de textos en interfaz y establecimiento de norma de diseño de textos en el proyecto:
 - Se eliminaron las explicaciones redundantes en la pestaña de Ajustes (textos obvios debajo de controles como el selector de micrófono, tono de llamada entrante y tono de mensajes).
