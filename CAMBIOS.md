@@ -17,6 +17,17 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.2L · 2026-09-19 · Antigravity
+**Qué cambió.** Limpieza de textos en interfaz y establecimiento de norma de diseño de textos en el proyecto:
+- Se eliminaron las explicaciones redundantes en la pestaña de Ajustes (textos obvios debajo de controles como el selector de micrófono, tono de llamada entrante y tono de mensajes).
+- Se redactó la explicación del umbral de activación de voz de forma concisa, directa y user-friendly, eliminando jerga técnica innecesaria ("la compuerta").
+- Se formalizó como regla en `CLAUDE.md`, `AGENTS.md` y `SYNC.md` la norma de diseño: cero textos redundantes en la interfaz y explicaciones claras sin tecnicismos.
+**Por qué.** Mantener la interfaz limpia, compacta y profesional sin sobrecargar al usuario con textos obvios ni conceptos de ingeniería de audio innecesarios.
+**Dónde.** `src/social/panel.js`, `CLAUDE.md`, `AGENTS.md`, `SYNC.md`.
+**Cómo se verifica.** Abrir Ajustes (avatar -> Ajustes) y comprobar que las tarjetas de audio y tonos no tienen leyendas redundantes y que la explicación del umbral es concisa y clara.
+
+---
+
 ### 0.24.2K · 2026-09-19 · Antigravity
 **Qué cambió.** Incorporación del sistema de audio y ringtones oficiales de Llamadita:
 - Se añadió como ringtone de llamada entrante oficial el audio descargado `llamadita-marimba-ringtone.wav` en `public/sounds/ringtone.wav`, el cual suena en bucle al recibir una llamada directa y se detiene al contestar, rechazar o vencer el tiempo de timbrado.

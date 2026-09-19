@@ -37,6 +37,7 @@ Este archivo es la puerta de entrada. Si sos un agente trabajando en este reposi
 - No crear un segundo cliente de Supabase: cada uno abre una conexión más por usuario.
 - No meter JavaScript dentro del HTML de la web: las cabeceras de seguridad lo bloquean.
 - La app usa un puerto fijo: no puede haber dos copias abiertas a la vez.
+- **Cero explicaciones redundantes en la interfaz:** No poner textos obvios debajo de controles que se explican solos. Si una explicación es necesaria (ej. calibrar umbral), debe ser concisa, amigable y sin tecnicismos innecesarios (evitar palabras como "compuerta").
 
 La verificación de los puntos 4, 5 y 6 corre sola en cada push a `main`. Si no cumplís,
 el repositorio te lo marca en rojo.

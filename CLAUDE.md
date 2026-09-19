@@ -1,4 +1,4 @@
-﻿# Llamadita — Protocolo de desarrollo y colaboración multi-agente (Claude & Antigravity)
+# Llamadita — Protocolo de desarrollo y colaboración multi-agente (Claude & Antigravity)
 
 Este proyecto lo desarrollan en paralelo dos personas con sus agentes de IA:
 - **Juan (LivaNess)** con **Antigravity**
@@ -52,6 +52,9 @@ Reglas:
 - **Cero menciones a otras apps de chat/voz** en código, UI, docs o commits. Llamadita se describe por lo que es.
 - Antes de reinventar algo, mirar si ya existe: `src/supabase/client.js` es el cliente Supabase compartido (auth, datos, presencia). No crear clientes nuevos con `createClient`: cada uno abre una conexión en vivo más por usuario. La señalización (`peerManager.js`) también lo usa desde la `1.12.1A`.
 - **Escala objetivo: 50 a 100 usuarios en el plan gratis de Supabase.** Nada que escriba en la base de forma periódica ni que emita en vivo cambios de una tabla que todos escuchan. Presencia = Realtime Presence (canal `presencia`).
+- **Textos de interfaz: cero explicaciones redundantes y lenguaje amigable (user-friendly).**
+  - No agregar textos obvios debajo de controles que ya se explican solos (ej: evitar "Elegí el micrófono que vas a usar", "Suena en bucle cuando un amigo te hace una llamada", "Sonido para avisar nuevos mensajes"). La interfaz debe ser limpia, compacta y sin ruido visual.
+  - Cuando una explicación sea necesaria (ej. calibrar el umbral de activación de voz), debe ser concisa, directa y sin tecnicismos innecesarios (evitar términos como "la compuerta" o jerga de ingeniería; preferir frases claras y directas como "cortando cualquier estática automáticamente").
 
 ---
 

@@ -1437,12 +1437,11 @@ function settingsView() {
       <select id="scAudioInput" class="sc-select">
         <option value="">Cargando micrófonos…</option>
       </select>
-      <p class="sc-muted sc-tiny">Elegí el micrófono que vas a usar en tus llamadas.</p>
     </div>
 
     <div class="sc-settings-group">
       <div class="sc-settings-title">
-        <span>Umbral de voz y puerta de ruido</span>
+        <span>Umbral de activación de voz</span>
         <span class="sc-voice-badge" id="scVoiceBadge">Silencio</span>
       </div>
 
@@ -1461,7 +1460,7 @@ function settingsView() {
       </div>
 
       <p class="sc-muted sc-tiny">
-        La <b>línea roja</b> marca dónde se activa el micrófono. Calibralo para que el ruido de tu habitación quede a la izquierda (silencio) y tu voz la sobrepase al hablar (verde). En silencio, la compuerta corta la estática automáticamente.
+        La <b>línea roja</b> marca cuándo se activa el micrófono. Ajustala para que el ruido ambiente quede a la izquierda (silencio) y tu voz la supere al hablar (verde), cortando cualquier estática automáticamente.
       </p>
     </div>
 
@@ -1472,14 +1471,13 @@ function settingsView() {
       <div class="sc-sound-row">
         <div class="sc-sound-info">
           <strong>Llamadita Clásica</strong>
-          <span class="sc-muted sc-tiny">Marimba melódica (WAV)</span>
+          <span class="sc-muted sc-tiny">Marimba melódica</span>
         </div>
         <button type="button" id="btnTestRingtone" class="sc-sound-btn ${isTestingRingtone ? 'active' : ''}">
           <span class="sc-sound-btn-icon">${isTestingRingtone ? '⏹' : '▶'}</span>
           <span class="sc-sound-btn-label">${isTestingRingtone ? 'Detener' : 'Probar'}</span>
         </button>
       </div>
-      <p class="sc-muted sc-tiny">Suena en bucle cuando un amigo te hace una llamada directa.</p>
     </div>
 
     <div class="sc-settings-group">
@@ -1500,7 +1498,6 @@ function settingsView() {
           <span>▶</span>
         </button>
       </div>
-      <p class="sc-muted sc-tiny">Sonido ultra-corto y nítido para avisar nuevos mensajes.</p>
     </div>
   </div>`;
 }

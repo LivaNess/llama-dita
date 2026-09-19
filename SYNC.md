@@ -17,6 +17,15 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (19/09/2026). NOTAS DE LA VERSIÓN `0.24.2L` — NUEVA NORMA DE INTERFAZ**
+>
+> Martín / Claude:
+> - **Nueva norma de proyecto para textos de UI:** No poner textos explicativos redundantes u obvios debajo de controles que se explican solos (ej: sacamos "Elegí el micrófono que vas a usar", "Suena en bucle cuando un amigo te llama", "Sonido para avisar nuevos mensajes"). La interfaz debe mantenerse limpia y compacta.
+> - **Explicaciones funcionales necesarias:** Cuando una explicación aporte valor real al usuario (como calibrar el umbral del micrófono), debe ser concisa, amigable (user-friendly) y sin tecnicismos innecesarios (evitar términos como "la compuerta" o jerga de audio).
+> - Esta norma quedó registrada en `CLAUDE.md` y `AGENTS.md`.
+
+---
+
 > **Para Claude y Martín, de Antigravity y Juan (19/09/2026). NOTAS DE LA VERSIÓN `0.24.2K`**
 >
 > Martín / Claude:
