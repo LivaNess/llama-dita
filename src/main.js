@@ -46,6 +46,25 @@ const studioBoothsView = document.getElementById('studioBoothsView');
 const standbyView = document.getElementById('standbyView');
 const btnSidebarMic = document.getElementById('btnSidebarMic');
 const btnDeafen = document.getElementById('btnDeafen');
+const mutedSpeechTooltip = document.getElementById('mutedSpeechTooltip');
+const mutedSpeechTooltipText = document.getElementById('mutedSpeechTooltipText');
+
+// Frases rotativas al hablar silenciado
+const MUTED_SPEECH_PHRASES = [
+  'Te escuchamos cuando toques acá',
+  'Sonido: 0%. Ganas de hablar: 100%.',
+  'Psst... estás en silencio',
+  'Estás silenciado',
+  'Desmuteate para hablar',
+  'Hablá con confianza, pero desmuteate primero.',
+  'El micrófono no te está escuchando.',
+  'Le estás hablando a la pared',
+  'Ojo, mic off.',
+  '¿Te leemos los labios?'
+];
+
+let mutedPhraseIndex = 0;
+let mutedTooltipHideTimer = null;
 let isDeafened = false;
 let wasMutedBeforeDeafen = false;
 let currentActiveChannel = null;
@@ -383,6 +402,12 @@ function renderAudioMetrics(ahora = 0) {
       hostVocalAura.style.transform = 'scale(1)';
       hostVocalAura.style.opacity = '0.08';
     }
+
+    // Detección de voz estando silenciado (umbral de decibeles/volumen)
+    const raw = audioManager.rawLocalMetrics;
+    if (raw && (raw.volume > 10 || raw.db > -45)) {
+      showSpeakingWhileMuted();
+    }
   } else {
     const { volume, isSpeaking } = audioManager.localMetrics;
     if (isSpeaking) {
@@ -429,6 +454,55 @@ function renderAudioMetrics(ahora = 0) {
   requestAnimationFrame(renderAudioMetrics);
 }
 
+// Tooltip flotante al hablar silenciado
+function showSpeakingWhileMuted() {
+  if (!mutedSpeechTooltip || !btnSidebarMic) return;
+
+  // Si no está visible todavía, elegimos la siguiente frase rotativa
+  if (!mutedSpeechTooltip.classList.contains('show')) {
+    if (mutedSpeechTooltipText) {
+      mutedSpeechTooltipText.textContent = MUTED_SPEECH_PHRASES[mutedPhraseIndex];
+      mutedPhraseIndex = (mutedPhraseIndex + 1) % MUTED_SPEECH_PHRASES.length;
+    }
+    mutedSpeechTooltip.hidden = false;
+    // Forzar reflow para animación elástica suave
+    void mutedSpeechTooltip.offsetWidth;
+    mutedSpeechTooltip.classList.add('show');
+
+    // Preparado para futuro aviso sonoro
+    // playMutedSpeechBeep();
+  }
+
+  // Animación de vibración / rebote sutil del botón rojo
+  btnSidebarMic.classList.add('vibrating');
+
+  // Reiniciar temporizador de ocultado (1.5 segundos después de que deje de hablar)
+  if (mutedTooltipHideTimer) {
+    clearTimeout(mutedTooltipHideTimer);
+  }
+  mutedTooltipHideTimer = setTimeout(() => {
+    hideSpeakingWhileMuted();
+  }, 1500);
+}
+
+function hideSpeakingWhileMuted() {
+  if (mutedTooltipHideTimer) {
+    clearTimeout(mutedTooltipHideTimer);
+    mutedTooltipHideTimer = null;
+  }
+  if (btnSidebarMic) {
+    btnSidebarMic.classList.remove('vibrating');
+  }
+  if (mutedSpeechTooltip) {
+    mutedSpeechTooltip.classList.remove('show');
+    setTimeout(() => {
+      if (!mutedSpeechTooltip.classList.contains('show')) {
+        mutedSpeechTooltip.hidden = true;
+      }
+    }, 250);
+  }
+}
+
 // Sincronización del botón de micrófono en la barra lateral
 function syncMicUi(isMuted) {
   if (btnSidebarMic) {
@@ -438,6 +512,7 @@ function syncMicUi(isMuted) {
     } else {
       btnSidebarMic.className = 'sidebar-mic-btn active';
       btnSidebarMic.title = 'Silenciar Micrófono';
+      hideSpeakingWhileMuted();
     }
   }
 }

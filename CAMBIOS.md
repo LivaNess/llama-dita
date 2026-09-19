@@ -19,6 +19,18 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.24.2G · 2026-09-19 · Antigravity
+**Qué cambió.** Detección y advertencia de voz al hablar estando silenciado (Speaking while Muted):
+- Si el usuario habla mientras el micrófono está en silencio por encima de un umbral de decibeles (`rawLocalMetrics`), aparece un tooltip flotante directamente sobre el botón rojo del micrófono.
+- El mensaje rota de manera cíclica entre las frases personalizadas pedidas ("Te escuchamos cuando toques acá", "Sonido: 0%. Ganas de hablar: 100%.", "Psst... estás en silencio", "Estás silenciado", etc.).
+- Animación: entrada elástica con `scale-up` suave (`cubic-bezier`), flecha indicadora y rebote/vibración sutil del icono de micrófono rojo.
+- Duración: permanece activo mientras la persona hable y desaparece suavemente 1.5 segundos después de que deje de hablar.
+- Preparado internamente con gancho para reproducir un aviso sonoro opcional en el futuro.
+**Por qué.** Pedido de Juan: advertir con frases divertidas y diseño cuidado si el usuario habla teniendo el micrófono silenciado.
+**Dónde.** `index.html`, `src/style.css`, `src/audio/audioManager.js`, `src/main.js`, `package.json`.
+
+---
+
 ### 0.24.2F · 2026-09-18 · Antigravity
 **Qué cambió.** Al estar ensordecido, hacer clic en el botón de micrófono para desmutearse ahora también des-ensordece automáticamente al usuario (reactiva el audio entrante para escuchar nuevamente a los demás y restablece el estado visual del botón de auriculares a activo).
 **Por qué.** Pedido de Juan: si estás ensordecido y decidís hablar desmuteándote, tiene sentido que también vuelvas a escuchar al resto inmediatamente.

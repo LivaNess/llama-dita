@@ -68,6 +68,11 @@ class AudioManager {
     return medirNivel(this.localAnalyser);
   }
 
+  // Métricas reales del micrófono (incluso si está silenciado), para avisar si habla con mic off
+  get rawLocalMetrics() {
+    return medirNivel(this.localAnalyser);
+  }
+
   get remoteMetrics() {
     return medirNivel(this.remoteAnalyser);
   }
@@ -121,8 +126,11 @@ class AudioManager {
       this.cleanupLocalNodes();
 
       // Audio Graph:
-      // Micrófono -> volumen -> analizador -> tapón mudo -> salida
-      this.localSource = ctx.createMediaStreamSource(this.localStream);
+      // Clonamos el track para el analizador local de modo que podamos seguir midiendo y
+      // detectando si el usuario habla incluso cuando silencia las pistas de salida hacia WebRTC.
+      const monitorTracks = this.localStream.getAudioTracks().map(t => t.clone());
+      this.monitorStream = new MediaStream(monitorTracks);
+      this.localSource = ctx.createMediaStreamSource(this.monitorStream);
       
       this.localGain = ctx.createGain();
       this.localGain.gain.value = this.micSensitivity;
@@ -151,6 +159,10 @@ class AudioManager {
 
   cleanupLocalNodes() {
     try {
+      if (this.monitorStream) {
+        this.monitorStream.getTracks().forEach(t => t.stop());
+        this.monitorStream = null;
+      }
       if (this.localSink) this.localSink.disconnect();
       if (this.localAnalyser) this.localAnalyser.disconnect();
       if (this.localGain) this.localGain.disconnect();
@@ -172,6 +184,7 @@ class AudioManager {
 
   setMute(mute) {
     this.isMuted = !!mute;
+    // Silenciamos la pista que se transmite a los demás
     if (this.localStream) {
       this.localStream.getAudioTracks().forEach(t => t.enabled = !this.isMuted);
     }

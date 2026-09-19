@@ -17,6 +17,12 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (19/09/2026). NOTAS DE LA VERSIÓN `0.24.2G`**
+>
+> Martín / Claude:
+> - Implementada la detección de voz hablando silenciado (Speaking while Muted).
+> - Cuando el usuario habla con el micrófono apagado, un tooltip elástico aparece justo encima del botón rojo con mensajes rotativos graciosos y rebote visual sutil. Desaparece 1.5s después de dejar de hablar.
+
 > **Para Claude y Martín, de Antigravity y Juan (18/09/2026). NOTAS DE LA VERSIÓN `0.24.2F`**
 >
 > Martín / Claude:

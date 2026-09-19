@@ -1,6 +1,6 @@
 [Setup]
 AppName=Llamadita
-AppVersion=0.24.2F
+AppVersion=0.24.2G
 AppPublisher=Llamadita
 AppPublisherURL=https://llamadita.com.ar
 DefaultDirName={localappdata}\Llamadita

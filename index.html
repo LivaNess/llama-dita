@@ -109,13 +109,19 @@
             <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path>
           </svg>
         </button>
-        <button class="sidebar-mic-btn active" id="btnSidebarMic" title="Silenciar / Activar Micrófono">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
-            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-            <line x1="12" x2="12" y1="19" y2="22"></line>
-          </svg>
-        </button>
+        <div class="sidebar-mic-wrapper">
+          <div class="muted-speech-tooltip" id="mutedSpeechTooltip" aria-live="polite" hidden>
+            <span class="tooltip-text" id="mutedSpeechTooltipText">Te escuchamos cuando toques acá</span>
+            <div class="tooltip-arrow"></div>
+          </div>
+          <button class="sidebar-mic-btn active" id="btnSidebarMic" title="Silenciar / Activar Micrófono">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+              <line x1="12" x2="12" y1="19" y2="22"></line>
+            </svg>
+          </button>
+        </div>
       </div>
     </aside>
 
