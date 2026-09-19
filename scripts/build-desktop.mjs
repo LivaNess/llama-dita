@@ -1,4 +1,4 @@
-﻿// Empaqueta la app de escritorio a partir del build de Vite (dist/).
+// Empaqueta la app de escritorio a partir del build de Vite (dist/).
 //  1. Sincroniza la versión de package.json en neutralino.config.json e installer.iss
 //  2. Copia dist/ a desktop/resources/ (conserva icons/ y js/) e inyecta las globals de Neutralino
 //  3. Escribe desktop/update-manifest.json (lo que consulta el updater de la app)
@@ -62,11 +62,12 @@ if (!existsSync(neu)) { console.error('No se generó ' + neu); process.exit(1); 
 if (process.platform === 'win32') {
   const exe = join(desktop, 'dist', cfg.cli.binaryName, `${cfg.cli.binaryName}-win_x64.exe`);
   const ico = join(desktop, 'resources', 'icons', 'app.ico');
-  if (existsSync(exe) && existsSync(ico)) {
+  if (existsSync(exe)) {
     const rcedit = join(root, 'node_modules', 'rcedit', 'bin', 'rcedit-x64.exe');
     if (existsSync(rcedit)) {
-      execSync(`"${rcedit}" "${exe}" --set-icon "${ico}"`, { stdio: 'inherit' });
-      console.log('Ícono del ejecutable actualizado.');
+      const iconArg = existsSync(ico) ? `--set-icon "${ico}"` : '';
+      execSync(`"${rcedit}" "${exe}" ${iconArg} --set-version-string "FileDescription" "Llamadita" --set-version-string "ProductName" "Llamadita" --set-version-string "CompanyName" "Llamadita" --set-product-version "${version}"`, { stdio: 'inherit' });
+      console.log('Metadatos e ícono del ejecutable actualizados a Llamadita.');
     } else {
       console.warn('No está rcedit: el .exe queda con el ícono de fábrica. Corré npm install.');
     }

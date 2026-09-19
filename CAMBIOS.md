@@ -17,6 +17,18 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.2Q · 2026-09-19 · Antigravity
+**Qué cambió.** Notificaciones nativas con avatar y foco a chat, aviso en segundo plano, control manual de actualización y botón de reacción en esquina:
+- **Notificaciones con nombre de app, avatar circular y foco al chat:** El encabezado del toast en Windows ahora muestra "Llamadita" (mediante `rcedit` en los metadatos del ejecutable PE y WinRT ToastNotifier), incorpora la foto de perfil circular del remitente y, al hacer clic en la notificación, restaura la ventana desde segundo plano/minimizado y navega directamente al canal o chat correspondiente.
+- **Notificaciones en segundo plano aun con el chat abierto:** Si el usuario tiene seleccionado el chat pero la aplicación se encuentra en segundo plano, minimizada o detrás de otra ventana, el aviso sonoro y la notificación de escritorio se disparan correctamente.
+- **Control manual de actualizaciones (flecha verde):** Se eliminó la instalación silenciosa automática al inicio. Ahora únicamente se enciende la flecha verde de descarga (`#btnUpdateAvailable`) en la cabecera cuando existe una versión disponible, dejando la decisión de actualizar exclusivamente en manos del usuario cuando decide tocarla.
+- **Botón de reacción en esquina del mensaje sin trampas de hover:** Se reestructuraron las acciones del mensaje (`.sc-msg-acciones`) para ubicarse en la esquina superior derecha del mensaje (`[ 😊 ] [ ↩ ]`), contenidas dentro del área del mensaje para evitar pérdidas bruscas del cursor. Al pulsar `😊` (o `+` en las reacciones existentes) se abre el selector con los 6 emojis rápidos arriba y la cuadrícula completa abajo.
+**Por qué.** La notificación de Windows decía "A Neutralinojs application" sin avatar y no abría el chat al tocarla; si el chat estaba en segundo plano no avisaba; la app se auto-actualizaba sin permiso del usuario; y la barra de reacciones anterior quedaba fuera del borde del mensaje en textos cortos, provocando que se cerrara abruptamente al mover el cursor hacia los emojis.
+**Dónde.** `package.json`, `scripts/build-desktop.mjs`, `src/main.js`, `src/updater.js`, `src/social/deeplink.js`, `src/social/panel.js`, `src/social/social.css`, `CAMBIOS.md`, `SYNC.md`.
+**Cómo se verifica.** Enviar un mensaje con la app minimizada o detrás de otra ventana: verificar que el toast dice "Llamadita", muestra el avatar y al tocarlo trae al frente la app abriendo ese chat. Comprobar que la flecha verde de actualización solo actualiza al hacerle clic. Pasar el mouse sobre un mensaje corto y hacer clic en `😊`: verificar que abre el popover con emojis rápidos y cuadrícula completa sin cerrarse al mover el mouse.
+
+---
+
 ### 0.24.2P · 2026-09-19 · Antigravity
 **Qué cambió.** Rediseño del menú de chat, barra flotante de reacciones con selector de emojis y barra de vista previa de respuestas:
 - **Rediseño del menú de opciones del chat:** Se amplió el ancho del menú desplegable (`min-width: 220px; width: max-content; white-space: nowrap`), evitando que "Borrar lo mío para los dos" se parta en dos renglones. Se añadieron textos en alto contraste (`#e2e8f0`), íconos suaves en azul (#8fa6ff), acciones destructivas en rojo (#fca5a5) y una línea divisoria limpia entre opciones normales y de borrado.

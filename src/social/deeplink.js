@@ -1,4 +1,4 @@
-﻿// El enlace del mail abre la app de escritorio.
+// El enlace del mail abre la app de escritorio.
 //
 // Cómo funciona:
 //  1. La app registra en Windows el esquema llamadita:// apuntando a un script propio
@@ -79,14 +79,22 @@ function tokensDesde(url) {
   return null;
 }
 
-async function revisarEnlace(nl, toast) {
-  let contenido = null;
-  try { contenido = await nl.filesystem.readFile(archivoUrl()); } catch (_) { return; }
-  try { await nl.filesystem.remove(archivoUrl()); } catch (_) {}
-  if (!contenido) return;
-
-  const enlace = contenido.match(new RegExp(`${ESQUEMA}://[^\\s"']+`, 'i'))?.[0];
+async function procesarEnlace(enlace, nl, toast, onOpenChat) {
   if (!enlace) return;
+
+  // Enlace a un chat o canal
+  if (enlace.toLowerCase().startsWith(`${ESQUEMA}://chat/`)) {
+    const channelId = enlace.substring(`${ESQUEMA}://chat/`.length).split(/[?#]/)[0].trim();
+    if (nl) {
+      try { await nl.window.unminimize(); } catch (_) {}
+      try { await nl.window.show(); } catch (_) {}
+      try { await nl.window.focus(); } catch (_) {}
+    }
+    if (channelId && onOpenChat) {
+      onOpenChat(channelId);
+    }
+    return;
+  }
 
   const tokens = tokensDesde(enlace);
   if (tokens?.error) { toast?.('Ese enlace ya no sirve. Pedí un código nuevo.'); return; }
@@ -94,6 +102,17 @@ async function revisarEnlace(nl, toast) {
 
   const { error } = await supabase.auth.setSession(tokens);
   toast?.(error ? 'El enlace ya fue usado o venció. Pedí un código nuevo.' : 'Entraste desde el enlace del mail');
+}
+
+async function revisarEnlace(nl, toast, onOpenChat) {
+  let contenido = null;
+  try { contenido = await nl.filesystem.readFile(archivoUrl()); } catch (_) { return; }
+  try { await nl.filesystem.remove(archivoUrl()); } catch (_) {}
+  if (!contenido) return;
+
+  const enlace = contenido.match(new RegExp(`${ESQUEMA}://[^\\s"']+`, 'i'))?.[0];
+  if (!enlace) return;
+  await procesarEnlace(enlace, nl, toast, onOpenChat);
 }
 
 // ------------------------------------------------- portapapeles (camino seguro)
@@ -119,7 +138,7 @@ async function revisarPortapapeles(nl, toast) {
 }
 
 // ---------------------------------------------------------------- arranque
-export async function initDeepLink({ toast } = {}) {
+export async function initDeepLink({ toast, onOpenChat } = {}) {
   const nl = await neutralino();
   if (!nl) return;
 
@@ -129,16 +148,12 @@ export async function initDeepLink({ toast } = {}) {
   const args = (window.NL_ARGS || []).join(' ');
   const enArgs = args.match(new RegExp(`${ESQUEMA}://[^\\s"']+`, 'i'))?.[0];
   if (enArgs) {
-    const tokens = tokensDesde(enArgs);
-    if (tokens && !tokens.error) {
-      const { error } = await supabase.auth.setSession(tokens);
-      if (!error) toast?.('Entraste desde el enlace del mail');
-    }
+    await procesarEnlace(enArgs, nl, toast, onOpenChat);
   }
 
   await instalarScriptYEsquema(nl);
-  await revisarEnlace(nl, toast);
-  setInterval(() => revisarEnlace(nl, toast), 1500);
+  await revisarEnlace(nl, toast, onOpenChat);
+  setInterval(() => revisarEnlace(nl, toast, onOpenChat), 1500);
   revisarPortapapeles(nl, toast);
   setInterval(() => revisarPortapapeles(nl, toast), 1500);
 }

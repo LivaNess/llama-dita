@@ -81,7 +81,7 @@ function unmuteChat(id) {
 
 let lastMessageSoundId = null;
 
-function notificarMensajeEscritorio(fila) {
+async function notificarMensajeEscritorio(fila) {
   if (!fila || fila.author_id === state.me?.id) return;
   if (hooks.getNotificationsEnabled && !hooks.getNotificationsEnabled()) return;
   if (isChatMuted(fila.channel_id) || isChatMuted(fila.author_id)) return;
@@ -91,12 +91,12 @@ function notificarMensajeEscritorio(fila) {
     return;
   }
 
-  const canal = state.channels?.find((c) => c.id === fila.channel_id);
+  const canal = state.channels?.find((c) => c.id === fila.channel_id) || state.directos?.get(fila.channel_id);
   const amigo = state.friendships
     ?.map((f) => f.requester_id === state.me?.id ? f.addressee : f.requester)
     ?.find((u) => u?.id === fila.author_id);
   const miembro = state.members?.find((m) => m.user_id === fila.author_id)?.profile;
-  const autor = amigo || miembro;
+  const autor = fila.author || amigo || miembro;
   const nombreAutor = autor?.display_name || autor?.username || 'Alguien';
 
   let titulo = 'Llamadita';
@@ -110,9 +110,16 @@ function notificarMensajeEscritorio(fila) {
     ? (fila.body.length > 85 ? fila.body.substring(0, 82) + '…' : fila.body)
     : 'Envió un archivo adjunto';
 
+  let avatarUrl = '';
+  if (autor?.avatar_key) {
+    try { avatarUrl = await archivos.urlParaVer(autor.avatar_key); } catch (_) {}
+  }
+
   hooks.showNativeDesktopNotification?.({
     title: titulo,
     body: cuerpo,
+    avatarUrl,
+    channelId: fila.channel_id,
     onClick: () => {
       if (fila.channel_id) openChannel(fila.channel_id);
     }
@@ -393,9 +400,14 @@ function onIncomingCall(row) {
   const from = f ? otherSide(f) : { display_name: 'Alguien', username: '' };
   state.incomingCall = { ...row, from };
   hooks.startRingtone?.();
+  let avatarUrl = '';
+  if (from?.avatar_key) {
+    try { archivos.urlParaVer(from.avatar_key).then((u) => { avatarUrl = u; }); } catch (_) {}
+  }
   hooks.showNativeDesktopNotification?.({
     title: 'Llamada entrante',
-    body: `${from.display_name || from.username || 'Un amigo'} te está llamando…`
+    body: `${from.display_name || from.username || 'Un amigo'} te está llamando…`,
+    avatarUrl
   });
   clearTimeout(state.ringTimer);
   state.ringTimer = setTimeout(() => answerCall('missed'), RING_TIMEOUT_MS);
@@ -682,7 +694,7 @@ function reaccionesItem(m) {
   }
   return `<div class="sc-reacciones">${[...porEmoji.entries()].map(([emoji, c]) =>
     `<button type="button" class="sc-reaccion ${c.mia ? 'mia' : ''}" data-reaccion="${esc(m.id)}" data-emoji="${esc(emoji)}" title="${c.mia ? 'Sacar la tuya' : 'Sumarte'}">${esc(emoji)} ${c.cuantos}</button>`
-  ).join('')}</div>`;
+  ).join('')}<button type="button" class="sc-reaccion sc-reaccion-sumar" data-abrir-emojis="${esc(m.id)}" title="Sumar reacción">+</button></div>`;
 }
 
 // La cita del mensaje al que se le responde. Si ese mensaje ya no esta, se dice; no se
@@ -725,8 +737,8 @@ function msgItem(m) {
     ${reaccionesItem(m)}
     <small class="sc-msg-time">${hora}${m.edited_at ? ' · editado' : ''}</small>
     ${editando ? '' : `<div class="sc-msg-acciones">
-      <div class="sc-emojis">${EMOJIS_RAPIDOS.map((e) => `<button type="button" class="sc-emoji" data-reaccion="${esc(m.id)}" data-emoji="${e}" title="Reaccionar">${e}</button>`).join('')}<button type="button" class="sc-emoji sc-emoji-mas" data-abrir-emojis="${esc(m.id)}" title="Más emojis">+</button></div>
-      <button type="button" class="sc-msg-accion" data-responder="${esc(m.id)}" title="Responder">\u21a9</button>
+      <button type="button" class="sc-msg-accion" data-abrir-emojis="${esc(m.id)}" title="Reaccionar">😊</button>
+      <button type="button" class="sc-msg-accion" data-responder="${esc(m.id)}" title="Responder">↩</button>
       ${puedoFijar ? `<button type="button" class="sc-msg-accion" data-fijar="${esc(m.id)}" title="${m.fijado ? 'Soltarlo' : 'Fijarlo'}">\ud83d\udccc</button>` : ''}
       ${mine && m.body ? `<button type="button" class="sc-msg-accion" data-editar="${esc(m.id)}" title="Editar el texto">✎</button>` : ''}
       ${puedoBorrar ? `<button type="button" class="sc-msg-accion" data-borrar="${esc(m.id)}" title="Borrar para todos">✕</button>` : ''}
@@ -821,9 +833,12 @@ async function llegoMensaje(channelId, fila, isUpdate = false) {
       // Notificaciones desactivadas
     } else if (isChatMuted(channelId) || isChatMuted(fila.author_id)) {
       // Chat silenciado
-    } else if (lastMessageSoundId !== fila.id) {
-      lastMessageSoundId = fila.id;
-      hooks.playMessageSound?.();
+    } else {
+      if (lastMessageSoundId !== fila.id) {
+        lastMessageSoundId = fila.id;
+        hooks.playMessageSound?.();
+      }
+      notificarMensajeEscritorio(fila);
     }
   }
   const perfil = state.members.find((m) => m.user_id === fila.author_id)?.profile;
@@ -1455,8 +1470,11 @@ function abrirSelectorEmojis(messageId, triggerBtn) {
   popover.className = 'sc-emoji-picker-popover';
   popover.innerHTML = `
     <div class="sc-emoji-picker-header">
-      <span>Reaccionar</span>
+      <span class="sc-emoji-picker-title">Reaccionar</span>
       <button type="button" class="sc-emoji-picker-close" title="Cerrar">✕</button>
+    </div>
+    <div class="sc-emoji-picker-quick">
+      ${EMOJIS_RAPIDOS.map((e) => `<button type="button" class="sc-emoji-picker-quick-item" data-pick-emoji="${e}" title="${e}">${e}</button>`).join('')}
     </div>
     <div class="sc-emoji-picker-grid">
       ${LISTA_EMOJIS_PICKER.map((emoji) => `<button type="button" class="sc-emoji-picker-item" data-pick-emoji="${emoji}">${emoji}</button>`).join('')}
@@ -2897,6 +2915,10 @@ export function getSocialState() {
 export function updateSocialCallState() {
   renderSidebar();
   renderChat();
+}
+
+export function openSocialChannel(id) {
+  return openChannel(id);
 }
 
 if (typeof navigator !== 'undefined' && navigator.mediaDevices?.addEventListener) {

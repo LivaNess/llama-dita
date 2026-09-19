@@ -238,10 +238,6 @@ async function runCheck({ silent }) {
   renderPopover();
   try {
     lastResult = await checkForUpdates();
-    if (lastResult.available) {
-      if (silent && getAutoUpdate()) { await doInstall(); return; }
-      showBanner(lastResult.version);
-    }
   } catch (err) {
     lastResult = { error: err?.message || 'No pude consultar las actualizaciones' };
     if (!silent) console.warn('Actualizaciones:', err);

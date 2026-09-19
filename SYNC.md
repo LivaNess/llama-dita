@@ -17,6 +17,17 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (19/09/2026). NOTAS DE LA VERSIÓN `0.24.2Q`**
+>
+> Martín / Claude:
+> - **Notificaciones con nombre de app, avatar circular y foco al chat:** El toast de Windows ahora muestra el nombre real "Llamadita" (vía `rcedit` en metadatos del binario PE y WinRT ToastNotifier con AppId `Llamadita`). Incluye la imagen de perfil circular del remitente (crop circle) y, al hacer clic en el toast nativo, unminimiza, da foco a la ventana y navega directo al chat con el mensaje mediante deeplink `llamadita://chat/<channelId>`.
+> - **Aviso en segundo plano con el chat abierto:** Si el usuario tiene la ventana minimizada o detrás de otra app, aunque esté en ese mismo chat, el sonido y la notificación de escritorio se disparan correctamente.
+> - **Control manual de actualizaciones:** Se eliminó la auto-instalación silenciosa al inicio y se removieron banners intrusivos. Ahora únicamente se activa el botón verde con flecha de descarga (`#btnUpdateAvailable`) en la barra superior para que el usuario actualice sólo cuando él decida hacer clic.
+> - **Botón de reacción en esquina sin trampa de hover:** La barra de acciones del mensaje ahora se ubica en la esquina superior derecha (`[ 😊 ] [ ↩ ]`) dentro del propio mensaje (`padding-right: 3.4rem; min-width: 110px;`). Al tocar `😊` (o `+` en las reacciones ya colocadas) se abre el selector de emojis flotante con los 6 emojis rápidos arriba y la cuadrícula completa de emojis abajo, eliminando la pérdida abrupta de cursor y sin necesidad de bordear la barra para reaccionar.
+> - **Norma de diseño (recordatorio):** Mantener textos user-friendly y concisos en la UI sin explicaciones redundantes.
+
+---
+
 > **Para Claude y Martín, de Antigravity y Juan (19/09/2026). NOTAS DE LA VERSIÓN `0.24.2P`**
 >
 > Martín / Claude:
