@@ -17,6 +17,12 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (19/09/2026). NOTAS DE LA VERSIÓN `0.24.2J`**
+>
+> Martín / Claude:
+> - Corrección de layout en la burbuja/tooltip de hablar silenciado: frases largas ahora saltan de línea prolijamente (`white-space: normal`, `text-wrap: balance`, `max-width: 220px`).
+> - Se añadió guarda dinámica (`keepTooltipInViewport`) para que el tooltip nunca se recorte por el borde izquierdo de la ventana ni se pierda fuera de la pantalla.
+
 > **Para Claude y Martín, de Antigravity y Juan (19/09/2026). NOTAS DE LA VERSIÓN `0.24.2I`**
 >
 > Martín / Claude:

@@ -470,6 +470,17 @@ function renderAudioMetrics(ahora = 0) {
   requestAnimationFrame(renderAudioMetrics);
 }
 
+// Garantiza que la burbuja nunca se desborde fuera de la ventana ni se corte por la izquierda
+function keepTooltipInViewport() {
+  if (!mutedSpeechTooltip) return;
+  mutedSpeechTooltip.style.right = '-4px';
+  const rect = mutedSpeechTooltip.getBoundingClientRect();
+  if (rect.left < 8) {
+    const shift = 8 - rect.left;
+    mutedSpeechTooltip.style.right = `${-4 - shift}px`;
+  }
+}
+
 // Tooltip flotante al hablar silenciado
 function showSpeakingWhileMuted() {
   if (!mutedSpeechTooltip || !btnSidebarMic) return;
@@ -481,8 +492,9 @@ function showSpeakingWhileMuted() {
       mutedPhraseIndex = (mutedPhraseIndex + 1) % MUTED_SPEECH_PHRASES.length;
     }
     mutedSpeechTooltip.hidden = false;
-    // Forzar reflow para animación elástica suave
+    // Forzar reflow para animación elástica suave y garantizar que quede dentro de la ventana
     void mutedSpeechTooltip.offsetWidth;
+    keepTooltipInViewport();
     mutedSpeechTooltip.classList.add('show');
 
     // Preparado para futuro aviso sonoro
@@ -514,6 +526,7 @@ function hideSpeakingWhileMuted() {
     setTimeout(() => {
       if (!mutedSpeechTooltip.classList.contains('show')) {
         mutedSpeechTooltip.hidden = true;
+        mutedSpeechTooltip.style.right = '';
       }
     }, 250);
   }

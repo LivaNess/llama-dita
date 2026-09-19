@@ -19,6 +19,16 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.24.2J · 2026-09-19 · Antigravity
+**Qué cambió.** Corrección en la burbuja/tooltip de "Estás silenciado":
+- Se habilitó el salto de línea balanceado (`white-space: normal`, `text-wrap: balance`, `word-break: break-word`) con un ancho máximo de 220px y texto centrado, evitando que frases largas se extiendan horizontalmente y se pierdan fuera de la ventana.
+- La flecha indicadora se ajustó a la posición exacta del centro del botón del micrófono.
+- Se implementó ajuste dinámico (`keepTooltipInViewport`) para asegurar que la burbuja siempre respete los bordes de la pantalla sin importar la resolución ni el tamaño de la ventana.
+**Por qué.** En frases largas como "Hablá con confianza, pero desmuteate primero.", el texto se extendía horizontalmente más allá del ancho de la barra lateral y se recortaba fuera de la pantalla.
+**Dónde.** `src/style.css`, `src/main.js`, `package.json`.
+
+---
+
 ### 0.24.2I · 2026-09-19 · Antigravity
 **Qué cambió.** Nueva pestaña de "Ajustes" en el menú de usuario (al tocar tu foto/perfil):
 - Selector de dispositivo de entrada (micrófonos detectados en el sistema) con persistencia local y recuperación automática si se desconecta un periférico.

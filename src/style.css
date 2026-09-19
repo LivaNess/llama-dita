@@ -1151,7 +1151,10 @@ button.logo-tag { font: inherit; cursor: pointer; }
 .muted-speech-tooltip {
   position: absolute;
   bottom: calc(100% + 12px);
-  right: -8px;
+  right: -4px;
+  max-width: 220px;
+  width: max-content;
+  min-width: 120px;
   background: #111827;
   color: #f3f4f6;
   border: 1px solid rgba(239, 68, 68, 0.45);
@@ -1161,7 +1164,10 @@ button.logo-tag { font: inherit; cursor: pointer; }
   font-size: 0.78rem;
   font-weight: 600;
   line-height: 1.35;
-  white-space: nowrap;
+  white-space: normal;
+  text-wrap: balance;
+  word-break: break-word;
+  text-align: center;
   pointer-events: none;
   z-index: 120;
   transform-origin: bottom right;
@@ -1179,10 +1185,15 @@ button.logo-tag { font: inherit; cursor: pointer; }
   transform: scale(1) translateY(0);
 }
 
+.muted-speech-tooltip .tooltip-text {
+  display: inline-block;
+  max-width: 100%;
+}
+
 .muted-speech-tooltip .tooltip-arrow {
   position: absolute;
   top: 100%;
-  right: 18px;
+  right: 16px;
   width: 0;
   height: 0;
   border-left: 6px solid transparent;
