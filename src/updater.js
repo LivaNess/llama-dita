@@ -1,4 +1,4 @@
-﻿// Actualizaciones de la app.
+// Actualizaciones de la app.
 // - En escritorio (Neutralino): baja el resources.neu nuevo, lo instala y reinicia.
 // - En navegador: compara versión y ofrece recargar.
 //
@@ -7,6 +7,8 @@
 // responde, cae a la API de GitHub, que sirve el mismo contenido del repo.
 // raw.githubusercontent quedó descartado: tiene cachés por servidor y llegó a ofrecer
 // una versión vieja.
+
+import { supabase } from './supabase/client.js';
 
 export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0';
 
@@ -100,17 +102,91 @@ export async function installUpdate() {
 }
 
 // ------------------------------------------------------------------
-// UI: el tag de versión del header abre un popover; banner cuando hay versión nueva.
 // ------------------------------------------------------------------
+// UI: botón de flecha verde cuando hay versión nueva, aviso en vivo
+// por Supabase Realtime (sin búsqueda pesada) y comprobación al abrir.
+// ------------------------------------------------------------------
+let toastHelper = null;
+let realtimeChannel = null;
+
+function updateArrowUI() {
+  const btn = document.getElementById('btnUpdateAvailable');
+  if (!btn) return;
+  if (lastResult?.available) {
+    btn.hidden = false;
+    btn.title = `Actualización v${lastResult.version} disponible · Clic para actualizar`;
+  } else {
+    btn.hidden = true;
+  }
+  if (busy) {
+    btn.classList.add('is-updating');
+    btn.title = 'Actualizando…';
+  } else {
+    btn.classList.remove('is-updating');
+  }
+}
+
 export function initUpdater({ toast } = {}) {
+  toastHelper = toast || null;
+
   const tag = document.getElementById('btnUpdates') || document.querySelector('.logo-tag');
   if (tag) {
     tag.textContent = `v${APP_VERSION}`;
-    tag.title = 'Actualizaciones';
+    tag.title = `Llamadita v${APP_VERSION}`;
     tag.style.cursor = 'pointer';
     tag.addEventListener('click', togglePopover);
   }
+
+  const btnArrow = document.getElementById('btnUpdateAvailable');
+  if (btnArrow && !btnArrow._bound) {
+    btnArrow._bound = true;
+    btnArrow.addEventListener('click', () => {
+      if (busy) return;
+      doInstall();
+    });
+  }
+
+  // 1. Chequeo inicial al entrar a la app (tras 4 segundos de cortesía)
   setTimeout(() => runCheck({ silent: true }), CHECK_DELAY_MS);
+
+  // 2. Escucha reactiva en vivo vía Supabase Realtime (cero consumo de red en reposo):
+  // Cuando se publica una nueva versión, el script de deploy emite un broadcast y
+  // todos los programas abiertos encienden la flecha verde inmediatamente.
+  iniciarEscuchaRealtime();
+
+  // 3. Respaldo pasivo: si la ventana vuelve a recibir foco y pasaron más de 30 minutos
+  let ultimoFoco = Date.now();
+  window.addEventListener('focus', () => {
+    if (Date.now() - ultimoFoco > 30 * 60 * 1000) {
+      ultimoFoco = Date.now();
+      runCheck({ silent: true });
+    }
+  });
+}
+
+function iniciarEscuchaRealtime() {
+  if (realtimeChannel) return;
+  try {
+    realtimeChannel = supabase.channel('llamadita-actualizaciones', {
+      config: { broadcast: { self: false } }
+    });
+    realtimeChannel.on('broadcast', { event: 'nueva-version' }, (payload) => {
+      const v = payload?.payload?.version || payload?.version;
+      if (v && newer(v, APP_VERSION)) {
+        // Nueva versión detectada en vivo: refrescamos el estado y mostramos la flecha verde
+        runCheck({ silent: true }).then(() => {
+          if (!lastResult?.available && newer(v, APP_VERSION)) {
+            lastResult = { available: true, version: v, fuente: 'en vivo' };
+            updateArrowUI();
+          }
+          toastHelper?.(`Nueva versión v${v} lista para instalar`);
+        });
+      }
+    });
+    realtimeChannel.subscribe();
+  } catch (err) {
+    console.warn('No se pudo suscribir al canal en vivo de actualizaciones:', err);
+  }
 }
 
 let pop = null;
@@ -127,7 +203,11 @@ function togglePopover() {
 }
 
 function onOutside(e) {
-  if (pop && !pop.contains(e.target) && !e.target.closest('#btnUpdates, .logo-tag')) { pop.remove(); pop = null; document.removeEventListener('click', onOutside); }
+  if (pop && !pop.contains(e.target) && !e.target.closest('#btnUpdates, .logo-tag, #btnUpdateAvailable')) {
+    pop.remove();
+    pop = null;
+    document.removeEventListener('click', onOutside);
+  }
 }
 
 function renderPopover() {
@@ -153,7 +233,9 @@ function renderPopover() {
 
 async function runCheck({ silent }) {
   if (busy) return;
-  busy = true; renderPopover();
+  busy = true;
+  updateArrowUI();
+  renderPopover();
   try {
     lastResult = await checkForUpdates();
     if (lastResult.available) {
@@ -164,12 +246,16 @@ async function runCheck({ silent }) {
     lastResult = { error: err?.message || 'No pude consultar las actualizaciones' };
     if (!silent) console.warn('Actualizaciones:', err);
   } finally {
-    busy = false; renderPopover();
+    busy = false;
+    updateArrowUI();
+    renderPopover();
   }
 }
 
 async function doInstall() {
-  busy = true; renderPopover();
+  busy = true;
+  updateArrowUI();
+  renderPopover();
   const banner = document.getElementById('updBanner');
   if (banner) banner.querySelector('.upd-banner-text').textContent = isDesktop() ? 'Descargando la actualización… la app se reinicia sola.' : 'Recargando…';
   try {
@@ -177,8 +263,10 @@ async function doInstall() {
   } catch (err) {
     busy = false;
     lastResult = { error: 'No se pudo actualizar: ' + (err?.message || err) };
+    updateArrowUI();
     renderPopover();
     banner?.remove();
+    toastHelper?.(lastResult.error);
   }
 }
 

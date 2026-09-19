@@ -378,10 +378,40 @@ function setupNetworking() {
   peerManager.initPeer(localStream);
 }
 
+// Detección de voz silenciada y compuerta de ruido local.
+// Corre de forma continua mientras haya micrófono activo o llamada, sin importar la vista.
+function procesarVozLocal() {
+  const raw = audioManager.rawLocalMetrics;
+  if (!raw) return;
+
+  if (!audioManager.isMuted) {
+    audioManager.processNoiseGate(raw);
+    mutedSpeechConsecutiveFrames = 0;
+  } else if (isConnected) {
+    // Detección de voz estando silenciado en llamada:
+    // Usa el umbral calibrado en audioManager y sostenido por 2 cuadros
+    // para evitar falsos positivos con respiración, tecleo o estática de condensador.
+    const isHumanSpeech = audioManager.isVoiceDetected(raw);
+    if (isHumanSpeech) {
+      mutedSpeechConsecutiveFrames++;
+      if (mutedSpeechConsecutiveFrames >= 2) {
+        showSpeakingWhileMuted();
+      }
+    } else {
+      mutedSpeechConsecutiveFrames = 0;
+    }
+  } else {
+    mutedSpeechConsecutiveFrames = 0;
+  }
+}
+
 // Bucle liviano de animación vocal: solo actualiza el aura y disco cuando las cabinas están a la vista
 let ultimoCuadro = 0;
 
 function renderAudioMetrics(ahora = 0) {
+  // Siempre procesamos la voz local (compuerta de ruido y aviso de silenciado en cualquier vista)
+  procesarVozLocal();
+
   const cabinasALaVista = studioBoothsView && studioBoothsView.style.display !== 'none';
   if (!cabinasALaVista || document.hidden) {
     requestAnimationFrame(renderAudioMetrics);
@@ -395,13 +425,7 @@ function renderAudioMetrics(ahora = 0) {
 
   const isSuspended = audioManager.audioCtx && audioManager.audioCtx.state === 'suspended';
 
-  // Obtenemos las métricas reales del micrófono para la puerta de ruido y detección de voz
-  const raw = audioManager.rawLocalMetrics;
-  if (raw && !audioManager.isMuted) {
-    audioManager.processNoiseGate(raw);
-  }
-
-  // 1. Aura vocal del usuario local
+  // 1. Aura vocal del usuario local (solo aspecto visual de la cabina)
   if (isSuspended) {
     if (audioPermissionBanner) audioPermissionBanner.style.display = 'flex';
   } else if (audioManager.isMuted) {
@@ -410,21 +434,7 @@ function renderAudioMetrics(ahora = 0) {
       hostVocalAura.style.transform = 'scale(1)';
       hostVocalAura.style.opacity = '0.08';
     }
-
-    // Detección de voz estando silenciado:
-    // Usa el umbral calibrado en audioManager y sostenido por 2 cuadros
-    // para evitar falsos positivos con respiración, tecleo o estática de condensador.
-    const isHumanSpeech = raw && audioManager.isVoiceDetected(raw);
-    if (isHumanSpeech) {
-      mutedSpeechConsecutiveFrames++;
-      if (mutedSpeechConsecutiveFrames >= 2) {
-        showSpeakingWhileMuted();
-      }
-    } else {
-      mutedSpeechConsecutiveFrames = 0;
-    }
   } else {
-    mutedSpeechConsecutiveFrames = 0;
     const { volume, isSpeaking } = audioManager.localMetrics;
     if (isSpeaking) {
       hostAvatarDisc?.classList.add('active');
@@ -469,6 +479,15 @@ function renderAudioMetrics(ahora = 0) {
 
   requestAnimationFrame(renderAudioMetrics);
 }
+
+// Respaldo de fondo a 60ms (~16Hz): si la pestaña o ventana queda en segundo plano,
+// los navegadores congelan o ralentizan requestAnimationFrame. Este intervalo garantiza
+// que si estás en llamada y hablás silenciado, la detección no se interrumpa jamás.
+setInterval(() => {
+  if (document.hidden && isConnected && audioManager.isMuted) {
+    procesarVozLocal();
+  }
+}, 60);
 
 // Garantiza que la burbuja nunca se desborde fuera de la ventana ni se corte por la izquierda
 function keepTooltipInViewport() {

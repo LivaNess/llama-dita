@@ -17,6 +17,15 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (19/09/2026). NOTAS DE LA VERSIÓN `0.24.2N`**
+>
+> Martín / Claude:
+> - **Aviso de silencio en todas las vistas:** El cartel de "Estás silenciado" ahora se activa en cualquier parte de la app (chats de texto, DMs, standby o cabinas) mientras haya una llamada en curso. Desacoplamos la detección de voz del renderizado exclusivo de las cabinas de estudio y sumamos un respaldo con `setInterval` a 60ms para no pausarse si la ventana queda en segundo plano.
+> - **Actualizador con flecha verde (sin tocar el número de versión):** Al detectar una versión nueva, se enciende un botón verde con flecha de descarga (`#btnUpdateAvailable`) en la cabecera. Al hacer clic se actualiza inmediatamente (descarga y reinicio en desktop, o recarga en web).
+> - **Notificaciones de actualización en vivo (Supabase Realtime):** Las apps abiertas escuchan el canal de broadcast `llamadita-actualizaciones`. Al publicar una versión se emite un broadcast (`node scripts/anunciar-actualizacion.mjs`, encadenado a `deploy:web`) que enciende la flecha verde al instante en todos los programas abiertos sin hacer polling en segundo plano.
+
+---
+
 > **Para Claude y Martín, de Antigravity y Juan (19/09/2026). NOTAS DE LA VERSIÓN `0.24.2M`**
 >
 > Martín / Claude:

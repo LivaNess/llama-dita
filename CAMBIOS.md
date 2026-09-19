@@ -17,6 +17,17 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.2N · 2026-09-19 · Antigravity
+**Qué cambió.** Aviso permanente de silenciado en todas las pantallas y actualizador con flecha verde reactiva:
+- **Aviso de silenciado universal:** La detección de habla mientras estás silenciado en una llamada activa ahora se ejecuta sin importar la vista abierta (canales de texto, chats privados, standby o cabina). Se desacopló del renderizado exclusivo de las tarjetas de cabina y se añadió un intervalo de respaldo a 60ms para no interrumpirse si la ventana queda en segundo plano.
+- **Actualizador con flecha verde (sin tocar el número de versión):** Al haber una actualización disponible (comprobada al abrir o notificada en vivo), aparece un botón verde con ícono de flecha de descarga en la cabecera junto al logo y la versión. Al hacer clic en la flecha, se inicia la descarga e instalación directamente sin obligar al usuario a abrir popovers ni tocar el texto de la versión.
+- **Avisos de actualización en vivo (Supabase Realtime Broadcast):** Se integró un canal de broadcast en tiempo real (`llamadita-actualizaciones`). Cuando se publica una versión, se emite un broadcast automático y todos los programas abiertos reciben la notificación al instante encendiendo la flecha verde, eliminando búsquedas pesadas y constantes en segundo plano.
+**Por qué.** El cartel de "Estás silenciado" dejaba de aparecer si el usuario salía de la vista de cabina durante una llamada, y actualizar requería tocar el número de versión manualmente sin enterarse en tiempo real cuando había una nueva entrega lista.
+**Dónde.** `src/main.js`, `src/updater.js`, `index.html`, `src/brand.css`, `scripts/anunciar-actualizacion.mjs`, `package.json`.
+**Cómo se verifica.** Estar en llamada con micrófono silenciado, cambiar a un chat de texto o standby y hablar: el aviso y la vibración en el botón de micrófono aparecen de inmediato. Ejecutar `node scripts/anunciar-actualizacion.mjs` o simular actualización para comprobar que la flecha verde se activa en la cabecera y reacciona al clic.
+
+---
+
 ### 0.24.2M · 2026-09-19 · Antigravity
 **Qué cambió.** Notificaciones globales fuera del chat, control de volumen y silenciado de chats con clic derecho:
 - **Notificaciones globales:** Se agregó suscripción global a `messages` en Realtime, permitiendo que suenen las notificaciones de mensajes entrantes aunque el usuario se encuentre fuera del canal o chat directo (ej. en otro canal, en la vista inicial de bienvenida o en Ajustes).
