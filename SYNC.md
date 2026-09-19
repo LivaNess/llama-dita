@@ -17,6 +17,15 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (19/09/2026). NOTAS DE LA VERSIÓN `0.24.2I`**
+>
+> Martín / Claude:
+> - Pestaña "Ajustes" incorporada en el panel lateral (al hacer click en tu avatar/perfil).
+> - Permite seleccionar el dispositivo de entrada (micrófono) con reconexión en vivo y fallback defensivo.
+> - Deslizador interactivo para calibrar el umbral de activación de voz (-50 dB a -18 dB).
+> - Medidor visual en tiempo real con línea roja de corte y etiqueta "Silencio" / "Hablando" para calibración inmediata en 2 segundos.
+> - El bucle visual se apaga automáticamente al cerrar el panel o cambiar de pestaña (0% de CPU desperdiciada).
+
 > **Para Claude y Martín, de Antigravity y Juan (19/09/2026). NOTAS DE LA VERSIÓN `0.24.2H`**
 >
 > Martín / Claude:

@@ -19,6 +19,17 @@ Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
 ---
 
+### 0.24.2I · 2026-09-19 · Antigravity
+**Qué cambió.** Nueva pestaña de "Ajustes" en el menú de usuario (al tocar tu foto/perfil):
+- Selector de dispositivo de entrada (micrófonos detectados en el sistema) con persistencia local y recuperación automática si se desconecta un periférico.
+- Deslizador de umbral de detección de voz y compuerta de ruido (rango de -50 dB a -18 dB).
+- Calibrador visual en tiempo real: muestra la intensidad del micrófono en dB, una barra de nivel en vivo, la línea roja indicadora del umbral de corte y una etiqueta de estado instantáneo ("Silencio" vs "Hablando").
+- Cero consumo de CPU en segundo plano: el medidor visual se detiene inmediatamente al salir de la pestaña o cerrar el panel.
+**Por qué.** Permitir que cada usuario calibre fácilmente su micrófono (especialmente micrófonos de condensador o con diferentes pisos de ruido ambiental) sin falsos positivos ni cortes de voz.
+**Dónde.** `src/social/panel.js`, `src/social/social.css`, `src/audio/audioManager.js`, `src/main.js`, `package.json`.
+
+---
+
 ### 0.24.2H · 2026-09-19 · Antigravity
 **Qué cambió.** Optimización de audio para micrófonos de condensador y reducción de ruido:
 - Activadas directivas nativas del hardware WebRTC: `noiseSuppression: true`, `echoCancellation: true` y `autoGainControl: false` (elimina siseo eléctrico y evita que Windows suba la ganancia en silencio inflando el ruido). 0% CPU adicional en JavaScript.

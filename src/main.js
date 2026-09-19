@@ -214,7 +214,8 @@ document.addEventListener('click', () => {
 // Start or reconnect microphone
 async function startMicrophone(deviceId = null) {
   try {
-    localStream = await audioManager.initLocalStream(deviceId);
+    const target = deviceId || audioManager.currentDeviceId || null;
+    localStream = await audioManager.initLocalStream(target);
     peerManager.updateLocalStream(localStream);
     if (audioPermissionBanner) {
       audioPermissionBanner.style.display = 'none';
@@ -411,9 +412,9 @@ function renderAudioMetrics(ahora = 0) {
     }
 
     // Detección de voz estando silenciado:
-    // Umbral calibrado para voz real (> -34 dB o volumen > 18) y sostenido por 2 cuadros
+    // Usa el umbral calibrado en audioManager y sostenido por 2 cuadros
     // para evitar falsos positivos con respiración, tecleo o estática de condensador.
-    const isHumanSpeech = raw && (raw.volume > 18 || raw.db > -34);
+    const isHumanSpeech = raw && audioManager.isVoiceDetected(raw);
     if (isHumanSpeech) {
       mutedSpeechConsecutiveFrames++;
       if (mutedSpeechConsecutiveFrames >= 2) {
@@ -648,7 +649,14 @@ window.addEventListener('DOMContentLoaded', () => {
       const fn = friend.display_name || friend.username;
       return conQuien === fn || conQuien === friend.username || conQuien === friend.display_name;
     },
-    hangup: () => leaveCall(true)
+    hangup: () => leaveCall(true),
+    getAudioInputs: () => audioManager.getAudioInputDevices(),
+    changeAudioDevice: (devId) => startMicrophone(devId),
+    getCurrentAudioInput: () => audioManager.currentDeviceId,
+    getVoiceThreshold: () => audioManager.voiceThresholdDb,
+    setVoiceThreshold: (db) => audioManager.setVoiceThreshold(db),
+    getRawMetrics: () => audioManager.rawLocalMetrics,
+    isVoiceDetected: (rawMetrics) => audioManager.isVoiceDetected(rawMetrics)
   });
   // Buscar actualizaciones al abrir (opcional) + popover en el tag de versión del header.
   initUpdater({ toast: showToast });

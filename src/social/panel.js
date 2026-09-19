@@ -152,6 +152,7 @@ function toggleDrawer(force) {
   if (!state.session || !state.me) {
     if (drawer) drawer.hidden = true;
     if (overlay) overlay.hidden = true;
+    stopMeterLoop();
     return;
   }
   const open = force ?? drawer.hidden;
@@ -160,6 +161,11 @@ function toggleDrawer(force) {
   headerBtn.classList.toggle('active', open);
   const userBtn = document.getElementById('btnSidebarUser');
   if (userBtn) userBtn.classList.toggle('active', open);
+  if (!open) {
+    stopMeterLoop();
+  } else if (state.tab === 'ajustes') {
+    startMeterLoop();
+  }
 }
 
 // ------------------------------------------------------------------
@@ -353,9 +359,9 @@ function render() {
   drawer.innerHTML = `
     ${profileHeader()}
     <nav class="sc-tabs">
-      ${['amigos', 'canales', 'perfil'].map((t) => `<button data-tab="${t}" class="${state.tab === t ? 'active' : ''}">${{ amigos: 'Amigos', canales: 'Canales', perfil: 'Perfil' }[t]}${t === 'amigos' && pendingCount() ? ` <b class="sc-badge">${pendingCount()}</b>` : ''}</button>`).join('')}
+      ${['amigos', 'canales', 'perfil', 'ajustes'].map((t) => `<button data-tab="${t}" class="${state.tab === t ? 'active' : ''}">${{ amigos: 'Amigos', canales: 'Canales', perfil: 'Perfil', ajustes: 'Ajustes' }[t]}${t === 'amigos' && pendingCount() ? ` <b class="sc-badge">${pendingCount()}</b>` : ''}</button>`).join('')}
     </nav>
-    <div class="sc-body">${{ amigos: friendsView, canales: channelsView, perfil: profileView }[state.tab]()}</div>`;
+    <div class="sc-body">${{ amigos: friendsView, canales: channelsView, perfil: profileView, ajustes: settingsView }[state.tab]()}</div>`;
   bindMain();
 }
 
@@ -1315,12 +1321,164 @@ function profileView() {
   </form>`;
 }
 
+// ---- Ajustes ----
+let meterAnimFrame = null;
+
+function stopMeterLoop() {
+  if (meterAnimFrame) {
+    cancelAnimationFrame(meterAnimFrame);
+    meterAnimFrame = null;
+  }
+}
+
+function startMeterLoop() {
+  stopMeterLoop();
+  if (state.tab !== 'ajustes' || !drawer || drawer.hidden) return;
+
+  const bar = drawer.querySelector('#scMeterBar');
+  const badge = drawer.querySelector('#scVoiceBadge');
+  const levelText = drawer.querySelector('#scCurrentLevel');
+  if (!bar) return;
+
+  const loop = () => {
+    if (state.tab !== 'ajustes' || !drawer || drawer.hidden) {
+      meterAnimFrame = null;
+      return;
+    }
+
+    const raw = hooks.getRawMetrics ? hooks.getRawMetrics() : null;
+    if (raw) {
+      const vol = raw.volume;
+      bar.style.width = `${vol}%`;
+
+      const isVoice = hooks.isVoiceDetected ? hooks.isVoiceDetected(raw) : false;
+      if (badge) {
+        if (isVoice) {
+          if (!badge.classList.contains('speaking')) {
+            badge.classList.add('speaking');
+            badge.textContent = 'Hablando';
+          }
+        } else {
+          if (badge.classList.contains('speaking')) {
+            badge.classList.remove('speaking');
+            badge.textContent = 'Silencio';
+          }
+        }
+      }
+
+      if (levelText) {
+        levelText.textContent = `Nivel: ${raw.db} dB`;
+      }
+    }
+
+    meterAnimFrame = requestAnimationFrame(loop);
+  };
+
+  meterAnimFrame = requestAnimationFrame(loop);
+}
+
+async function populateAudioInputs(selectEl) {
+  if (!selectEl) return;
+  try {
+    const devices = hooks.getAudioInputs ? await hooks.getAudioInputs() : [];
+    const currentId = hooks.getCurrentAudioInput ? hooks.getCurrentAudioInput() : null;
+
+    if (!devices || devices.length === 0) {
+      selectEl.innerHTML = `<option value="">Micrófono predeterminado del sistema</option>`;
+      return;
+    }
+
+    selectEl.innerHTML = devices.map((d, index) => {
+      const label = d.label || `Micrófono ${index + 1}`;
+      const isSelected = (currentId && d.deviceId === currentId) || (!currentId && index === 0);
+      return `<option value="${esc(d.deviceId)}" ${isSelected ? 'selected' : ''}>${esc(label)}</option>`;
+    }).join('');
+  } catch (err) {
+    console.warn('Error listando micrófonos:', err);
+    selectEl.innerHTML = `<option value="">Micrófono predeterminado</option>`;
+  }
+}
+
+function settingsView() {
+  const thresholdDb = hooks.getVoiceThreshold ? hooks.getVoiceThreshold() : -34;
+  const thresholdPct = Math.max(0, Math.min(100, Math.round(((thresholdDb + 55) / 52) * 100)));
+
+  return `<div class="sc-settings">
+    <div class="sc-settings-group">
+      <div class="sc-settings-title">
+        <span>Micrófono de entrada</span>
+      </div>
+      <select id="scAudioInput" class="sc-select">
+        <option value="">Cargando micrófonos…</option>
+      </select>
+      <p class="sc-muted sc-tiny">Elegí el micrófono que vas a usar en tus llamadas.</p>
+    </div>
+
+    <div class="sc-settings-group">
+      <div class="sc-settings-title">
+        <span>Umbral de voz y puerta de ruido</span>
+        <span class="sc-voice-badge" id="scVoiceBadge">Silencio</span>
+      </div>
+
+      <div class="sc-meter-wrap" id="scMeterWrap">
+        <div class="sc-meter-bar" id="scMeterBar"></div>
+        <div class="sc-meter-marker" id="scMeterMarker" style="left: ${thresholdPct}%;"></div>
+      </div>
+
+      <div class="sc-meter-status">
+        <span id="scCurrentLevel">Nivel: - dB</span>
+        <span id="scThresholdLabel">Corte: ${thresholdDb} dB</span>
+      </div>
+
+      <div class="sc-slider-row">
+        <input type="range" id="scVoiceThreshold" class="sc-slider" min="-50" max="-18" step="1" value="${thresholdDb}" />
+      </div>
+
+      <p class="sc-muted sc-tiny">
+        La <b>línea roja</b> marca dónde se activa el micrófono. Calibralo para que el ruido de tu habitación quede a la izquierda (silencio) y tu voz la sobrepase al hablar (verde). En silencio, la compuerta corta la estática automáticamente.
+      </p>
+    </div>
+  </div>`;
+}
+
 // ---- Eventos ----
 function bindMain() {
   const q = (s) => drawer.querySelector(s);
   q('#scClose')?.addEventListener('click', () => toggleDrawer(false));
-  drawer.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => { state.tab = b.dataset.tab; render(); }));
+  drawer.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => {
+    state.tab = b.dataset.tab;
+    if (state.tab !== 'ajustes') stopMeterLoop();
+    render();
+  }));
   q('#scStatus')?.addEventListener('change', async (e) => { state.me.status = e.target.value; state.presence?.track({ status: myStatus() }); await api.setStatus(state.me.id, e.target.value); });
+
+  // ajustes
+  if (state.tab === 'ajustes') {
+    const audioSelect = q('#scAudioInput');
+    populateAudioInputs(audioSelect);
+    audioSelect?.addEventListener('change', async (e) => {
+      const devId = e.target.value;
+      if (hooks.changeAudioDevice) {
+        await hooks.changeAudioDevice(devId);
+        hooks.toast?.('Micrófono cambiado');
+      }
+    });
+
+    const threshSlider = q('#scVoiceThreshold');
+    const threshMarker = q('#scMeterMarker');
+    const threshLabel = q('#scThresholdLabel');
+    threshSlider?.addEventListener('input', (e) => {
+      const db = Number(e.target.value);
+      if (hooks.setVoiceThreshold) {
+        hooks.setVoiceThreshold(db);
+      }
+      const pct = Math.max(0, Math.min(100, Math.round(((db + 55) / 52) * 100)));
+      if (threshMarker) threshMarker.style.left = `${pct}%`;
+      if (threshLabel) threshLabel.textContent = `Corte: ${db} dB`;
+    });
+
+    startMeterLoop();
+  }
 
   // amigos
   q('#scSearchForm')?.addEventListener('submit', async (e) => {
@@ -2192,4 +2350,12 @@ export function getSocialState() {
 export function updateSocialCallState() {
   renderSidebar();
   renderChat();
+}
+
+if (typeof navigator !== 'undefined' && navigator.mediaDevices?.addEventListener) {
+  navigator.mediaDevices.addEventListener('devicechange', () => {
+    if (state.tab === 'ajustes' && drawer && !drawer.hidden) {
+      populateAudioInputs(drawer.querySelector('#scAudioInput'));
+    }
+  });
 }

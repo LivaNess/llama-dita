@@ -274,3 +274,97 @@
   border-radius: 6px; padding: .25rem .4rem; font-family: inherit; font-size: .78rem;
 }
 .chat-retencion p { margin: .35rem 0 0; }
+
+/* ---- Pestaña Ajustes (Micrófono y Umbral) ---- */
+.sc-settings { display: flex; flex-direction: column; gap: .75rem; }
+.sc-settings-group {
+  background: rgba(255, 255, 255, .03);
+  border: 1px solid rgba(255, 255, 255, .07);
+  border-radius: 10px;
+  padding: .85rem;
+  display: flex;
+  flex-direction: column;
+  gap: .55rem;
+}
+.sc-settings-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: .84rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+.sc-select {
+  width: 100%;
+  background: rgba(255, 255, 255, .06);
+  border: 1px solid rgba(255, 255, 255, .12);
+  color: inherit;
+  border-radius: 8px;
+  padding: .5rem .65rem;
+  font-size: .84rem;
+  font-family: inherit;
+  outline: none;
+}
+.sc-select:focus { border-color: #a855f7; }
+.sc-select option {
+  background: #0f1420;
+  color: #f8fafc;
+}
+
+.sc-meter-wrap {
+  position: relative;
+  width: 100%;
+  height: 14px;
+  background: rgba(0, 0, 0, .45);
+  border-radius: 7px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .1);
+}
+.sc-meter-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #10b981 0%, #3b82f6 60%, #a855f7 100%);
+  border-radius: 7px;
+  transition: width 0.04s linear;
+}
+.sc-meter-marker {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: #ef4444;
+  box-shadow: 0 0 6px #ef4444;
+  z-index: 2;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.sc-meter-status {
+  display: flex;
+  justify-content: space-between;
+  font-size: .72rem;
+  color: var(--text-muted, #64748b);
+  font-variant-numeric: tabular-nums;
+}
+.sc-voice-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: .68rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, .05);
+  color: var(--text-muted, #64748b);
+  border: 1px solid rgba(255, 255, 255, .08);
+  transition: all .15s ease;
+}
+.sc-voice-badge.speaking {
+  background: rgba(16, 185, 129, .2);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, .4);
+  box-shadow: 0 0 8px rgba(16, 185, 129, .25);
+}
+.sc-slider-row { width: 100%; display: flex; align-items: center; }
+.sc-slider {
+  width: 100%;
+  accent-color: #a855f7;
+  cursor: pointer;
+  height: 6px;
+}

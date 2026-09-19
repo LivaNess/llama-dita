@@ -56,16 +56,28 @@ class AudioManager {
     this.remoteAnalyser = null;
     this.monitorGain = null;
     this.currentDeviceId = null;
+    try {
+      this.currentDeviceId = localStorage.getItem('llamadita_audio_input_device') || null;
+    } catch (_) {}
+
+    const savedThreshold = typeof localStorage !== 'undefined' ? localStorage.getItem('llamadita_voice_threshold_db') : null;
+    this.voiceThresholdDb = (savedThreshold !== null && !isNaN(Number(savedThreshold))) ? Number(savedThreshold) : -34;
+
     this.isMuted = false;
     this.micSensitivity = 1.8;
     this.isLoopbackEnabled = false;
-
+    this.lastVoiceDetectedAt = Date.now();
+    this.isGateOpen = true;
   }
 
   // El nivel se calcula en el momento en que se lee, no todo el tiempo.
   get localMetrics() {
     if (this.isMuted) return SILENCIO;
-    return medirNivel(this.localAnalyser);
+    const m = medirNivel(this.localAnalyser);
+    return {
+      ...m,
+      isSpeaking: this.isVoiceDetected(m)
+    };
   }
 
   // Métricas reales del micrófono (incluso si está silenciado), para avisar si habla con mic off
@@ -75,6 +87,18 @@ class AudioManager {
 
   get remoteMetrics() {
     return medirNivel(this.remoteAnalyser);
+  }
+
+  setVoiceThreshold(db) {
+    this.voiceThresholdDb = Number(db);
+    try {
+      localStorage.setItem('llamadita_voice_threshold_db', String(this.voiceThresholdDb));
+    } catch (_) {}
+  }
+
+  isVoiceDetected(rawMetrics) {
+    if (!rawMetrics) return false;
+    return rawMetrics.db >= this.voiceThresholdDb;
   }
 
   // Get or initialize AudioContext
@@ -111,6 +135,9 @@ class AudioManager {
       this.localStream.getTracks().forEach(t => t.stop());
     }
 
+    // Preservar el estado de silencio si ya estaba silenciado
+    const wasMuted = this.isMuted;
+
     // Constraints optimizados para micrófonos de calidad:
     // Activamos cancelación de eco y supresión de ruido por hardware/C++ nativo (0% JS CPU)
     // Desactivamos autoGainControl para que el sistema operativo no suba la ganancia en silencio.
@@ -119,8 +146,10 @@ class AudioManager {
       echoCancellation: true,
       autoGainControl: false
     };
-    if (deviceId) {
-      audioConstraints.deviceId = { exact: deviceId };
+
+    const targetDeviceId = deviceId || this.currentDeviceId;
+    if (targetDeviceId) {
+      audioConstraints.deviceId = { exact: targetDeviceId };
     }
 
     const constraints = {
@@ -129,11 +158,27 @@ class AudioManager {
     };
 
     try {
-      this.localStream = await navigator.mediaDevices.getUserMedia(constraints);
-      this.currentDeviceId = deviceId;
-      this.isMuted = false;
+      try {
+        this.localStream = await navigator.mediaDevices.getUserMedia(constraints);
+        this.currentDeviceId = targetDeviceId;
+      } catch (devErr) {
+        if (targetDeviceId) {
+          console.warn('Dispositivo guardado no disponible, usando micrófono por defecto:', devErr);
+          delete audioConstraints.deviceId;
+          this.localStream = await navigator.mediaDevices.getUserMedia(constraints);
+          this.currentDeviceId = null;
+          try { localStorage.removeItem('llamadita_audio_input_device'); } catch (_) {}
+        } else {
+          throw devErr;
+        }
+      }
+
+      this.isMuted = wasMuted;
+      if (wasMuted) {
+        this.localStream.getAudioTracks().forEach(t => t.enabled = false);
+      }
       this.lastVoiceDetectedAt = Date.now();
-      this.isGateOpen = true;
+      this.isGateOpen = !wasMuted;
 
       // Clean previous nodes
       this.cleanupLocalNodes();
@@ -205,7 +250,7 @@ class AudioManager {
   }
 
   // Puerta de ruido inteligente (Noise Gate):
-  // Si el usuario no está muteado manualmente, detecta si hay voz real.
+  // Si el usuario no está muteado manualmente, detecta si hay voz real usando el umbral calibrado.
   // Cuando deja de hablar, mantiene la transmisión abierta 450ms (hold time)
   // para que nunca se coman los finales de frases ni respiraciones, y luego
   // silencia digitalmente la salida para evitar estática en el receptor.
@@ -213,8 +258,7 @@ class AudioManager {
     if (this.isMuted || !this.localStream) return;
 
     const ahora = Date.now();
-    // Umbral de voz real: volumen > 10 o nivel > -38 dB
-    const voiceDetected = rawMetrics && (rawMetrics.volume > 10 || rawMetrics.db > -38);
+    const voiceDetected = this.isVoiceDetected(rawMetrics);
 
     if (voiceDetected) {
       this.lastVoiceDetectedAt = ahora;
