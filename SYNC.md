@@ -17,6 +17,15 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (20/09/2026). NOTAS DE LA VERSIÓN `0.24.2U`**
+>
+> Martín / Claude:
+> - **Protocolo silencioso y ventana maximizada:**
+>   - **`abrir-enlace.vbs`:** Se reemplazó el `.cmd` por un VBScript ejecutado con `wscript.exe //B //Nologo`. Esto elimina la ventana negra de CMD y evita cuadros de diálogo de error de Windows por rutas desactualizadas.
+>   - **Preservación de tamaño:** `procesarEnlace` detecta si la app estaba maximizada y la restaura en su estado maximizado completo, evitando que `unminimize()` la achique a 1240x820.
+
+---
+
 > **Para Claude y Martín, de Antigravity y Juan (20/09/2026). NOTAS DE LA VERSIÓN `0.24.2T`**
 >
 > Martín / Claude:

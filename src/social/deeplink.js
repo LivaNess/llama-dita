@@ -29,46 +29,63 @@ async function neutralino() {
 const rutaApp = () => (window.NL_PATH || '.');
 const aWindows = (p) => p.split('/').join('\\');
 const archivoUrl = () => `${rutaApp()}/.tmp/enlace.txt`;
-const archivoScript = () => `${rutaApp()}/abrir-enlace.cmd`;
+const archivoVbs = () => `${rutaApp()}/abrir-enlace.vbs`;
+const archivoCmd = () => `${rutaApp()}/abrir-enlace.cmd`;
 
-const SCRIPT = [
+// VBScript silencioso: se ejecuta con wscript.exe sin ventana negra ni parpadeos
+const SCRIPT_VBS = [
+  'On Error Resume Next',
+  'Set objArgs = WScript.Arguments',
+  'If objArgs.Count > 0 Then',
+  '  url = objArgs(0)',
+  '  Set fso = CreateObject("Scripting.FileSystemObject")',
+  '  Set wshShell = CreateObject("WScript.Shell")',
+  '  tempDir = fso.GetSpecialFolder(2)',
+  '  Set file1 = fso.CreateTextFile(tempDir & "\\llamadita_enlace.txt", True)',
+  '  file1.WriteLine url',
+  '  file1.Close',
+  '  appDir = fso.GetParentFolderName(WScript.ScriptFullName)',
+  '  tmpDir = appDir & "\\.tmp"',
+  '  If Not fso.FolderExists(tmpDir) Then fso.CreateFolder(tmpDir)',
+  '  Set file2 = fso.CreateTextFile(tmpDir & "\\enlace.txt", True)',
+  '  file2.WriteLine url',
+  '  file2.Close',
+  '  Set wmi = GetObject("winmgmts:")',
+  '  Set procs = wmi.ExecQuery("Select * from Win32_Process where Name = \'Llamadita-win_x64.exe\' or Name = \'Llamadita.exe\'")',
+  '  If procs.Count = 0 Then',
+  '    exeWin = appDir & "\\Llamadita-win_x64.exe"',
+  '    exeNorm = appDir & "\\Llamadita.exe"',
+  '    If fso.FileExists(exeWin) Then',
+  '      wshShell.Run """" & exeWin & """", 1, False',
+  '    ElseIf fso.FileExists(exeNorm) Then',
+  '      wshShell.Run """" & exeNorm & """", 1, False',
+  '    End If',
+  '  End If',
+  'End If'
+].join('\r\n') + '\r\n';
+
+const SCRIPT_CMD = [
   '@echo off',
   'setlocal enabledelayedexpansion',
   'set "URL=%~1"',
   'if not exist "%~dp0.tmp" mkdir "%~dp0.tmp"',
   '> "%~dp0.tmp\\enlace.txt" echo !URL!',
   'if defined TEMP (> "%TEMP%\\llamadita_enlace.txt" echo !URL!)',
-  'tasklist /FI "IMAGENAME eq Llamadita-win_x64.exe" | find /I "Llamadita-win_x64.exe" >nul',
-  'if not errorlevel 1 goto fin',
-  'tasklist /FI "IMAGENAME eq Llamadita.exe" | find /I "Llamadita.exe" >nul',
-  'if not errorlevel 1 goto fin',
-  'if exist "%~dp0Llamadita-win_x64.exe" (',
-  '  start "" "%~dp0Llamadita-win_x64.exe"',
-  ') else (',
-  '  start "" "%~dp0Llamadita.exe"',
-  ')',
-  ':fin',
   'endlocal'
 ].join('\r\n') + '\r\n';
 
 async function instalarScriptYEsquema(nl) {
-  // Se reescribe solo si falta o quedó viejo.
   try {
-    const actual = await nl.filesystem.readFile(archivoScript());
-    if (!actual.includes('llamadita_enlace.txt')) throw new Error('viejo');
-  } catch (_) {
-    try { await nl.filesystem.writeFile(archivoScript(), SCRIPT); } catch (_) { return; }
-  }
-  const cmd = aWindows(archivoScript());
-  const base = `HKCU\\Software\\Classes\\${ESQUEMA}`;
-  const ordenes = [
-    `reg add "${base}" /ve /d "URL:Llamadita" /f`,
-    `reg add "${base}" /v "URL Protocol" /d "" /f`,
-    `reg add "${base}\\shell\\open\\command" /ve /d "cmd /c \\"\\"${cmd}\\" \\"%1\\"\\"" /f`
-  ];
-  for (const o of ordenes) {
-    try { await nl.os.execCommand(o); } catch (_) { /* si falla, siempre queda el código */ }
-  }
+    await nl.filesystem.writeFile(archivoVbs(), SCRIPT_VBS);
+    await nl.filesystem.writeFile(archivoCmd(), SCRIPT_CMD);
+  } catch (_) {}
+
+  // Registrar el esquema llamadita:// usando PowerShell para evitar sintaxis rota en reg.exe
+  const vbsWin = aWindows(archivoVbs());
+  const psReg = `powershell -NoProfile -NonInteractive -Command "New-Item -Path 'HKCU:\\Software\\Classes\\${ESQUEMA}\\shell\\open\\command' -Force | Out-Null; Set-ItemProperty -Path 'HKCU:\\Software\\Classes\\${ESQUEMA}' -Name '(Default)' -Value 'URL:Llamadita'; Set-ItemProperty -Path 'HKCU:\\Software\\Classes\\${ESQUEMA}' -Name 'URL Protocol' -Value ''; Set-ItemProperty -Path 'HKCU:\\Software\\Classes\\${ESQUEMA}\\shell\\open\\command' -Name '(Default)' -Value 'wscript.exe //B //Nologo \\\"${vbsWin.replace(/\\/g, '\\\\')}\\\" \\\"%1\\\"'"`;
+  try {
+    await nl.os.execCommand(psReg);
+  } catch (_) {}
 }
 
 // ---------------------------------------------------------------- tokens
@@ -89,17 +106,36 @@ function tokensDesde(url) {
 async function procesarEnlace(enlace, nl, toast, onOpenChat) {
   if (!enlace) return;
 
+  // Restaurar y enfocar la ventana preservando el estado maximizado si correspondía
+  const enfocarVentana = async () => {
+    if (!nl) return;
+    try {
+      const wasMaximized = (await nl.window.isMaximized()) || (localStorage.getItem('llamadita_was_maximized') === '1');
+      const isMin = await nl.window.isMinimized();
+      if (isMin) {
+        await nl.window.unminimize();
+      }
+      if (wasMaximized) {
+        await nl.window.maximize();
+      }
+      await nl.window.show();
+      await nl.window.focus();
+    } catch (_) {}
+  };
+
   // Enlace a un chat o canal
   if (enlace.toLowerCase().startsWith(`${ESQUEMA}://chat/`)) {
     const channelId = enlace.substring(`${ESQUEMA}://chat/`.length).split(/[?#]/)[0].trim();
-    if (nl) {
-      try { await nl.window.unminimize(); } catch (_) {}
-      try { await nl.window.show(); } catch (_) {}
-      try { await nl.window.focus(); } catch (_) {}
-    }
+    await enfocarVentana();
     if (channelId && onOpenChat) {
       onOpenChat(channelId);
     }
+    return;
+  }
+
+  // Foco general
+  if (enlace.toLowerCase().startsWith(`${ESQUEMA}://focus`)) {
+    await enfocarVentana();
     return;
   }
 
@@ -173,6 +209,24 @@ export async function initDeepLink({ toast, onOpenChat } = {}) {
   }
 
   await instalarScriptYEsquema(nl);
+
+  // Rastrear si el usuario usa la app maximizada para no achicársela al enfocar desde notificaciones
+  const checkMax = async () => {
+    try {
+      if (await nl.window.isMaximized()) {
+        localStorage.setItem('llamadita_was_maximized', '1');
+      } else if (!(await nl.window.isMinimized())) {
+        localStorage.setItem('llamadita_was_maximized', '0');
+      }
+    } catch (_) {}
+  };
+  checkMax();
+  let resizeTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(checkMax, 300);
+  });
+
   await revisarEnlace(nl, toast, onOpenChat);
   setInterval(() => revisarEnlace(nl, toast, onOpenChat), 500);
   revisarPortapapeles(nl, toast);

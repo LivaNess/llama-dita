@@ -101,19 +101,41 @@ const scriptEnlace = [
   'if not exist "%~dp0.tmp" mkdir "%~dp0.tmp"',
   '> "%~dp0.tmp' + String.fromCharCode(92) + 'enlace.txt" echo !URL!',
   'if defined TEMP (> "%TEMP%' + String.fromCharCode(92) + 'llamadita_enlace.txt" echo !URL!)',
-  'tasklist /FI "IMAGENAME eq Llamadita-win_x64.exe" | find /I "Llamadita-win_x64.exe" >nul',
-  'if not errorlevel 1 goto fin',
-  'tasklist /FI "IMAGENAME eq Llamadita.exe" | find /I "Llamadita.exe" >nul',
-  'if not errorlevel 1 goto fin',
-  'if exist "%~dp0Llamadita-win_x64.exe" (',
-  '  start "" "%~dp0Llamadita-win_x64.exe"',
-  ') else (',
-  '  start "" "%~dp0Llamadita.exe"',
-  ')',
-  ':fin',
   'endlocal'
 ].join(CR) + CR;
 writeFileSync(join(desktop, 'dist', cfg.cli.binaryName, 'abrir-enlace.cmd'), scriptEnlace);
+
+const scriptVbs = [
+  'On Error Resume Next',
+  'Set objArgs = WScript.Arguments',
+  'If objArgs.Count > 0 Then',
+  '  url = objArgs(0)',
+  '  Set fso = CreateObject("Scripting.FileSystemObject")',
+  '  Set wshShell = CreateObject("WScript.Shell")',
+  '  tempDir = fso.GetSpecialFolder(2)',
+  '  Set file1 = fso.CreateTextFile(tempDir & "\\llamadita_enlace.txt", True)',
+  '  file1.WriteLine url',
+  '  file1.Close',
+  '  appDir = fso.GetParentFolderName(WScript.ScriptFullName)',
+  '  tmpDir = appDir & "\\.tmp"',
+  '  If Not fso.FolderExists(tmpDir) Then fso.CreateFolder(tmpDir)',
+  '  Set file2 = fso.CreateTextFile(tmpDir & "\\enlace.txt", True)',
+  '  file2.WriteLine url',
+  '  file2.Close',
+  '  Set wmi = GetObject("winmgmts:")',
+  '  Set procs = wmi.ExecQuery("Select * from Win32_Process where Name = \'Llamadita-win_x64.exe\' or Name = \'Llamadita.exe\'")',
+  '  If procs.Count = 0 Then',
+  '    exeWin = appDir & "\\Llamadita-win_x64.exe"',
+  '    exeNorm = appDir & "\\Llamadita.exe"',
+  '    If fso.FileExists(exeWin) Then',
+  '      wshShell.Run """" & exeWin & """", 1, False',
+  '    ElseIf fso.FileExists(exeNorm) Then',
+  '      wshShell.Run """" & exeNorm & """", 1, False',
+  '    End If',
+  '  End If',
+  'End If'
+].join(CR) + CR;
+writeFileSync(join(desktop, 'dist', cfg.cli.binaryName, 'abrir-enlace.vbs'), scriptVbs);
 
 // 7. Script de notificaciones de Windows
 const scriptsDist = join(desktop, 'dist', cfg.cli.binaryName, 'scripts');

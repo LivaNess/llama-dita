@@ -1,0 +1,1 @@
+llamadita://chat/test-channel

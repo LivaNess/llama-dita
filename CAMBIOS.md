@@ -17,6 +17,16 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.2U · 2026-09-20 · Antigravity
+**Qué cambió.** Eliminación de ventana CMD y preservación de ventana maximizada al hacer clic en notificación:
+- **Ejecución 100% silenciosa con VBScript (`abrir-enlace.vbs`):** Se reemplazó la invocación via `cmd /c` por `wscript.exe //B //Nologo "abrir-enlace.vbs" "%1"`. Esto erradica por completo la ventana de consola negra parpadeante y previene el cuadro de diálogo de error de Windows *"No se puede encontrar el archivo... Llamadita.exe"*.
+- **Preservación de ventana maximizada:** Al hacer clic en una notificación nativa, la app ya no fuerza una restauración que achique la ventana a su tamaño predeterminado (`SW_RESTORE`). Se detecta si la app estaba maximizada (`isMaximized()` y `localStorage`) y se conserva su estado en pantalla completa sin deformar la ventana.
+**Por qué.** El script `.cmd` viejo registrado en el sistema operativo intentaba buscar un binario con nombre desactualizado en AppData y abría una consola CMD negra, mientras que `nl.window.unminimize()` desmaximizaba la ventana a tamaño 1240x820.
+**Dónde.** `src/social/deeplink.js`, `scripts/build-desktop.mjs`, `installer.iss`, `package.json`, `CAMBIOS.md`, `SYNC.md`.
+**Cómo se verifica.** Al hacer clic en el toast de Windows con la ventana maximizada, la app pasa al frente sin abrir ninguna ventana de consola negra, sin mensajes de error y manteniéndose maximizada.
+
+---
+
 ### 0.24.2T · 2026-09-20 · Antigravity
 **Qué cambió.** Solución completa y robusta de notificaciones nativas en Windows (Toast WinRT con avatar y nombre de app):
 - **Caché y soporte de avatar en Toast WinRT:** Las aplicaciones Win32 clásicas no descargan imágenes remotas en notificaciones Toast; requieren archivos locales en disco. El notificador ahora descarga automáticamente el avatar a `%TEMP%\llamadita_cache\` y lo vincula como `appLogoOverride` circular en el Toast, mostrando la foto del remitente.
