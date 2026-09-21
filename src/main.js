@@ -719,16 +719,32 @@ if (typeof window !== 'undefined' && 'Notification' in window) {
 
 // Notificaciones nativas del sistema operativo (Windows Neutralino o Web Notification API)
 async function showNativeDesktopNotification({ title, body, avatarUrl, channelId, onClick }) {
-  const cleanTitle = String(title || 'Llamadita').replace(/["`]/g, "'");
-  const cleanBody = String(body || '').replace(/["`]/g, "'");
+  const cleanTitle = String(title || 'Llamadita').replace(/[<>"&]/g, '').replace(/'/g, '\u2019');
+  const cleanBody = String(body || '').replace(/[<>"&]/g, c => ({'<':'&lt;','>':'&gt;','"':'&quot;','&':'&amp;'}[c])).replace(/'/g, '\u2019');
 
   // 1. Escritorio (Neutralino en Windows)
   if (typeof window.NL_PORT !== 'undefined') {
     try {
       const nl = await import('@neutralinojs/lib');
-      if (nl?.os?.showNotification) {
-        await nl.os.showNotification(cleanTitle, cleanBody, 'INFO');
-      }
+      const launch = channelId ? `llamadita://chat/${encodeURIComponent(channelId)}` : 'llamadita://focus';
+
+      // Construir el script PS1 y escribirlo a un archivo temporal via filesystem de Neutralino.
+      // Usar un archivo evita todo problema de quoting/encoding al pasar XML por línea de comandos.
+      const imgLine = avatarUrl
+        ? `<image placement="appLogoOverride" hint-crop="circle" src="${avatarUrl}"/>`
+        : '';
+      const psContent = [
+        '[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null',
+        '[Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null',
+        `$x = New-Object Windows.Data.Xml.Dom.XmlDocument`,
+        `$x.LoadXml('<toast activationType="protocol" launch="${launch}"><visual><binding template="ToastGeneric"><text>${cleanTitle}</text><text>${cleanBody}</text>${imgLine}</binding></visual></toast>')`,
+        `$t = New-Object Windows.UI.Notifications.ToastNotification $x`,
+        `[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('Llamadita').Show($t)`
+      ].join('\r\n');
+
+      const tmpPath = `${await nl.os.getPath('temp')}\\llamadita_toast.ps1`;
+      await nl.filesystem.writeFile(tmpPath, psContent);
+      await nl.os.execCommand(`powershell -NoProfile -NonInteractive -File "${tmpPath}"`, { background: true });
     } catch (err) {
       console.warn('Error emitiendo notificación nativa:', err);
     }
@@ -739,8 +755,8 @@ async function showNativeDesktopNotification({ title, body, avatarUrl, channelId
   if (typeof window !== 'undefined' && 'Notification' in window) {
     try {
       if (Notification.permission === 'granted') {
-        const notif = new Notification(cleanTitle, {
-          body: cleanBody,
+        const notif = new Notification(String(title || 'Llamadita'), {
+          body: String(body || ''),
           icon: avatarUrl || '/favicon.svg'
         });
         notif.onclick = () => {

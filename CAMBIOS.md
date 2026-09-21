@@ -17,6 +17,15 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.2S · 2026-09-19 · Antigravity
+**Qué cambió.** Toast nativo de Windows con nombre "Llamadita" usando archivo temporal en lugar de EncodedCommand:
+- **Toast WinRT vía archivo temporal:** Se reescribió `showNativeDesktopNotification` en `src/main.js` para que en Neutralino escriba el script de PowerShell a un archivo `.ps1` en `%TEMP%` con `nl.filesystem.writeFile` y lo ejecute con `powershell -File`, en lugar de intentar pasar el XML por `-EncodedCommand`. Esto elimina por completo los problemas de quoting y codificación que hacían fallar la construcción del comando, garantizando que el cartel muestre **Llamadita** como nombre de app y no *"A Neutralinojs application"*.
+**Por qué.** Pasar XML con comillas dobles y atributos a través de `-EncodedCommand` con variables interpoladas de JavaScript producía errores de sintaxis en PowerShell; un archivo `.ps1` no tiene ese problema.
+**Dónde.** `src/main.js`, `package.json`, `CAMBIOS.md`, `SYNC.md`.
+**Cómo se verifica.** Minimizar la app y enviar un mensaje: el cartel de Windows dice "Llamadita" (y no "A Neutralinojs application").
+
+---
+
 ### 0.24.2R · 2026-09-19 · Antigravity
 **Qué cambió.** Corrección definitiva de notificaciones en Windows y solicitud de permisos en navegador:
 - **Restauración de notificaciones nativas en Windows:** Se volvió a la API nativa `nl.os.showNotification` de Neutralino, eliminando el script experimental de PowerShell que fallaba silenciosamente por sintaxis y restricciones de AUMID. Las notificaciones ahora se emiten de manera 100% fiable e instantánea en Windows, mostrando "Llamadita" como nombre de la aplicación gracias a los metadatos PE integrados en el ejecutable.

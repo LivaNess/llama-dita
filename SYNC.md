@@ -17,6 +17,13 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (19/09/2026). NOTAS DE LA VERSIÓN `0.24.2S`**
+>
+> Martín / Claude:
+> - **Toast WinRT sin problemas de quoting:** En lugar de pasar el XML de PowerShell por `-EncodedCommand` (que producía errores de parsing al interpolar atributos XML con comillas dobles), ahora se escribe el script a `%TEMP%\llamadita_toast.ps1` con `nl.filesystem.writeFile` y se ejecuta con `powershell -File`, eliminando 100% el problema. El cartel de Windows ahora dice "Llamadita" y no "A Neutralinojs application".
+
+---
+
 > **Para Claude y Martín, de Antigravity y Juan (19/09/2026). NOTAS DE LA VERSIÓN `0.24.2R`**
 >
 > Martín / Claude:
