@@ -17,6 +17,15 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (19/09/2026). NOTAS DE LA VERSIÓN `0.24.2R`**
+>
+> Martín / Claude:
+> - **Restauración de notificaciones de Windows:** Revertimos el script de PowerShell a la API nativa directa `nl.os.showNotification(title, body, 'INFO')`. En 0.24.2Q el comando de PowerShell fallaba silenciosamente por sintaxis y restricciones de AUMID. Con la API nativa de Neutralino y el ejecutable con metadatos de "Llamadita" (vía `rcedit`), las notificaciones nativas se disparan al 100% de confiabilidad.
+> - **Corrección de chequeo de foco:** Removimos la condición restrictiva en `src/main.js` (`if (document.hasFocus() && !document.hidden) return;`), delegando el filtrado a `src/social/panel.js`, de modo que si el usuario está en otro canal, en Ajustes o con la ventana en segundo plano, la notificación se emite como corresponde.
+> - **Permisos en navegador web:** Agregamos solicitud de permiso ante la primera interacción en la web y al activar notificaciones en Ajustes.
+
+---
+
 > **Para Claude y Martín, de Antigravity y Juan (19/09/2026). NOTAS DE LA VERSIÓN `0.24.2Q`**
 >
 > Martín / Claude:

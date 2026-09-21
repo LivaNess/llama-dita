@@ -1,9 +1,9 @@
 {
   "applicationId": "com.llamadita.app",
-  "version": "0.24.2Q",
-  "resourcesURL": "https://llamadita.com.ar/descargas/resources.neu?v=0.24.2Q",
-  "sha256": "1ff9ef4d77f66fca71cff8de1e3b1e5108ecc4b6a57b3c34b5b1621d8c29b271",
+  "version": "0.24.2R",
+  "resourcesURL": "https://llamadita.com.ar/descargas/resources.neu?v=0.24.2R",
+  "sha256": "7c5120df6b1ef148ccb60c7658badc1122b1d5e5051d88d1c28edf050b979c2c",
   "data": {
-    "releasedAt": "2026-09-19T21:43:34.836Z"
+    "releasedAt": "2026-09-21T02:48:19.051Z"
   }
 }

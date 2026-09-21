@@ -17,6 +17,17 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.2R · 2026-09-19 · Antigravity
+**Qué cambió.** Corrección definitiva de notificaciones en Windows y solicitud de permisos en navegador:
+- **Restauración de notificaciones nativas en Windows:** Se volvió a la API nativa `nl.os.showNotification` de Neutralino, eliminando el script experimental de PowerShell que fallaba silenciosamente por sintaxis y restricciones de AUMID. Las notificaciones ahora se emiten de manera 100% fiable e instantánea en Windows, mostrando "Llamadita" como nombre de la aplicación gracias a los metadatos PE integrados en el ejecutable.
+- **Notificación al estar en otros canales o vistas:** Se eliminó la supresión general en `src/main.js` cuando la ventana tenía el foco, dejando que `src/social/panel.js` gestione con precisión la condición: solo se omite si el usuario está enfocado y leyendo exactamente ese mismo canal; si está en otro canal, en Ajustes, en bienvenida, o con la ventana minimizada/en segundo plano, la notificación se emite correctamente.
+- **Permisos de notificación en web:** Se añadió la solicitud de permisos (`Notification.requestPermission()`) ante la primera interacción del usuario y al activar el interruptor de notificaciones en Ajustes, asegurando que los navegadores web permitan los avisos nativos.
+**Por qué.** En la versión anterior las notificaciones a Windows dejaron de llegar por completo debido al script de PowerShell y a chequeos de foco duplicados.
+**Dónde.** `src/main.js`, `src/social/panel.js`, `package.json`, `CAMBIOS.md`, `SYNC.md`.
+**Cómo se verifica.** Recibir un mensaje con la app minimizada o en segundo plano (o estando en otro canal con la app en foco): la notificación nativa de Windows aparece en la esquina inferior derecha con sonido y título "Llamadita". En navegador web, al hacer clic en cualquier parte se solicita permiso y luego se emiten las notificaciones web.
+
+---
+
 ### 0.24.2Q · 2026-09-19 · Antigravity
 **Qué cambió.** Notificaciones nativas con avatar y foco a chat, aviso en segundo plano, control manual de actualización y botón de reacción en esquina:
 - **Notificaciones con nombre de app, avatar circular y foco al chat:** El encabezado del toast en Windows ahora muestra "Llamadita" (mediante `rcedit` en los metadatos del ejecutable PE y WinRT ToastNotifier), incorpora la foto de perfil circular del remitente y, al hacer clic en la notificación, restaura la ventana desde segundo plano/minimizado y navega directamente al canal o chat correspondiente.

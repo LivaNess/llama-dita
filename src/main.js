@@ -708,66 +708,39 @@ window.addEventListener('DOMContentLoaded', () => {
   initDeepLink({ toast: showToast, onOpenChat: (channelId) => openSocialChannel(channelId) });
 });
 
+// Solicitar permisos de notificación en navegador web con la primera interacción del usuario
+if (typeof window !== 'undefined' && 'Notification' in window) {
+  document.addEventListener('click', () => {
+    if (Notification.permission === 'default') {
+      try { Notification.requestPermission(); } catch (_) {}
+    }
+  }, { once: true, passive: true });
+}
+
 // Notificaciones nativas del sistema operativo (Windows Neutralino o Web Notification API)
 async function showNativeDesktopNotification({ title, body, avatarUrl, channelId, onClick }) {
-  // Si la aplicación ya está activa y en primer plano, no hace falta emitir notificación nativa
-  if (document.hasFocus() && !document.hidden) return;
+  const cleanTitle = String(title || 'Llamadita').replace(/["`]/g, "'");
+  const cleanBody = String(body || '').replace(/["`]/g, "'");
 
   // 1. Escritorio (Neutralino en Windows)
   if (typeof window.NL_PORT !== 'undefined') {
     try {
       const nl = await import('@neutralinojs/lib');
-      const launch = channelId ? `llamadita://chat/${encodeURIComponent(channelId)}` : 'llamadita://focus';
-      const cleanTitle = String(title || 'Llamadita').replace(/["`]/g, "'");
-      const cleanBody = String(body || '').replace(/["`]/g, "'");
-      const imgXml = avatarUrl ? `<image placement="appLogoOverride" hint-crop="circle" src="${avatarUrl}"/>` : '';
-
-      const psScript = `[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
-[Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null
-$imgXml = @"
-${imgXml}
-"@
-$xml = @"
-<toast activationType="protocol" launch="${launch}">
-  <visual>
-    <binding template="ToastGeneric">
-      <text>${cleanTitle}</text>
-      <text>${cleanBody}</text>
-      $imgXml
-    </binding>
-  </visual>
-</toast>
-"@
-$doc = New-Object Windows.Data.Xml.Dom.XmlDocument
-$doc.LoadXml($xml)
-$toast = New-Object Windows.UI.Notifications.ToastNotification $doc
-[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('Llamadita').Show($toast)`;
-
-      let binary = '';
-      for (let i = 0; i < psScript.length; i++) {
-        const code = psScript.charCodeAt(i);
-        binary += String.fromCharCode(code & 0xff, (code >> 8) & 0xff);
+      if (nl?.os?.showNotification) {
+        await nl.os.showNotification(cleanTitle, cleanBody, 'INFO');
       }
-      const b64 = btoa(binary);
-
-      await nl.os.execCommand(`powershell -NoProfile -EncodedCommand ${b64}`, { background: true });
-      return;
     } catch (err) {
-      console.warn('Error emitiendo notificación nativa con PowerShell:', err);
-      try {
-        const nl = await import('@neutralinojs/lib');
-        await nl.os.showNotification(title, body || '', 'INFO');
-        return;
-      } catch (_) {}
+      console.warn('Error emitiendo notificación nativa:', err);
     }
+    return;
   }
 
   // 2. Navegador web estándar
   if (typeof window !== 'undefined' && 'Notification' in window) {
     try {
       if (Notification.permission === 'granted') {
-        const notif = new Notification(title, {
-          body: body || '',
+        const notif = new Notification(cleanTitle, {
+          body: cleanBody,
           icon: avatarUrl || '/favicon.svg'
         });
         notif.onclick = () => {

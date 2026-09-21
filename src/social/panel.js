@@ -1817,6 +1817,9 @@ function bindMain() {
     const notifyCheck = q('#scNotifyEnabled');
     notifyCheck?.addEventListener('change', (e) => {
       if (hooks.setNotificationsEnabled) hooks.setNotificationsEnabled(e.target.checked);
+      if (e.target.checked && typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+        try { Notification.requestPermission(); } catch (_) {}
+      }
     });
 
     const msgSoundSelect = q('#scMsgSound');
