@@ -86,8 +86,11 @@ async function notificarMensajeEscritorio(fila) {
   if (hooks.getNotificationsEnabled && !hooks.getNotificationsEnabled()) return;
   if (isChatMuted(fila.channel_id) || isChatMuted(fila.author_id)) return;
 
-  // Si la ventana tiene el foco y estamos leyendo este mismo canal, no emitimos notificación nativa
-  if (document.hasFocus() && !document.hidden && state.currentChannel?.id === fila.channel_id) {
+  // Si la ventana tiene el foco real del SO y estamos en el mismo canal, no notificamos.
+  // En escritorio Neutralino usamos el hook isWindowFocused (trackea eventos windowFocus/windowBlur),
+  // porque document.hasFocus() en la WebView puede devolver true aunque la ventana esté minimizada.
+  const tieneFoco = hooks.isWindowFocused ? hooks.isWindowFocused() : (document.hasFocus() && !document.hidden);
+  if (tieneFoco && state.currentChannel?.id === fila.channel_id) {
     return;
   }
 

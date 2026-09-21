@@ -71,6 +71,19 @@ let wasMutedBeforeDeafen = false;
 let currentActiveChannel = null;
 let isUserLoggedIn = false;
 
+// Rastrea si la ventana Neutralino tiene el foco real del sistema operativo.
+// document.hasFocus() dentro de la WebView embebida puede devolver true aun cuando
+// la ventana está minimizada o detrás de otras. Usamos los eventos de Neutralino.
+let nlWindowFocused = true; // conservador: asumimos foco al inicio
+if (typeof window.NL_PORT !== 'undefined') {
+  import('@neutralinojs/lib').then(nl => {
+    if (nl?.events?.on) {
+      nl.events.on('windowFocus', () => { nlWindowFocused = true; });
+      nl.events.on('windowBlur',  () => { nlWindowFocused = false; });
+    }
+  }).catch(() => {});
+}
+
 async function updateBoothProfiles() {
   const social = typeof getSocialState === 'function' ? getSocialState() : null;
 
@@ -700,6 +713,7 @@ window.addEventListener('DOMContentLoaded', () => {
     setRingtoneVolume: (v) => audioManager.setRingtoneVolume(v),
     getMessageVolume: () => audioManager.messageVolume,
     setMessageVolume: (v) => audioManager.setMessageVolume(v),
+    isWindowFocused: () => nlWindowFocused,
     showNativeDesktopNotification: (opts) => showNativeDesktopNotification(opts)
   });
   // Buscar actualizaciones al abrir (opcional) + popover en el tag de versión del header.
@@ -728,8 +742,12 @@ async function showNativeDesktopNotification({ title, body, avatarUrl, channelId
       const nl = await import('@neutralinojs/lib');
       const launch = channelId ? `llamadita://chat/${encodeURIComponent(channelId)}` : 'llamadita://focus';
 
-      // Construir el script PS1 y escribirlo a un archivo temporal via filesystem de Neutralino.
-      // Usar un archivo evita todo problema de quoting/encoding al pasar XML por línea de comandos.
+      // Obtener la carpeta temporal via variable de entorno (más fiable que nl.os.getPath en Neutralino)
+      let tmpDir = '';
+      try { tmpDir = await nl.os.getEnv('TEMP'); } catch (_) {}
+      if (!tmpDir) try { tmpDir = await nl.os.getEnv('TMP'); } catch (_) {}
+      if (!tmpDir) tmpDir = 'C:\\Windows\\Temp';
+
       const imgLine = avatarUrl
         ? `<image placement="appLogoOverride" hint-crop="circle" src="${avatarUrl}"/>`
         : '';
@@ -742,11 +760,25 @@ async function showNativeDesktopNotification({ title, body, avatarUrl, channelId
         `[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('Llamadita').Show($t)`
       ].join('\r\n');
 
-      const tmpPath = `${await nl.os.getPath('temp')}\\llamadita_toast.ps1`;
+      const tmpPath = `${tmpDir}\\llamadita_toast.ps1`;
       await nl.filesystem.writeFile(tmpPath, psContent);
-      await nl.os.execCommand(`powershell -NoProfile -NonInteractive -File "${tmpPath}"`, { background: true });
+      // -ExecutionPolicy Bypass evita bloqueos por política de ejecución de scripts
+      const result = await nl.os.execCommand(
+        `powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "${tmpPath}"`,
+        { background: false }
+      );
+      if (result.exitCode !== 0) {
+        console.warn('Toast PS1 falló (exitCode', result.exitCode, '):', result.stdErr);
+        // Fallback: notificación nativa básica de Neutralino (sin nombre personalizado pero funciona)
+        try { await nl.os.showNotification(cleanTitle, cleanBody, 'INFO'); } catch (_) {}
+      }
     } catch (err) {
       console.warn('Error emitiendo notificación nativa:', err);
+      // Fallback de último recurso
+      try {
+        const nl2 = await import('@neutralinojs/lib');
+        await nl2.os.showNotification(cleanTitle, cleanBody, 'INFO');
+      } catch (_) {}
     }
     return;
   }
