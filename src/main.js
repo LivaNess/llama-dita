@@ -81,6 +81,55 @@ if (typeof window !== 'undefined') {
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) windowHasDomFocus = false;
   });
+
+  // Comportamiento nativo de aplicación de escritorio (apariencia y controles)
+  // 1. Suprimir el menú contextual genérico del navegador (Inspeccionar, Atrás, Recargar, Imprimir).
+  // Se conserva el menú nativo del sistema en campos editables (input, textarea) para Copiar/Pegar.
+  // Y se respetan los menús contextuales propios de la app (canales, amigos).
+  window.addEventListener('contextmenu', (e) => {
+    const target = e.target;
+    if (!target) return;
+    const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable;
+    if (isInput) return; // Permitir menú nativo para copiar/cortar/pegar texto
+
+    // Permitir si pertenece a menús contextuales propios de Llamadita
+    if (target.closest?.('#channelContextMenu, .channel-btn, .sidebar-friend-item, [data-custom-contextmenu]')) {
+      return;
+    }
+
+    e.preventDefault();
+  }, false);
+
+  // 2. Prevenir arrastre fantasma de imágenes y enlaces estilo página web
+  window.addEventListener('dragstart', (e) => {
+    const target = e.target;
+    if (target && (target.tagName === 'IMG' || target.tagName === 'A' || target.closest?.('a, img'))) {
+      e.preventDefault();
+    }
+  }, false);
+
+  // 3. Prevenir atajos de navegador que interfieren con la app (F5, Ctrl+R, Ctrl+P, F7, Ctrl+U)
+  window.addEventListener('keydown', (e) => {
+    const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    // F5 o Ctrl+R (recarga accidental durante llamada o chat)
+    if (e.key === 'F5' || (e.ctrlKey && (e.key === 'r' || e.key === 'R'))) {
+      if (!isDev || !e.shiftKey) {
+        e.preventDefault();
+      }
+    }
+    // Ctrl+P (diálogo de impresión del navegador)
+    if (e.ctrlKey && (e.key === 'p' || e.key === 'P')) {
+      e.preventDefault();
+    }
+    // F7 (navegación por cursor de Edge)
+    if (e.key === 'F7') {
+      e.preventDefault();
+    }
+    // Ctrl+U (ver código fuente)
+    if (e.ctrlKey && (e.key === 'u' || e.key === 'U')) {
+      e.preventDefault();
+    }
+  }, false);
 }
 
 async function isAppInForeground() {

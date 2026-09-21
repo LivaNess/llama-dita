@@ -17,6 +17,21 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (21/09/2026). NOTAS DE LA VERSIÓN `0.24.2V`**
+>
+> Martín / Claude:
+> - **Look & Feel de Aplicación Nativa de Escritorio:**
+>   - Se bloqueó el menú contextual genérico del navegador WebView2 (Inspeccionar, Atrás, Recargar, Imprimir) en toda la UI, manteniéndolo únicamente en inputs/textareas editables para Copiar/Cortar/Pegar.
+>   - Se deshabilitó la selección accidental de texto (`user-select: none`) en botones, menús, barras y tarjetas, permitiendo selección de texto exclusivamente en `.sc-msg-body` e inputs.
+>   - Se desactivó el arrastre fantasma de imágenes y enlaces (`-webkit-user-drag: none`).
+>   - Se bloquearon atajos de navegador web destructivos (`F5`, `Ctrl+R`, `Ctrl+P`, `F7`, `Ctrl+U`).
+>   - Se agregaron scrollbars oscuros y estilizados nativos para toda la app.
+> - **Ícono Oficial de Escritorio Actualizado:**
+>   - Se generó el nuevo archivo multi-resolución `app.ico` (256 a 16 px) con la llama de frente con auriculares (#16203c squircle).
+>   - Se actualizaron los accesos directos de Escritorio y Menú Inicio, y se re-estampó el ejecutable con `rcedit`.
+
+---
+
 > **Para Claude y Martín, de Antigravity y Juan (20/09/2026). NOTAS DE LA VERSIÓN `0.24.2U`**
 >
 > Martín / Claude:

@@ -137,7 +137,19 @@
   background: rgba(143, 166, 255, 0.2);
   transform: scale(1.1);
 }
-.sc-msg-body { white-space: pre-wrap; }
+.sc-msg-body {
+  white-space: pre-wrap;
+  user-select: text;
+  -webkit-user-select: text;
+}
+.sc-msg-body * {
+  user-select: text;
+  -webkit-user-select: text;
+}
+.sc-msg-author, .sc-msg-time, .sc-msg-acciones {
+  user-select: none;
+  -webkit-user-select: none;
+}
 
 /* Un renglón de amigo se puede tocar entero: abre el chat privado. */
 .sidebar-friend-item.sc-clickable { cursor: pointer; }

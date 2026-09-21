@@ -24,6 +24,39 @@ html, body {
   height: 100%;
   width: 100%;
   overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Evitar arrastre fantasma de imágenes y enlaces estilo página web */
+img, a {
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
+/* Permitir selección de texto en campos editables y contenedores de texto seleccionable */
+input, textarea, [contenteditable="true"], .selectable, .selectable-text {
+  user-select: text;
+  -webkit-user-select: text;
+  -ms-user-select: text;
+}
+
+/* Scrollbars globales estilo aplicación de escritorio */
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
 }
 
 * {

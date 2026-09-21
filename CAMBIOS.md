@@ -17,6 +17,25 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.2V · 2026-09-21 · Antigravity
+**Qué cambió.** Experiencia 100% nativa de aplicación de escritorio y actualización del ícono de Windows:
+- **Apariencia nativa de aplicación de escritorio:**
+  - Se eliminó el menú contextual genérico del navegador (Edge/WebView2: "Atrás", "Recargar", "Inspeccionar", "Imprimir").
+  - Se conserva el menú nativo únicamente en campos editables (`<input>`, `<textarea>`) para permitir Copiar/Cortar/Pegar con normalidad, y se respetan los menús propios de la aplicación (canales y amigos).
+  - Se deshabilitó la selección accidental de texto (`user-select: none`) en toda la interfaz (botones, barras de navegación, cabeceras, tarjetas), permitiendo seleccionar texto únicamente dentro del cuerpo de los mensajes del chat (`.sc-msg-body`) y campos de entrada.
+  - Se bloqueó el arrastre fantasma de imágenes y enlaces (`-webkit-user-drag: none`).
+  - Se interceptaron atajos de teclado propios de navegadores web (`F5`, `Ctrl+R`, `Ctrl+P`, `F7`, `Ctrl+U`) para evitar recargas accidentales durante llamadas o chats.
+  - Se estilizaron las barras de desplazamiento (scrollbars) globales con un diseño oscuro, estilizado y minimalista.
+- **Actualización del ícono de escritorio y de sistema:**
+  - Se generó el nuevo archivo multi-resolución `app.ico` (256, 128, 64, 48, 32, 16) con el logo oficial de la marca (la llama con auriculares sobre fondo squircle navy).
+  - Se incrustó el nuevo ícono en el binario ejecutable (`Llamadita-win_x64.exe` y en las instalaciones de AppData) mediante `rcedit`.
+  - Se actualizaron los accesos directos de Escritorio y Menú Inicio apuntando al nuevo ícono y ejecutable.
+**Por qué.** La aplicación dejaba seleccionar elementos gráficos o abrir menús de navegador web (como Inspeccionar o Recargar), dando la sensación de ser una página web dentro de una ventana en lugar de un software de escritorio nativo. Además, el acceso directo y el ejecutable aún tenían el ícono de perfil viejo en vez del nuevo isotipo de marca.
+**Dónde.** `src/style.css`, `src/social/social.css`, `src/main.js`, `desktop/resources/icons/app.ico`, `desktop/resources/icons/appIcon.png`, `desktop/resources/icons/trayIcon.png`, `scripts/generar-icono.ps1`, `package.json`, `CAMBIOS.md`, `SYNC.md`.
+**Cómo se verifica.** Al hacer clic derecho o arrastrar en la interfaz no aparece menú de navegador ni se resalta texto en azul, pero sí se puede seleccionar y copiar el texto de los mensajes. El acceso directo del escritorio y el ejecutable muestran el nuevo ícono oficial.
+
+---
+
 ### 0.24.2U · 2026-09-20 · Antigravity
 **Qué cambió.** Eliminación de ventana CMD y preservación de ventana maximizada al hacer clic en notificación:
 - **Ejecución 100% silenciosa con VBScript (`abrir-enlace.vbs`):** Se reemplazó la invocación via `cmd /c` por `wscript.exe //B //Nologo "abrir-enlace.vbs" "%1"`. Esto erradica por completo la ventana de consola negra parpadeante y previene el cuadro de diálogo de error de Windows *"No se puede encontrar el archivo... Llamadita.exe"*.
