@@ -17,6 +17,17 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (20/09/2026). NOTAS DE LA VERSIÓN `0.24.2T`**
+>
+> Martín / Claude:
+> - **Solución definitiva de notificaciones Toast en Windows:**
+>   - **Descarga local de avatar para Toast WinRT:** En Windows Win32 unpackaged, las notificaciones Toast no descargan imágenes remotas (https); requieren archivo local en disco. El notificador descarga automáticamente el avatar en `%TEMP%\llamadita_cache\avatar_<hash>.webp` y lo inyecta como `appLogoOverride` circular en el Toast.
+>   - **Payload JSON:** Toda la información viaja por un archivo JSON temporal codificado en UTF-8 y se parsea en PowerShell con `ConvertFrom-Json`. Esto previene cualquier error de sintaxis XML con URLs prefirmadas de R2 (que contienen ampersands `&`), comillas o emojis.
+>   - **Detección de foco real:** Implementado `isAppInForeground()` combinando `document.hasFocus()`, eventos `onfocus/onblur`, `visibilitychange` y `nl.window.isMinimized()`. Corregido el bug de `nlWindowFocused` que bloqueaba las notificaciones cuando el usuario estaba en otra ventana.
+>   - **Deeplink ultra rápido:** Polling cada 500ms y compatibilidad con `Llamadita-win_x64.exe` y `Llamadita.exe`.
+
+---
+
 > **Para Claude y Martín, de Antigravity y Juan (19/09/2026). NOTAS DE LA VERSIÓN `0.24.2S`**
 >
 > Martín / Claude:

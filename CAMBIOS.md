@@ -17,6 +17,18 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.2T · 2026-09-20 · Antigravity
+**Qué cambió.** Solución completa y robusta de notificaciones nativas en Windows (Toast WinRT con avatar y nombre de app):
+- **Caché y soporte de avatar en Toast WinRT:** Las aplicaciones Win32 clásicas no descargan imágenes remotas en notificaciones Toast; requieren archivos locales en disco. El notificador ahora descarga automáticamente el avatar a `%TEMP%\llamadita_cache\` y lo vincula como `appLogoOverride` circular en el Toast, mostrando la foto del remitente.
+- **Payload JSON libre de errores de escape:** Se desacopló la lógica de invocación escribiendo un archivo JSON temporal con los datos del mensaje. Esto elimina cualquier problema con caracteres especiales, comillas, ampersands de URLs firmadas o emojis en el XML de WinRT.
+- **Detección precisa de ventana en segundo plano:** Se implementó `isAppInForeground()` combinando `document.hasFocus()`, eventos `window.onfocus/onblur`, `visibilitychange` y `nl.window.isMinimized()`, corrigiendo el falso foco permanente que suprimía notificaciones cuando la app estaba minimizada o en segundo plano.
+- **Deep link instantáneo:** `abrir-enlace.cmd` escribe tanto en la carpeta local como en `%TEMP%\llamadita_enlace.txt` y soporta tanto `Llamadita-win_x64.exe` como `Llamadita.exe`, con polling a 500ms para traer la app al frente y abrir el chat de inmediato al hacer clic en el cartel.
+**Por qué.** Las notificaciones en versiones anteriores fallaban por error de parsing XML con los `&` de las URLs de avatar en R2, la falta de soporte de imágenes remotas en Win32 toasts y una detección de foco defectuosa.
+**Dónde.** `desktop/resources/scripts/send-notification.ps1`, `src/main.js`, `src/social/panel.js`, `src/social/deeplink.js`, `scripts/build-desktop.mjs`, `package.json`, `CAMBIOS.md`, `SYNC.md`.
+**Cómo se verifica.** Minimizando la app o estando en otra ventana y enviando un mensaje desde otra cuenta: el cartel de Windows aparece en la esquina con el nombre "Llamadita", el nombre del autor, su foto circular y el texto del mensaje, y al hacer clic abre la ventana y navega al chat.
+
+---
+
 ### 0.24.2S · 2026-09-19 · Antigravity
 **Qué cambió.** Toast nativo de Windows con nombre "Llamadita" usando archivo temporal en lugar de EncodedCommand:
 - **Toast WinRT vía archivo temporal:** Se reescribió `showNativeDesktopNotification` en `src/main.js` para que en Neutralino escriba el script de PowerShell a un archivo `.ps1` en `%TEMP%` con `nl.filesystem.writeFile` y lo ejecute con `powershell -File`, en lugar de intentar pasar el XML por `-EncodedCommand`. Esto elimina por completo los problemas de quoting y codificación que hacían fallar la construcción del comando, garantizando que el cartel muestre **Llamadita** como nombre de app y no *"A Neutralinojs application"*.

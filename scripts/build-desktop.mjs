@@ -33,9 +33,9 @@ writeFileSync(cfgPath, JSON.stringify(cfg, null, 2) + '\n');
 const issPath = join(root, 'installer.iss');
 writeFileSync(issPath, readFileSync(issPath, 'utf8').replace(/^AppVersion=.*$/m, `AppVersion=${version}`));
 
-// 2. dist/ → desktop/resources/ (se conservan icons/ y js/)
+// 2. dist/ → desktop/resources/ (se conservan icons/, js/ y scripts/)
 for (const entry of readdirSync(resources)) {
-  if (entry === 'icons' || entry === 'js') continue;
+  if (entry === 'icons' || entry === 'js' || entry === 'scripts') continue;
   rmSync(join(resources, entry), { recursive: true, force: true });
 }
 cpSync(dist, resources, { recursive: true });
@@ -100,10 +100,28 @@ const scriptEnlace = [
   'set "URL=%~1"',
   'if not exist "%~dp0.tmp" mkdir "%~dp0.tmp"',
   '> "%~dp0.tmp' + String.fromCharCode(92) + 'enlace.txt" echo !URL!',
+  'if defined TEMP (> "%TEMP%' + String.fromCharCode(92) + 'llamadita_enlace.txt" echo !URL!)',
+  'tasklist /FI "IMAGENAME eq Llamadita-win_x64.exe" | find /I "Llamadita-win_x64.exe" >nul',
+  'if not errorlevel 1 goto fin',
   'tasklist /FI "IMAGENAME eq Llamadita.exe" | find /I "Llamadita.exe" >nul',
-  'if errorlevel 1 start "" "%~dp0Llamadita.exe"',
+  'if not errorlevel 1 goto fin',
+  'if exist "%~dp0Llamadita-win_x64.exe" (',
+  '  start "" "%~dp0Llamadita-win_x64.exe"',
+  ') else (',
+  '  start "" "%~dp0Llamadita.exe"',
+  ')',
+  ':fin',
   'endlocal'
 ].join(CR) + CR;
 writeFileSync(join(desktop, 'dist', cfg.cli.binaryName, 'abrir-enlace.cmd'), scriptEnlace);
+
+// 7. Script de notificaciones de Windows
+const scriptsDist = join(desktop, 'dist', cfg.cli.binaryName, 'scripts');
+mkdirSync(scriptsDist, { recursive: true });
+const notifScriptSrc = join(resources, 'scripts', 'send-notification.ps1');
+if (existsSync(notifScriptSrc)) {
+  cpSync(notifScriptSrc, join(scriptsDist, 'send-notification.ps1'));
+}
+
 mkdirSync(join(root, 'installer'), { recursive: true });
 console.log(`\nListo: v${version}\n- ${neu}\n- desktop/update-manifest.json\nAhora publicá la web (npm run deploy:web): de ahí bajan la actualización las apps instaladas.`);

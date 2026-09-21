@@ -71,17 +71,32 @@ let wasMutedBeforeDeafen = false;
 let currentActiveChannel = null;
 let isUserLoggedIn = false;
 
-// Rastrea si la ventana Neutralino tiene el foco real del sistema operativo.
-// document.hasFocus() dentro de la WebView embebida puede devolver true aun cuando
-// la ventana está minimizada o detrás de otras. Usamos los eventos de Neutralino.
-let nlWindowFocused = true; // conservador: asumimos foco al inicio
-if (typeof window.NL_PORT !== 'undefined') {
-  import('@neutralinojs/lib').then(nl => {
-    if (nl?.events?.on) {
-      nl.events.on('windowFocus', () => { nlWindowFocused = true; });
-      nl.events.on('windowBlur',  () => { nlWindowFocused = false; });
-    }
-  }).catch(() => {});
+// Rastreo confiable de foco de ventana (SO y DOM)
+// Permite no molestar al usuario si está chateando activamente en la ventana,
+// pero garantiza enviar notificación si la ventana está minimizada o en segundo plano.
+let windowHasDomFocus = typeof document !== 'undefined' ? document.hasFocus() : true;
+if (typeof window !== 'undefined') {
+  window.addEventListener('focus', () => { windowHasDomFocus = true; });
+  window.addEventListener('blur', () => { windowHasDomFocus = false; });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) windowHasDomFocus = false;
+  });
+}
+
+async function isAppInForeground() {
+  if (typeof document !== 'undefined') {
+    if (document.hidden) return false;
+    if (!document.hasFocus()) return false;
+    if (!windowHasDomFocus) return false;
+  }
+  if (typeof window !== 'undefined' && typeof window.NL_PORT !== 'undefined') {
+    try {
+      const nl = await import('@neutralinojs/lib');
+      if (await nl.window.isMinimized()) return false;
+      if (!(await nl.window.isVisible())) return false;
+    } catch (_) {}
+  }
+  return true;
 }
 
 async function updateBoothProfiles() {
@@ -713,7 +728,7 @@ window.addEventListener('DOMContentLoaded', () => {
     setRingtoneVolume: (v) => audioManager.setRingtoneVolume(v),
     getMessageVolume: () => audioManager.messageVolume,
     setMessageVolume: (v) => audioManager.setMessageVolume(v),
-    isWindowFocused: () => nlWindowFocused,
+    isWindowFocused: () => isAppInForeground(),
     showNativeDesktopNotification: (opts) => showNativeDesktopNotification(opts)
   });
   // Buscar actualizaciones al abrir (opcional) + popover en el tag de versión del header.
@@ -731,53 +746,120 @@ if (typeof window !== 'undefined' && 'Notification' in window) {
   }, { once: true, passive: true });
 }
 
+// Script PowerShell embebido como respaldo infalible
+const NOTIFIER_PS1 = `param([string]$PayloadFile)
+$ErrorActionPreference = 'Stop'
+try {
+  if (-not $PayloadFile -or -not (Test-Path $PayloadFile)) { throw "Payload file not found" }
+  $raw = [System.IO.File]::ReadAllText($PayloadFile, [System.Text.Encoding]::UTF8)
+  $data = $raw | ConvertFrom-Json
+  $title = if ($data.title) { $data.title } else { "Llamadita" }
+  $body = if ($data.body) { $data.body } else { "" }
+  $avatarUrl = $data.avatarUrl
+  $launchUri = if ($data.launchUri) { $data.launchUri } else { "llamadita://focus" }
+  $appId = $data.appId
+  if (-not $appId) {
+    $startApp = Get-StartApps | Where-Object { $_.Name -like "*Llamadita*" } | Select-Object -First 1
+    if ($startApp -and $startApp.AppID) {
+      $appId = $startApp.AppID
+    } else {
+      $proc = Get-Process -Name "Llamadita*", "Llama-dita*" -ErrorAction SilentlyContinue | Select-Object -First 1
+      if ($proc -and $proc.Path) { $appId = $proc.Path } else { $appId = "Llamadita" }
+    }
+  }
+  $localAvatarPath = ""
+  if ($avatarUrl -and $avatarUrl -match "^https?://") {
+    $cacheDir = Join-Path $env:TEMP "llamadita_cache"
+    if (-not (Test-Path $cacheDir)) { New-Item -ItemType Directory -Path $cacheDir -Force | Out-Null }
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    $hashBytes = $sha.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($avatarUrl))
+    $hash = ([System.BitConverter]::ToString($hashBytes)).Replace("-", "").Substring(0, 16)
+    $targetFile = Join-Path $cacheDir "avatar_$hash.webp"
+    if (-not (Test-Path $targetFile)) {
+      try { Invoke-WebRequest -Uri $avatarUrl -OutFile $targetFile -UseBasicParsing -TimeoutSec 4 } catch { $targetFile = "" }
+    }
+    if ($targetFile -and (Test-Path $targetFile)) { $localAvatarPath = $targetFile }
+  } elseif ($avatarUrl -and (Test-Path $avatarUrl)) {
+    $localAvatarPath = $avatarUrl
+  }
+  $escTitle = [System.Security.SecurityElement]::Escape($title)
+  $escBody = [System.Security.SecurityElement]::Escape($body)
+  $escLaunch = [System.Security.SecurityElement]::Escape($launchUri)
+  $imgTag = ""
+  if ($localAvatarPath) {
+    $escImg = [System.Security.SecurityElement]::Escape($localAvatarPath)
+    $imgTag = "<image placement=\`"appLogoOverride\`" hint-crop=\`"circle\`" src=\`"$escImg\`"/>"
+  }
+  $xml = @"
+<toast activationType="protocol" launch="$escLaunch">
+  <visual>
+    <binding template="ToastGeneric">
+      <text>$escTitle</text>
+      <text>$escBody</text>
+      $imgTag
+    </binding>
+  </visual>
+</toast>
+"@
+  [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
+  [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null
+  $xmlDoc = New-Object Windows.Data.Xml.Dom.XmlDocument
+  $xmlDoc.LoadXml($xml)
+  $toast = New-Object Windows.UI.Notifications.ToastNotification $xmlDoc
+  [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($appId).Show($toast)
+} catch {
+  exit 1
+}`;
+
 // Notificaciones nativas del sistema operativo (Windows Neutralino o Web Notification API)
 async function showNativeDesktopNotification({ title, body, avatarUrl, channelId, onClick }) {
-  const cleanTitle = String(title || 'Llamadita').replace(/[<>"&]/g, '').replace(/'/g, '\u2019');
-  const cleanBody = String(body || '').replace(/[<>"&]/g, c => ({'<':'&lt;','>':'&gt;','"':'&quot;','&':'&amp;'}[c])).replace(/'/g, '\u2019');
-
   // 1. Escritorio (Neutralino en Windows)
   if (typeof window.NL_PORT !== 'undefined') {
     try {
       const nl = await import('@neutralinojs/lib');
-      const launch = channelId ? `llamadita://chat/${encodeURIComponent(channelId)}` : 'llamadita://focus';
-
-      // Obtener la carpeta temporal via variable de entorno (más fiable que nl.os.getPath en Neutralino)
       let tmpDir = '';
       try { tmpDir = await nl.os.getEnv('TEMP'); } catch (_) {}
       if (!tmpDir) try { tmpDir = await nl.os.getEnv('TMP'); } catch (_) {}
       if (!tmpDir) tmpDir = 'C:\\Windows\\Temp';
 
-      const imgLine = avatarUrl
-        ? `<image placement="appLogoOverride" hint-crop="circle" src="${avatarUrl}"/>`
-        : '';
-      const psContent = [
-        '[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null',
-        '[Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null',
-        `$x = New-Object Windows.Data.Xml.Dom.XmlDocument`,
-        `$x.LoadXml('<toast activationType="protocol" launch="${launch}"><visual><binding template="ToastGeneric"><text>${cleanTitle}</text><text>${cleanBody}</text>${imgLine}</binding></visual></toast>')`,
-        `$t = New-Object Windows.UI.Notifications.ToastNotification $x`,
-        `[Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('Llamadita').Show($t)`
-      ].join('\r\n');
+      const launchUri = channelId ? `llamadita://chat/${encodeURIComponent(channelId)}` : 'llamadita://focus';
 
-      const tmpPath = `${tmpDir}\\llamadita_toast.ps1`;
-      await nl.filesystem.writeFile(tmpPath, psContent);
-      // -ExecutionPolicy Bypass evita bloqueos por política de ejecución de scripts
-      const result = await nl.os.execCommand(
-        `powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "${tmpPath}"`,
-        { background: false }
-      );
-      if (result.exitCode !== 0) {
-        console.warn('Toast PS1 falló (exitCode', result.exitCode, '):', result.stdErr);
-        // Fallback: notificación nativa básica de Neutralino (sin nombre personalizado pero funciona)
-        try { await nl.os.showNotification(cleanTitle, cleanBody, 'INFO'); } catch (_) {}
+      // 1.1 Asegurar que el script PowerShell esté listo en TEMP
+      const scriptPath = `${tmpDir}\\llamadita_notifier.ps1`;
+      try {
+        await nl.filesystem.writeFile(scriptPath, NOTIFIER_PS1);
+      } catch (_) {}
+
+      // 1.2 Escribir payload JSON (0 problemas de quoting / escaping)
+      const payloadFile = `${tmpDir}\\llamadita_payload_${Date.now()}_${Math.floor(Math.random()*1000)}.json`;
+      const payloadData = {
+        title: String(title || 'Llamadita'),
+        body: String(body || ''),
+        avatarUrl: avatarUrl || '',
+        launchUri,
+        appId: ''
+      };
+      await nl.filesystem.writeFile(payloadFile, JSON.stringify(payloadData));
+
+      // 1.3 Ejecutar script PowerShell con ExecutionPolicy Bypass
+      const cmd = `powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "${scriptPath}" -PayloadFile "${payloadFile}"`;
+      const res = await nl.os.execCommand(cmd, { background: false });
+
+      if (res && res.exitCode !== 0) {
+        console.warn('Toast PowerShell falló:', res.stdErr);
+        // Fallback a API de Neutralino si fallara WinRT
+        try { await nl.os.showNotification(String(title || 'Llamadita'), String(body || ''), 'INFO'); } catch (_) {}
       }
+
+      // Limpieza del archivo temporal de datos
+      setTimeout(() => {
+        try { nl.filesystem.remove(payloadFile); } catch (_) {}
+      }, 5000);
     } catch (err) {
       console.warn('Error emitiendo notificación nativa:', err);
-      // Fallback de último recurso
       try {
         const nl2 = await import('@neutralinojs/lib');
-        await nl2.os.showNotification(cleanTitle, cleanBody, 'INFO');
+        await nl2.os.showNotification(String(title || 'Llamadita'), String(body || ''), 'INFO');
       } catch (_) {}
     }
     return;

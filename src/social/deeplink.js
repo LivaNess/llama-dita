@@ -33,22 +33,29 @@ const archivoScript = () => `${rutaApp()}/abrir-enlace.cmd`;
 
 const SCRIPT = [
   '@echo off',
-  // Expansión retrasada: sin esto el & de la dirección corta el comando y el
-  // enlace se guarda incompleto.
   'setlocal enabledelayedexpansion',
   'set "URL=%~1"',
   'if not exist "%~dp0.tmp" mkdir "%~dp0.tmp"',
   '> "%~dp0.tmp\\enlace.txt" echo !URL!',
+  'if defined TEMP (> "%TEMP%\\llamadita_enlace.txt" echo !URL!)',
+  'tasklist /FI "IMAGENAME eq Llamadita-win_x64.exe" | find /I "Llamadita-win_x64.exe" >nul',
+  'if not errorlevel 1 goto fin',
   'tasklist /FI "IMAGENAME eq Llamadita.exe" | find /I "Llamadita.exe" >nul',
-  'if errorlevel 1 start "" "%~dp0Llamadita.exe"',
+  'if not errorlevel 1 goto fin',
+  'if exist "%~dp0Llamadita-win_x64.exe" (',
+  '  start "" "%~dp0Llamadita-win_x64.exe"',
+  ') else (',
+  '  start "" "%~dp0Llamadita.exe"',
+  ')',
+  ':fin',
   'endlocal'
 ].join('\r\n') + '\r\n';
 
 async function instalarScriptYEsquema(nl) {
-  // Se reescribe solo si falta o quedó viejo (sin la expansión retrasada).
+  // Se reescribe solo si falta o quedó viejo.
   try {
     const actual = await nl.filesystem.readFile(archivoScript());
-    if (!actual.includes('enabledelayedexpansion')) throw new Error('viejo');
+    if (!actual.includes('llamadita_enlace.txt')) throw new Error('viejo');
   } catch (_) {
     try { await nl.filesystem.writeFile(archivoScript(), SCRIPT); } catch (_) { return; }
   }
@@ -106,8 +113,22 @@ async function procesarEnlace(enlace, nl, toast, onOpenChat) {
 
 async function revisarEnlace(nl, toast, onOpenChat) {
   let contenido = null;
-  try { contenido = await nl.filesystem.readFile(archivoUrl()); } catch (_) { return; }
-  try { await nl.filesystem.remove(archivoUrl()); } catch (_) {}
+  // 1. Intentar archivo local de la app
+  try {
+    contenido = await nl.filesystem.readFile(archivoUrl());
+    await nl.filesystem.remove(archivoUrl());
+  } catch (_) {}
+
+  // 2. Si no estaba, intentar archivo compartido en TEMP
+  if (!contenido) {
+    try {
+      const tempDir = (await nl.os.getEnv('TEMP')) || 'C:\\Windows\\Temp';
+      const tempFile = `${tempDir}\\llamadita_enlace.txt`;
+      contenido = await nl.filesystem.readFile(tempFile);
+      await nl.filesystem.remove(tempFile);
+    } catch (_) {}
+  }
+
   if (!contenido) return;
 
   const enlace = contenido.match(new RegExp(`${ESQUEMA}://[^\\s"']+`, 'i'))?.[0];
@@ -153,7 +174,7 @@ export async function initDeepLink({ toast, onOpenChat } = {}) {
 
   await instalarScriptYEsquema(nl);
   await revisarEnlace(nl, toast, onOpenChat);
-  setInterval(() => revisarEnlace(nl, toast, onOpenChat), 1500);
+  setInterval(() => revisarEnlace(nl, toast, onOpenChat), 500);
   revisarPortapapeles(nl, toast);
   setInterval(() => revisarPortapapeles(nl, toast), 1500);
 }
