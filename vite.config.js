@@ -1,7 +1,10 @@
 import { defineConfig } from 'vite';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync, createReadStream } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const pkg = JSON.parse(readFileSync(join(__dirname, 'package.json'), 'utf8'));
 
 export default defineConfig({
   define: {
@@ -11,8 +14,56 @@ export default defineConfig({
     port: 3000,
     host: true
   },
+  plugins: [
+    {
+      name: 'serve-web-in-dev',
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          const rawUrl = req.url || '';
+          const url = rawUrl.split('?')[0];
+
+          if (url.startsWith('/css/')) {
+            const filePath = join(__dirname, 'web', url);
+            if (existsSync(filePath)) {
+              res.setHeader('Content-Type', 'text/css; charset=utf-8');
+              createReadStream(filePath).pipe(res);
+              return;
+            }
+          }
+          if (url.startsWith('/js/')) {
+            const filePath = join(__dirname, 'web', url);
+            if (existsSync(filePath)) {
+              res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+              createReadStream(filePath).pipe(res);
+              return;
+            }
+          }
+          if (url.startsWith('/brand/')) {
+            const filePath = join(__dirname, 'public', url);
+            if (existsSync(filePath)) {
+              createReadStream(filePath).pipe(res);
+              return;
+            }
+          }
+          if (url === '/web' || url === '/web/') {
+            const htmlPath = join(__dirname, 'web', 'index.html');
+            if (existsSync(htmlPath)) {
+              let html = readFileSync(htmlPath, 'utf8')
+                .replaceAll('{{VERSION}}', pkg.version)
+                .replaceAll('{{INSTALLER_SIZE_MB}}', '18,5');
+              res.setHeader('Content-Type', 'text/html; charset=utf-8');
+              res.end(html);
+              return;
+            }
+          }
+          next();
+        });
+      }
+    }
+  ],
   build: {
     outDir: 'dist',
     target: 'esnext'
   }
 });
+

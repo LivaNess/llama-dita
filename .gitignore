@@ -8,3 +8,4 @@ node_modules/
 # El Worker de adjuntos tiene sus propias dependencias
 workers/*/node_modules/
 workers/*/.wrangler/
+.playwright-cli/

@@ -16,3 +16,9 @@
 /update-manifest.json
   Cache-Control: no-cache
   Access-Control-Allow-Origin: *
+
+/css/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+/js/*
+  Cache-Control: public, max-age=0, must-revalidate

@@ -17,6 +17,14 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (22/09/2026). NOTAS DE LA VERSIÓN `0.24.2X`**
+>
+> Martín / Claude:
+> - **Footer & Cookie Banner:** Corrección de estilos CSS, reseteo defensivo en listas, eliminación de reglas viejas duplicadas y espaciado inferior.
+> - **Cache-Busting & Cloudflare:** Se añadieron parámetros `?v={{VERSION}}` a los archivos CSS y JS en todas las páginas HTML y se configuró `max-age=0, must-revalidate` en `_headers` para que nunca queden estilos viejos cacheados por 4 horas.
+> - **Dev Server:** Middleware en `vite.config.js` para servir `/css/`, `/js/`, `/brand/` y `/web/` correctamente en local.
+> - Verificado visualmente antes del despliegue.
+>
 > **Para Claude y Martín, de Antigravity y Juan (22/09/2026). NOTAS DE LA VERSIÓN `0.24.2W`**
 >
 > Martín / Claude:

@@ -17,6 +17,18 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.2X · 2026-09-22 · Antigravity
+**Qué cambió.** Corrección y blindaje del pie de página (footer) y banner de cookies en la web oficial:
+- **Reseteo y estilos estrictos del footer:** Se eliminaron las viñetas por defecto (`list-style: none !important; margin: 0 !important; padding: 0 !important;`) y se agregaron estilos inline defensivos en todas las listas del footer para evitar visualización rota en caso de demoras en carga de estilos.
+- **Limpieza de reglas CSS duplicadas:** Se removió la regla heredada antigua `.footer` y se consolidó el nuevo diseño de 3 columnas (`.footer-grid`) con separación clara, tipografía jerárquica y márgenes inferiores de seguridad para que el banner flotante de cookies nunca tape los datos legales.
+- **Cache-busting riguroso (`?v={{VERSION}}`):** Se versionaron todas las referencias a `/css/site.css` y scripts en todas las páginas HTML (`index.html`, `/privacidad/`, `/terminos/`, `/cookies/`, `/reembolsos/`, `/entrar/`), garantizando que navegadores y proxies sirvan la última versión al instante sin retener CSS viejo de 4 horas en caché de disco.
+- **Encabezados Cloudflare (`_headers`):** Se configuró `Cache-Control: public, max-age=0, must-revalidate` para `/css/*` y `/js/*`, asegurando revalidación inmediata en cada despliegue.
+- **Soporte de assets web en Vite local:** Se incorporó middleware de desarrollo en `vite.config.js` para servir `/css/`, `/js/`, `/brand/` y `/web/` correctamente sin caer en fallback SPA.
+- **Inspección visual automatizada:** Se verificó la renderización real con navegador headless previo al despliegue, confirmando columnas horizontales sin viñetas y banner flotante con desenfoque y márgenes adecuados.
+**Por qué.** En navegadores con el CSS antiguo en caché o en rutas directas sin bundle, el footer se mostraba como una lista vertical sin estilos con viñetas por defecto y el banner de cookies estirado horizontalmente.
+**Dónde.** `web/css/site.css`, `web/_headers`, `vite.config.js`, `web/index.html`, `web/privacidad/index.html`, `web/terminos/index.html`, `web/cookies/index.html`, `web/reembolsos/index.html`, `web/entrar/index.html`, `package.json`.
+**Cómo se verifica.** Abrir la web y navegar al pie de página: se observan las 3 columnas organizadas horizontalmente sin viñetas, pie de copyright visible y banner de cookies flotante estilizado.
+
 ### 0.24.2W · 2026-09-22 · Antigravity
 **Qué cambió.** Blindaje legal integral, privacidad, accesibilidad WCAG 2.1 AA, transparencia y consentimiento informado:
 - **Páginas legales dedicadas:**
