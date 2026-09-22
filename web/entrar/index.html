@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es-AR">
 <head>
   <meta charset="UTF-8" />
@@ -14,17 +14,27 @@
   <link rel="stylesheet" href="/css/entrar.css" />
 </head>
 <body class="entrar-body">
-  <main class="entrar-wrap">
-    <img src="/brand/logo-mark-light.svg" alt="" width="84" height="84" />
+  <main class="entrar-wrap" id="main-content">
+    <img src="/brand/logo-mark-light.svg" alt="Logotipo oficial de Llamadita" width="84" height="84" />
     <h1>Abriendo Llamadita</h1>
-    <p id="estado">Un segundo, estamos abriendo la app…</p>
+    <p id="estado" role="status" aria-live="polite">Un segundo, estamos abriendo la aplicación…</p>
 
     <div class="entrar-acciones">
-      <a class="btn btn-primary" id="btnAbrir" href="#">Abrir Llamadita</a>
-      <a class="btn btn-ghost" href="/descargas/Llamadita-Setup.exe" download>No la tengo instalada</a>
+      <a class="btn btn-primary" id="btnAbrir" href="#" aria-label="Abrir la aplicación Llamadita en Windows">Abrir Llamadita</a>
+      <a class="btn btn-ghost" href="/descargas/Llamadita-Setup.exe" download aria-label="Descargar el instalador de Llamadita para Windows">Descargar aplicación</a>
     </div>
 
-    <p class="entrar-nota">Si el navegador te pregunta si querés abrir Llamadita, decile que sí. Si no pasa nada, tocá el botón de arriba.</p>
+    <p class="entrar-nota">Si el navegador te solicita permiso para abrir el enlace de Llamadita, confirmalo. Si no se abre automáticamente, hacé clic en el botón de arriba.</p>
+    
+    <nav class="entrar-legal" aria-label="Enlaces legales" style="margin-top: 2rem; font-size: 0.82rem; color: var(--text-muted); display: flex; gap: 1rem; justify-content: center;">
+      <a href="/terminos/" target="_blank" rel="noopener">Términos</a>
+      <span>·</span>
+      <a href="/privacidad/" target="_blank" rel="noopener">Privacidad</a>
+      <span>·</span>
+      <a href="/cookies/" target="_blank" rel="noopener">Cookies</a>
+      <span>·</span>
+      <a href="mailto:contacto@llamadita.com.ar">Contacto</a>
+    </nav>
   </main>
 
   <script type="module" src="/js/entrar.js"></script>

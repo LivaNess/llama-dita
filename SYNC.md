@@ -17,6 +17,19 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (22/09/2026). NOTAS DE LA VERSIÓN `0.24.2W`**
+>
+> Martín / Claude:
+> - **Blindaje Legal, Privacidad y Accesibilidad (WCAG 2.1 AA):**
+>   - **Páginas legales publicadas en la web:** `/privacidad/`, `/terminos/`, `/cookies/` y `/reembolsos/`, con cumplimiento de la Ley 25.326 (Protección de Datos Personales en Argentina / AAIP), Ley 24.240 (Defensa del Consumidor / arrepentimiento y baja) y GDPR.
+>   - **Consentimiento obligatorio en formularios:** Casilla de aceptación en el registro web (`#termsConsent`) y en la vista de login de la app (`#scTermsConsent`).
+>   - **Auditoría de cookies:** Cero rastreadores de terceros ni cookies de marketing. Banner informativo no intrusivo (`cookies.js`).
+>   - **Accesibilidad:** Skip-link en todas las páginas, textos `alt` en imágenes y logos, contraste reforzado (`--text-muted` a `#9AA7D7`), botones con descripciones claras y navegación 100% asistida por teclado.
+>   - **Auditoría de afirmaciones:** Se corrigió en la maqueta del hero "0% packet loss" por "Audio estéreo · Conexión directa P2P".
+>   - **Acceso legal en la App:** Pestaña "Ajustes" del cajón social incluye bloque de enlaces legales directos.
+
+---
+
 > **Para Claude y Martín, de Antigravity y Juan (21/09/2026). NOTAS DE LA VERSIÓN `0.24.2V`**
 >
 > Martín / Claude:

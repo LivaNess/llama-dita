@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es-AR">
 <head>
   <meta charset="UTF-8" />
@@ -17,35 +17,37 @@
   <link rel="stylesheet" href="/css/site.css" />
 </head>
 <body>
+  <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+
   <header class="topbar">
     <div class="wrap topbar-inner">
-      <a class="brand" href="/" aria-label="Llamadita, inicio">
-        <img src="/brand/logo-mark-light.svg" alt="" width="34" height="34" />
+      <a class="brand" href="/" aria-label="Llamadita, ir a la página de inicio">
+        <img src="/brand/logo-mark-light.svg" alt="Logotipo oficial de Llamadita" width="34" height="34" />
         <span>Llamadita</span>
       </a>
-      <nav class="topnav" aria-label="Principal">
+      <nav class="topnav" aria-label="Navegación principal">
         <a href="#como-funciona">Cómo funciona</a>
         <a href="#registro">Crear cuenta</a>
-        <a class="btn btn-small" href="/descargas/Llamadita-Setup.exe" download>Descargar</a>
+        <a class="btn btn-small" href="/descargas/Llamadita-Setup.exe" download aria-label="Descargar instalador de Llamadita para Windows">Descargar</a>
       </nav>
     </div>
   </header>
 
-  <main>
+  <main id="main-content">
     <section class="hero">
       <div class="wrap hero-grid">
         <div class="hero-copy">
-          <p class="eyebrow"><span class="badge-dot"></span> Para Windows 10 y 11</p>
+          <p class="eyebrow"><span class="badge-dot"></span> Para Windows 10 y 11 (64-bit)</p>
           <h1>Tu grupo, tu voz, sin vueltas.</h1>
           <p class="lead">Llamadita es la app para hablar con tus amigos: llamadas de voz directas, canales de texto y de voz, y una cuenta que se crea solo con tu mail.</p>
           <div class="hero-actions">
-            <a class="btn btn-primary" href="/descargas/Llamadita-Setup.exe" download>
+            <a class="btn btn-primary" href="/descargas/Llamadita-Setup.exe" download aria-label="Descargar instalador de Llamadita para Windows de 64 bits">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
-              Bajar Llamadita
+              Bajar Llamadita para Windows (64-bit)
             </a>
-            <a class="btn btn-ghost" href="#registro">Crear cuenta</a>
+            <a class="btn btn-ghost" href="#registro">Crear cuenta gratuita</a>
           </div>
-          <p class="hero-meta">Versión <strong data-version>{{VERSION}}</strong> · 64-bit · {{INSTALLER_SIZE_MB}} MB · Se actualiza sola</p>
+          <p class="hero-meta">Versión <strong data-version>{{VERSION}}</strong> · 64-bit · {{INSTALLER_SIZE_MB}} MB · Actualizaciones automáticas</p>
         </div>
 
         <div class="hero-visual" aria-hidden="true">
@@ -99,7 +101,7 @@
                     <span class="mock-avatar guest-av">JU</span>
                     <div class="mock-booth-info">
                       <strong class="mock-name">juan</strong>
-                      <small class="mock-tech">Estéreo · 0% packet loss</small>
+                      <small class="mock-tech">Audio estéreo · Conexión directa P2P</small>
                     </div>
                     <span class="mock-bars guest-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
                   </div>
@@ -165,27 +167,52 @@
 
     <section class="download-band">
       <div class="wrap download-inner">
-        <img src="/brand/logo-mark-light.svg" alt="" width="56" height="56" />
+        <img src="/brand/logo-mark-light.svg" alt="Logotipo de Llamadita" width="56" height="56" />
         <div class="download-text">
           <h2>Bajala y probala con tu grupo</h2>
-          <p>Versión <span data-version>{{VERSION}}</span> para Windows. La bajás una vez y se mantiene al día sola.</p>
+          <p>Versión <span data-version>{{VERSION}}</span> para Windows (64-bit). La bajás una vez y se mantiene al día de forma automática.</p>
         </div>
-        <a class="btn btn-cream" href="/descargas/Llamadita-Setup.exe" download>Descargar para Windows</a>
+        <a class="btn btn-cream" href="/descargas/Llamadita-Setup.exe" download aria-label="Descargar instalador de Llamadita para Windows de 64 bits">Descargar para Windows (64-bit)</a>
       </div>
     </section>
   </main>
 
   <footer class="footer">
-    <div class="wrap footer-inner">
-      <span class="brand brand-small">
-        <img src="/brand/logo-mark-light.svg" alt="" width="22" height="22" />
-        <span>Llamadita</span>
-      </span>
-      <span>llamadita.com.ar · v<span data-version>{{VERSION}}</span></span>
+    <div class="wrap">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a class="brand brand-small" href="/" aria-label="Llamadita, ir al inicio">
+            <img src="/brand/logo-mark-light.svg" alt="Logotipo oficial de Llamadita" width="26" height="26" />
+            <span>Llamadita</span>
+          </a>
+          <p>Tu grupo, tu voz, sin vueltas. Llamadas de voz directas punto a punto, canales de chat y privacidad por diseño para Windows.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Legal y Privacidad</h4>
+          <ul class="footer-links">
+            <li><a href="/terminos/">Términos y Condiciones</a></li>
+            <li><a href="/privacidad/">Política de Privacidad</a></li>
+            <li><a href="/cookies/">Política de Cookies</a></li>
+            <li><a href="/reembolsos/">Reembolsos y Baja</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Contacto y Soporte</h4>
+          <ul class="footer-links">
+            <li><a href="mailto:contacto@llamadita.com.ar">contacto@llamadita.com.ar</a></li>
+            <li><a href="mailto:privacidad@llamadita.com.ar">privacidad@llamadita.com.ar</a></li>
+            <li><a href="#como-funciona">Cómo funciona</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p class="footer-legal-note">© 2026 Llamadita. Todos los derechos reservados. Operado y regulado de conformidad con la Ley N° 25.326 de Protección de Datos Personales y la Ley N° 24.240 de Defensa del Consumidor de la República Argentina. Órgano de Control: Agencia de Acceso a la Información Pública (AAIP). Versión <span data-version>{{VERSION}}</span>.</p>
+      </div>
     </div>
   </footer>
 
   <script type="module" src="/js/dominio.js"></script>
+  <script type="module" src="/js/cookies.js"></script>
   <script type="module" src="/js/registro.js"></script>
 </body>
 </html>

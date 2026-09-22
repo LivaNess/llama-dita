@@ -511,6 +511,11 @@ function loginView({ isSidebar = false } = {}) {
       <form id="scEmailForm">
         <label>Tu mail</label>
         <input type="email" id="scEmail" placeholder="vos@ejemplo.com" autocomplete="email" required />
+        ${signup ? `
+        <div class="sc-consent-row" style="display:flex; align-items:flex-start; gap:0.5rem; margin:0.6rem 0; font-size:0.75rem; color: var(--text-secondary);">
+          <input type="checkbox" id="scTermsConsent" style="margin-top:2px; flex-shrink:0;" required />
+          <label for="scTermsConsent">Acepto los <a href="https://llamadita.com.ar/terminos/" target="_blank" rel="noopener" style="color:#93c5fd; text-decoration:underline;">Términos</a> y la <a href="https://llamadita.com.ar/privacidad/" target="_blank" rel="noopener" style="color:#93c5fd; text-decoration:underline;">Privacidad</a>.</label>
+        </div>` : ''}
         <button class="sc-primary" type="submit">${signup ? 'Crear cuenta' : 'Mandarme el código'}</button>
         <button class="sc-link" type="button" id="scHaveCode">Ya tengo un código</button>
       </form>` : `
@@ -529,6 +534,13 @@ function bindLogin(container = drawer) {
   if (!container) return;
   container.querySelector('#scEmailForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (state.loginMode !== 'login') {
+      const consent = container.querySelector('#scTermsConsent');
+      if (!consent || !consent.checked) {
+        showLoginError('Tenés que aceptar los Términos y la Política de Privacidad para crear tu cuenta.', container);
+        return;
+      }
+    }
     const btn = e.target.querySelector('button'); if (btn) btn.disabled = true;
     try { state.loginEmail = await sendCode(container.querySelector('#scEmail').value, { createUser: state.loginMode !== 'login' }); state.codeOnly = false; render(); }
     catch (err) { showLoginError(err.message + (/Demasiados/.test(err.message) ? ' Si ya tenés un código, tocá "Ya tengo un código".' : ''), container); if (btn) btn.disabled = false; }
@@ -1749,6 +1761,23 @@ function settingsView() {
       </div>
       <div class="sc-slider-row">
         <input type="range" id="scMsgVol" class="sc-slider" min="0" max="100" step="1" value="${Math.round(msgVol * 100)}" />
+      </div>
+    </div>
+
+    <!-- Legal y Privacidad -->
+    <div class="sc-setting-card" style="margin-top: 1rem; border-color: rgba(143,166,255,0.18);">
+      <div class="sc-setting-title">Legal y Privacidad</div>
+      <p style="font-size: 0.74rem; color: var(--text-muted, #94a3b8); margin-bottom: 0.6rem; line-height: 1.4;">
+        Llamadita protege tus datos personales (Ley 25.326). Las llamadas de voz viajan cifradas punto a punto y no se graban.
+      </p>
+      <div style="display: flex; flex-wrap: wrap; gap: 0.7rem; font-size: 0.76rem;">
+        <a href="https://llamadita.com.ar/terminos/" target="_blank" rel="noopener" style="color: #93c5fd; text-decoration: underline;">Términos</a>
+        <span style="color: var(--text-muted, #64748b);">·</span>
+        <a href="https://llamadita.com.ar/privacidad/" target="_blank" rel="noopener" style="color: #93c5fd; text-decoration: underline;">Privacidad</a>
+        <span style="color: var(--text-muted, #64748b);">·</span>
+        <a href="https://llamadita.com.ar/cookies/" target="_blank" rel="noopener" style="color: #93c5fd; text-decoration: underline;">Cookies</a>
+        <span style="color: var(--text-muted, #64748b);">·</span>
+        <a href="https://llamadita.com.ar/reembolsos/" target="_blank" rel="noopener" style="color: #93c5fd; text-decoration: underline;">Reembolsos y Baja</a>
       </div>
     </div>
   </div>`;

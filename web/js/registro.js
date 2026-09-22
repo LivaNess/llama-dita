@@ -1,4 +1,4 @@
-﻿// Registro e ingreso desde la web oficial. Misma cuenta que la app (Supabase Auth, sin contraseña).
+// Registro e ingreso desde la web oficial. Misma cuenta que la app (Supabase Auth, sin contraseña).
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/+esm';
 
 const SUPABASE_URL = 'https://mwzkrahindnheuheoycv.supabase.co';
@@ -31,6 +31,8 @@ function setMsg(text, kind = 'error') {
   if (!el) return;
   el.textContent = text;
   el.className = `msg ${kind}`;
+  el.setAttribute('role', kind === 'error' ? 'alert' : 'status');
+  el.setAttribute('aria-live', 'polite');
   el.hidden = !text;
 }
 
@@ -49,21 +51,28 @@ function render() {
 function renderEmail() {
   const signup = state.mode === 'signup';
   card.innerHTML = `
-    <div class="tabs" role="tablist">
+    <div class="tabs" role="tablist" aria-label="Modo de acceso">
       <button type="button" role="tab" data-mode="signup" class="${signup ? 'active' : ''}" aria-selected="${signup}">Crear cuenta</button>
       <button type="button" role="tab" data-mode="login" class="${signup ? '' : 'active'}" aria-selected="${!signup}">Ya tengo cuenta</button>
     </div>
-    <h3>${signup ? 'Creá tu cuenta' : 'Entrá a tu cuenta'}</h3>
-    <p class="hint">${signup ? 'Te mandamos un código de 6 dígitos a tu mail.' : 'Escribí el mail con el que te registraste.'}</p>
+    <h3>${signup ? 'Creá tu cuenta gratuita' : 'Entrá a tu cuenta'}</h3>
+    <p class="hint">${signup ? 'Te mandamos un código de 6 dígitos a tu mail para confirmar tu usuario.' : 'Escribí el mail con el que te registraste para recibir tu código.'}</p>
     <form id="fEmail" novalidate>
       <div class="field">
-        <label for="email">Tu mail</label>
-        <input id="email" type="email" autocomplete="email" placeholder="vos@ejemplo.com" value="${esc(state.email)}" required />
+        <label for="email">Tu correo electrónico</label>
+        <input id="email" type="email" autocomplete="email" placeholder="vos@ejemplo.com" value="${esc(state.email)}" required aria-required="true" />
       </div>
-      <button class="btn btn-primary" type="submit">${signup ? 'Crear cuenta' : 'Mandarme el código'}</button>
+      ${signup ? `
+      <div class="field-checkbox">
+        <input type="checkbox" id="termsConsent" name="termsConsent" required aria-required="true" />
+        <label for="termsConsent">
+          He leído y acepto los <a href="/terminos/" target="_blank" rel="noopener">Términos y Condiciones</a> y la <a href="/privacidad/" target="_blank" rel="noopener">Política de Privacidad</a> de Llamadita.
+        </label>
+      </div>` : ''}
+      <button class="btn btn-primary" type="submit">${signup ? 'Crear cuenta gratuita' : 'Pedir código de acceso'}</button>
     </form>
-    <button class="link" type="button" id="haveCode">Ya tengo un código</button>
-    <p class="msg" hidden></p>`;
+    <button class="link" type="button" id="haveCode">Ya tengo un código de acceso</button>
+    <p class="msg" role="alert" aria-live="polite" hidden></p>`;
 
   card.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => { state.mode = b.dataset.mode; render(); }));
   const form = card.querySelector('#fEmail');
@@ -71,6 +80,14 @@ function renderEmail() {
     e.preventDefault();
     const email = card.querySelector('#email').value.trim().toLowerCase();
     if (!EMAIL_RE.test(email)) return setMsg('Escribí un mail válido.');
+
+    if (state.mode === 'signup') {
+      const consent = card.querySelector('#termsConsent');
+      if (!consent || !consent.checked) {
+        return setMsg('Tenés que aceptar los Términos y Condiciones y la Política de Privacidad para crear tu cuenta.');
+      }
+    }
+
     busy(form, true);
     const { error } = await sb.auth.signInWithOtp({
       email,
@@ -96,17 +113,17 @@ function renderEmail() {
 
 function renderCode() {
   card.innerHTML = `
-    <h3>Revisá tu mail</h3>
-    <p class="hint">${state.codeOnly ? 'Escribí el código' : 'Te mandamos un código'} para <strong>${esc(state.email)}</strong>. Si no lo ves, mirá en spam.</p>
+    <h3>Revisá tu correo</h3>
+    <p class="hint">${state.codeOnly ? 'Escribí el código' : 'Te enviamos un código'} para <strong>${esc(state.email)}</strong>. Si no lo ves en tu bandeja de entrada, revisá en correo no deseado (spam).</p>
     <form id="fCode" novalidate>
       <div class="field">
-        <label for="code">Código de 6 dígitos</label>
-        <input id="code" class="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="······" required />
+        <label for="code">Código de acceso (6 dígitos)</label>
+        <input id="code" class="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="······" required aria-required="true" />
       </div>
-      <button class="btn btn-primary" type="submit">Entrar</button>
+      <button class="btn btn-primary" type="submit">Verificar código y entrar</button>
     </form>
-    <button class="link" type="button" id="back">Usar otro mail</button>
-    <p class="msg" hidden></p>`;
+    <button class="link" type="button" id="back">Usar otro correo electrónico</button>
+    <p class="msg" role="alert" aria-live="polite" hidden></p>`;
 
   const form = card.querySelector('#fCode');
   const input = card.querySelector('#code');
@@ -141,19 +158,19 @@ function renderDone() {
     ${p ? `
     <form id="fProfile" novalidate>
       <div class="field">
-        <label for="displayName">Cómo te van a ver</label>
+        <label for="displayName">Nombre público (cómo te ven los demás)</label>
         <input id="displayName" maxlength="40" value="${esc(p.display_name)}" />
       </div>
       <div class="field">
-        <label for="username">Tu usuario (así te buscan tus amigos)</label>
+        <label for="username">Usuario único (para que te agreguen tus amigos)</label>
         <input id="username" maxlength="20" value="${esc(p.username)}" autocapitalize="off" spellcheck="false" />
       </div>
-      <button class="btn btn-ghost" type="submit">Guardar</button>
+      <button class="btn btn-ghost" type="submit">Guardar cambios de perfil</button>
     </form>
-    <p class="msg" hidden></p>
+    <p class="msg" role="status" aria-live="polite" hidden></p>
     <div class="divider"></div>` : '<p class="hint">Estamos terminando de preparar tu perfil. Recargá en unos segundos.</p>'}
-    <a class="btn btn-primary" href="${DOWNLOAD_URL}" download>Bajar Llamadita para Windows</a>
-    <p class="hint" style="margin-top:0.9rem">Abrí la app y entrá con este mismo mail. Te va a pedir un código nuevo.</p>
+    <a class="btn btn-primary" href="${DOWNLOAD_URL}" download>Bajar Llamadita para Windows (64-bit)</a>
+    <p class="hint" style="margin-top:0.9rem">Abrí la aplicación instalada e ingresá con este mismo correo para conectar.</p>
     <button class="link" type="button" id="logout">Cerrar sesión en esta página</button>`;
 
   const form = card.querySelector('#fProfile');

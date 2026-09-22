@@ -17,6 +17,36 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.2W · 2026-09-22 · Antigravity
+**Qué cambió.** Blindaje legal integral, privacidad, accesibilidad WCAG 2.1 AA, transparencia y consentimiento informado:
+- **Páginas legales dedicadas:**
+  - **Política de Privacidad (`/privacidad/`):** Redactada en estricto cumplimiento con la **Ley N° 25.326 de Protección de Datos Personales (Argentina)**, leyenda legal reglamentaria de la **Agencia de Acceso a la Información Pública (AAIP)**, ejercicio de derechos ARCO gratuitos y alineación con GDPR. Especificación de que las llamadas de voz son P2P y **no se graban ni almacenan**, y de que la autenticación es sin contraseñas (OTP).
+  - **Términos y Condiciones de Uso (`/terminos/`):** Normas de conducta, propiedad intelectual, limitación de responsabilidad y jurisdicción exclusiva en los Tribunales Ordinarios de la Ciudad Autónoma de Buenos Aires (República Argentina).
+  - **Política de Cookies y Almacenamiento Local (`/cookies/`):** Transparencia total sobre el uso de almacenamiento local técnico (token de sesión de Supabase Auth y preferencias de audio). Certificación de **cero cookies publicitarias y cero rastreadores de terceros** (sin Google Analytics ni Meta Pixel).
+  - **Política de Reembolsos, Cancelaciones y Baja (`/reembolsos/`):** Declaración de gratuidad del servicio, derecho de revocación / arrepentimiento legal de 10 días (conforme a la **Ley N° 24.240 de Defensa del Consumidor** y Res. 424/2020) y procedimiento directo para solicitar la baja definitiva de cuenta y supresión de datos.
+- **Consentimiento informado en formularios:**
+  - Casilla de verificación obligatoria en el formulario de registro web y en la app de escritorio: *"He leído y acepto los Términos y Condiciones y la Política de Privacidad"*.
+  - Validación antes del envío con mensajes accesibles para lectores de pantalla (`role="alert"` y `aria-live="polite"`).
+- **Banner de cookies y almacenamiento local:**
+  - Componente accesible e informativo (`cookies.js`) con persistencia en `localStorage` y botón de aceptación.
+- **Accesibilidad (WCAG 2.1 Nivel AA) y navegación por teclado:**
+  - Enlace de salto accesible (`.skip-link`) al contenido principal en todas las páginas.
+  - Textos alternativos descriptivos en todas las imágenes y logos (`alt="Logotipo oficial de Llamadita"`).
+  - Ajuste de contraste en tipografías secundarias (`--text-muted` elevado a `#9AA7D7`, superando el ratio de 5.4:1 contra el fondo oscuro).
+  - Foco visible destacado (`:focus-visible`) en todos los controles interactivos.
+  - Textos claros y específicos en botones: *"Bajar Llamadita para Windows (64-bit)"*, *"Crear cuenta gratuita"*, *"Verificar código y entrar"*.
+- **Auditoría de afirmaciones comerciales:**
+  - Corrección de promesas absolutas no demostrables: reemplazo de *"0% packet loss"* en la maqueta por *"Audio estéreo · Conexión directa P2P"*.
+- **Pie de página ampliado y accesible:**
+  - Estructura semántica con enlaces a las 4 políticas legales, canales de contacto (`contacto@llamadita.com.ar`, `privacidad@llamadita.com.ar`) y referencias legales de Argentina.
+- **Acceso legal en la App de escritorio:**
+  - Enlace a los Términos, Privacidad, Cookies y Reembolsos incorporado en la pestaña "Ajustes" de la aplicación.
+**Por qué.** Evitar riesgos legales y regulatorios, garantizar la transparencia y la privacidad por diseño, cumplir con las leyes de defensa del consumidor y protección de datos personales de Argentina, y asegurar una accesibilidad universal óptima.
+**Dónde.** `web/privacidad/index.html`, `web/terminos/index.html`, `web/cookies/index.html`, `web/reembolsos/index.html`, `web/index.html`, `web/entrar/index.html`, `web/css/site.css`, `web/js/cookies.js`, `web/js/registro.js`, `src/social/panel.js`, `scripts/build-web.mjs`, `package.json`, `CAMBIOS.md`, `SYNC.md`.
+**Cómo se verifica.** Todas las páginas legales cargan en `/privacidad/`, `/terminos/`, `/cookies/` y `/reembolsos/`. El formulario de registro no permite continuar sin aceptar los términos. El banner de almacenamiento se muestra al ingresar por primera vez. Las imágenes tienen texto alternativo y se puede navegar toda la web únicamente con el teclado.
+
+---
+
 ### 0.24.2V · 2026-09-21 · Antigravity
 **Qué cambió.** Experiencia 100% nativa de aplicación de escritorio y actualización del ícono de Windows:
 - **Apariencia nativa de aplicación de escritorio:**

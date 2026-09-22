@@ -4,7 +4,7 @@
 //  - installer/Llamadita-Setup.exe → /descargas/ (el instalador que se ofrece para bajar)
 //  - version de package.json → reemplaza {{VERSION}} y escribe /version.json
 // Uso: npm run build:web    (publicar: npm run deploy:web)
-import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -42,8 +42,21 @@ if (existsSync(manifiesto) && existsSync(paquete)) {
   console.warn('AVISO: falta desktop/update-manifest.json o resources.neu; corré antes "npm run build:desktop" o las apps instaladas no verán la actualización.');
 }
 
-const indexPath = join(out, 'index.html');
-writeFileSync(indexPath, readFileSync(indexPath, 'utf8').replaceAll('{{VERSION}}', version).replaceAll('{{INSTALLER_SIZE_MB}}', sizeMb));
+function replacePlaceholders(dir) {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const fullPath = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      replacePlaceholders(fullPath);
+    } else if (entry.isFile() && entry.name.endsWith('.html')) {
+      const content = readFileSync(fullPath, 'utf8')
+        .replaceAll('{{VERSION}}', version)
+        .replaceAll('{{INSTALLER_SIZE_MB}}', sizeMb);
+      writeFileSync(fullPath, content);
+    }
+  }
+}
+replacePlaceholders(out);
+
 writeFileSync(join(out, 'version.json'), JSON.stringify({ version, installer: '/descargas/Llamadita-Setup.exe', builtAt: new Date().toISOString() }, null, 2) + '\n');
 
 console.log(`Web lista en site-dist/ · versión ${version} · instalador ${sizeMb} MB`);
