@@ -41,12 +41,25 @@ export default defineConfig({
           if (url.startsWith('/brand/')) {
             const filePath = join(__dirname, 'public', url);
             if (existsSync(filePath)) {
+              if (url.endsWith('.svg')) res.setHeader('Content-Type', 'image/svg+xml');
+              else if (url.endsWith('.png')) res.setHeader('Content-Type', 'image/png');
+              else if (url.endsWith('.ico')) res.setHeader('Content-Type', 'image/x-icon');
               createReadStream(filePath).pipe(res);
               return;
             }
           }
-          if (url === '/web' || url === '/web/') {
-            const htmlPath = join(__dirname, 'web', 'index.html');
+          if (url.startsWith('/fonts/')) {
+            const filePath = join(__dirname, 'web', url);
+            if (existsSync(filePath)) {
+              res.setHeader('Content-Type', 'font/woff2');
+              createReadStream(filePath).pipe(res);
+              return;
+            }
+          }
+          if (url === '/web' || url === '/web/' || url.startsWith('/web/')) {
+            let rel = url.replace(/^\/web\/?/, '');
+            if (!rel || rel.endsWith('/')) rel += 'index.html';
+            const htmlPath = join(__dirname, 'web', rel);
             if (existsSync(htmlPath)) {
               let html = readFileSync(htmlPath, 'utf8')
                 .replaceAll('{{VERSION}}', pkg.version)

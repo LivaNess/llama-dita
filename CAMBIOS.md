@@ -17,6 +17,23 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.2Y · 2026-09-22 · Antigravity
+**Qué cambió.** Página dedicada de Licencias y Código Abierto y modernización tipográfica integral con Google Sans Flex modulando sus 6 variables:
+- **Página de Licencias de Código Abierto (`/licencias/`):** Catálogo exhaustivo de atribución y reconocimiento a la comunidad open-source para todas las dependencias: Neutralinojs (MIT), PeerJS (MIT), Supabase Client (MIT), Vite (MIT), rcedit (MIT), Google Sans Flex (SIL OFL 1.1), JetBrains Mono (SIL OFL 1.1), Inter (SIL OFL 1.1), Outfit (SIL OFL 1.1), Lucide / Feather Icons (ISC/MIT) y estándares abiertos W3C/IETF (WebRTC, Web Audio API, Web Cryptography). Textos legales completos integrados.
+- **Enlace de Licencias en todos los footers:** Incorporación de *Licencias de Código Abierto* en la columna *Legal y Privacidad* de todas las páginas web (`/`, `/privacidad/`, `/terminos/`, `/cookies/`, `/reembolsos/`, `/entrar/`).
+- **Tipografía Variable Google Sans Flex (6 Ejes):** Adopción de Google Sans Flex como tipografía principal tanto en la web como en la app de escritorio para Windows, modulando sus 6 variables:
+  - `wght` (grosor 1..1000): jerarquía balanceada desde 420 en texto corrido hasta 840 en titulares.
+  - `wdth` (ancho 25..151): 104% en marca para presencia sólida; 96..98% en pantallas pequeñas para prevenir saltos de línea indeseados o cortes.
+  - `opsz` (tamaño óptico 6..144): ajuste óptico automático acorde al tamaño de renderizado (14px en badges, 64px en hero).
+  - `slnt` (inclinación -10..0): -7 grados en acentos y citas dinámicas.
+  - `GRAD` (grado 0..100): compensación de contraste de trazo en fondos oscuros Dark Studio sin alterar el flujo del texto.
+  - `ROND` (redondez 0..100): terminales amables y cálidos (65..85%) afines al avatar de la llamita.
+- **Autosuficiencia Offline en la App:** Archivos `.woff2` locales empaquetados en `src/fonts/` y `web/fonts/` con `@font-face` nativo y cache inmutable en Cloudflare (`_headers`), asegurando carga instantánea incluso sin conexión a internet.
+- **Blindaje antidesbordes y adaptabilidad:** Reglas con `overflow-wrap: break-word`, `text-wrap: balance` y presets móviles dedicados.
+**Por qué.** Reconocer formalmente los derechos de autor y licencias de las tecnologías libres utilizadas e impregnar de personalidad visual la aplicación y el sitio con una tipografía variable expresiva y fluida.
+**Dónde.** `web/licencias/index.html`, `web/css/site.css`, `src/brand.css`, `src/style.css`, `web/_headers`, `vite.config.js`, páginas HTML y package.json.
+**Cómo se verifica.** Navegar a `/licencias/` y observar la tabla de dependencias y textos de licencia; verificar en el inspector que la tipografía computada es Google Sans Flex con `font-variation-settings`.
+
 ### 0.24.2X · 2026-09-22 · Antigravity
 **Qué cambió.** Corrección y blindaje del pie de página (footer) y banner de cookies en la web oficial:
 - **Reseteo y estilos estrictos del footer:** Se eliminaron las viñetas por defecto (`list-style: none !important; margin: 0 !important; padding: 0 !important;`) y se agregaron estilos inline defensivos en todas las listas del footer para evitar visualización rota en caso de demoras en carga de estilos.

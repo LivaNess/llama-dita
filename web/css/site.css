@@ -3,7 +3,30 @@
    Estilo: Dark Studio / Cyber-acústico acorde a la app de escritorio.
    Paleta: Azul estudio (#0A0F22), Navy (#1C2B5A), Azul eléctrico (#5B7CFA),
            Crema (#F4ECDC), Cyan (#06B6D4) y Verde estado (#10B981).
+   Tipografía: Google Sans Flex Variable (6 Ejes: wght, wdth, opsz, slnt, GRAD, ROND)
    ========================================================================== */
+
+@font-face {
+  font-family: 'Google Sans Flex';
+  font-style: oblique 0deg 10deg;
+  font-display: swap;
+  font-weight: 1 1000;
+  font-stretch: 25% 151%;
+  src: url('/fonts/google-sans-flex-latin-full-normal.woff2') format('woff2-variations'),
+       url('/fonts/google-sans-flex-latin-full-normal.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Google Sans Flex';
+  font-style: oblique 0deg 10deg;
+  font-display: swap;
+  font-weight: 1 1000;
+  font-stretch: 25% 151%;
+  src: url('/fonts/google-sans-flex-latin-ext-full-normal.woff2') format('woff2-variations'),
+       url('/fonts/google-sans-flex-latin-ext-full-normal.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
 
 :root {
   --bg-main: #0A0F22;
@@ -40,9 +63,22 @@
   --shadow-main: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(91, 124, 250, 0.08);
   --shadow-card: 0 12px 30px rgba(0, 0, 0, 0.35);
   
-  --font-display: 'Outfit', 'Segoe UI', system-ui, sans-serif;
-  --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'Google Sans Flex', 'Outfit', 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'Google Sans Flex', 'Inter', 'Segoe UI', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
+
+  /* Presets de los 6 ejes paramétricos de Google Sans Flex */
+  /* [wght (1..1000), wdth (25..151), opsz (6..144), slnt (-10..0), GRAD (0..100), ROND (0..100)] */
+  --fv-brand: 'wght' 820, 'wdth' 104, 'opsz' 44, 'ROND' 85, 'GRAD' 20, 'slnt' 0;
+  --fv-hero: 'wght' 840, 'wdth' 100, 'opsz' 64, 'ROND' 65, 'GRAD' 25, 'slnt' 0;
+  --fv-h2: 'wght' 740, 'wdth' 100, 'opsz' 34, 'ROND' 55, 'GRAD' 15, 'slnt' 0;
+  --fv-h3: 'wght' 660, 'wdth' 99, 'opsz' 24, 'ROND' 40, 'GRAD' 10, 'slnt' 0;
+  --fv-h4: 'wght' 680, 'wdth' 98, 'opsz' 16, 'ROND' 35, 'GRAD' 10, 'slnt' 0;
+  --fv-btn: 'wght' 660, 'wdth' 102, 'opsz' 18, 'ROND' 75, 'GRAD' 20, 'slnt' 0;
+  --fv-badge: 'wght' 680, 'wdth' 96, 'opsz' 14, 'ROND' 45, 'GRAD' 15, 'slnt' 0;
+  --fv-body: 'wght' 420, 'wdth' 100, 'opsz' 16, 'ROND' 20, 'GRAD' 0, 'slnt' 0;
+  --fv-body-bold: 'wght' 640, 'wdth' 100, 'opsz' 16, 'ROND' 30, 'GRAD' 15, 'slnt' 0;
+  --fv-slant: 'wght' 540, 'wdth' 96, 'opsz' 15, 'ROND' 35, 'GRAD' 10, 'slnt' -7;
 }
 
 * {
@@ -58,6 +94,7 @@ html {
 
 body {
   font-family: var(--font-body);
+  font-variation-settings: var(--fv-body);
   color: var(--text-primary);
   background-color: var(--bg-main);
   line-height: 1.55;
@@ -69,6 +106,11 @@ body {
     linear-gradient(to bottom, rgba(143, 166, 255, 0.025) 1px, transparent 1px);
   background-size: 100% 100%, 100% 100%, 36px 36px, 36px 36px;
   min-height: 100vh;
+}
+
+strong, b {
+  font-variation-settings: var(--fv-body-bold);
+  font-weight: 600;
 }
 
 img {
@@ -86,6 +128,21 @@ h1, h2, h3 {
   color: #FFFFFF;
   line-height: 1.15;
   letter-spacing: -0.015em;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  text-wrap: balance;
+}
+
+h1 {
+  font-variation-settings: var(--fv-hero);
+}
+
+h2 {
+  font-variation-settings: var(--fv-h2);
+}
+
+h3 {
+  font-variation-settings: var(--fv-h3);
 }
 
 .wrap {
@@ -101,6 +158,7 @@ h1, h2, h3 {
   justify-content: center;
   gap: 0.6rem;
   font-family: var(--font-display);
+  font-variation-settings: var(--fv-btn);
   font-weight: 700;
   font-size: 0.98rem;
   padding: 0.85rem 1.45rem;
@@ -198,10 +256,11 @@ h1, h2, h3 {
   align-items: center;
   gap: 0.75rem;
   font-family: var(--font-display);
+  font-variation-settings: var(--fv-brand);
   font-weight: 800;
-  font-size: 1.15rem;
+  font-size: 1.18rem;
   color: var(--brand-cream);
-  letter-spacing: 0.05em;
+  letter-spacing: 0.03em;
   text-shadow: 0 0 12px rgba(244, 236, 220, 0.25);
 }
 
@@ -243,10 +302,11 @@ h1, h2, h3 {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  font-family: var(--font-mono);
+  font-family: var(--font-display);
+  font-variation-settings: var(--fv-badge);
   font-weight: 700;
-  font-size: 0.78rem;
-  letter-spacing: 0.06em;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
   color: var(--brand-blue-soft);
   background: rgba(91, 124, 250, 0.12);
   border: 1px solid rgba(143, 166, 255, 0.22);
@@ -1045,6 +1105,13 @@ section h2 {
 }
 
 @media (max-width: 640px) {
+  :root {
+    --fv-brand: 'wght' 820, 'wdth' 98, 'opsz' 32, 'ROND' 80, 'GRAD' 20, 'slnt' 0;
+    --fv-hero: 'wght' 820, 'wdth' 96, 'opsz' 38, 'ROND' 60, 'GRAD' 20, 'slnt' 0;
+    --fv-h2: 'wght' 720, 'wdth' 97, 'opsz' 26, 'ROND' 50, 'GRAD' 15, 'slnt' 0;
+    --fv-h3: 'wght' 640, 'wdth' 97, 'opsz' 20, 'ROND' 40, 'GRAD' 10, 'slnt' 0;
+    --fv-btn: 'wght' 660, 'wdth' 100, 'opsz' 16, 'ROND' 70, 'GRAD' 15, 'slnt' 0;
+  }
   .topnav a:not(.btn) {
     display: none;
   }
@@ -1078,23 +1145,36 @@ section h2 {
    Accesibilidad general (WCAG 2.1 AA)
    ========================================================================== */
 .skip-link {
-  position: fixed;
-  top: -999px;
-  left: 1rem;
-  z-index: 9999;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
   background: #3859E0;
   color: #FFFFFF;
-  padding: 0.75rem 1.25rem;
   border-radius: 8px;
   font-family: var(--font-display);
   font-weight: 700;
   text-decoration: none;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-  transition: top 0.15s ease;
+  z-index: 9999;
 }
 
 .skip-link:focus {
+  position: fixed;
   top: 1rem;
+  left: 1rem;
+  width: auto;
+  height: auto;
+  padding: 0.75rem 1.25rem;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
   outline: 3px solid #F4ECDC;
   outline-offset: 2px;
 }

@@ -1,7 +1,7 @@
 {
   "name": "llamadita",
   "private": true,
-  "version": "0.24.2X",
+  "version": "0.24.2Y",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -13,6 +13,8 @@
     "verificar": "node scripts/verificar-protocolo.mjs"
   },
   "dependencies": {
+    "@fontsource-variable/google-sans-flex": "^5.3.1",
+    "@fontsource/google-sans-flex": "^5.3.1",
     "@neutralinojs/lib": "^6.0.0",
     "@supabase/supabase-js": "^2.116.0",
     "peerjs": "^1.5.4"

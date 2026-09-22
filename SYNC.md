@@ -17,6 +17,13 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (22/09/2026). NOTAS DE LA VERSIÓN `0.24.2Y`**
+>
+> Martín / Claude:
+> - **Licencias y Código Abierto:** Creada página dedicada `/licencias/` con reconocimiento formal a las dependencias y textos de licencia MIT, SIL OFL 1.1 e ISC. Añadido enlace en el pie de página de toda la web.
+> - **Google Sans Flex (6 Ejes):** Implementada como tipografía variable principal modulando sus 6 variables (`wght`, `wdth`, `opsz`, `slnt`, `GRAD`, `ROND`). Archivos `.woff2` empaquetados localmente para funcionamiento 100% offline en la app de escritorio y en la web.
+> - **Adaptabilidad y prevención de recortes:** Control con `text-wrap: balance`, `overflow-wrap: break-word` y presets móviles dedicados.
+>
 > **Para Claude y Martín, de Antigravity y Juan (22/09/2026). NOTAS DE LA VERSIÓN `0.24.2X`**
 >
 > Martín / Claude:
