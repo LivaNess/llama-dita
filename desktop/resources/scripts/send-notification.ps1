@@ -1,4 +1,4 @@
-﻿param(
+param(
     [string]$PayloadFile
 )
 $ErrorActionPreference = 'Stop'
@@ -23,7 +23,7 @@ try {
         if ($startApp -and $startApp.AppID) {
             $appId = $startApp.AppID
         } else {
-            $appId = "C:\Users\juand\.gemini\antigravity\scratch\toki-podcast\desktop\dist\Llamadita\Llamadita-win_x64.exe"
+            $appId = "C:\Users\juand\.gemini\antigravity\scratch\llamadita\desktop\dist\Llamadita\Llamadita-win_x64.exe"
         }
     }
 

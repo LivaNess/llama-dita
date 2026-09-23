@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/neutralinojs/neutralinojs/main/schemas/neutralino.config.schema.json",
   "applicationId": "com.llamadita.app",
-  "version": "0.24.2Y",
+  "version": "0.24.3A",
   "defaultMode": "window",
   "port": 24024,
   "documentRoot": "/resources/",
@@ -38,7 +38,7 @@
       "maximize": false,
       "hidden": false,
       "resizable": true,
-      "exitProcessOnClose": true,
+      "exitProcessOnClose": false,
       "webviewArgs": "--use-fake-ui-for-media-stream --autoplay-policy=no-user-gesture-required"
     }
   },

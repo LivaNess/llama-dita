@@ -47,9 +47,9 @@ function setTray() {
     let tray = {
         icon: "/resources/icons/trayIcon.png",
         menuItems: [
-            {id: "VERSION", text: "Get version"},
+            {id: "SHOW", text: "Abrir Llamadita"},
             {id: "SEP", text: "-"},
-            {id: "QUIT", text: "Quit"}
+            {id: "QUIT", text: "Salir de Llamadita"}
         ]
     };
 
@@ -64,10 +64,10 @@ function setTray() {
 */
 function onTrayMenuItemClicked(event) {
     switch(event.detail.id) {
-        case "VERSION":
-            // Display version information
-            Neutralino.os.showMessageBox("Version information",
-                `Neutralinojs server: v${NL_VERSION} | Neutralinojs client: v${NL_CVERSION}`);
+        case "SHOW":
+            Neutralino.window.show();
+            Neutralino.window.unminimize();
+            Neutralino.window.focus();
             break;
         case "QUIT":
             // Exit the application
@@ -80,7 +80,7 @@ function onTrayMenuItemClicked(event) {
     Function to handle the window close event by gracefully exiting the Neutralino application.
 */
 function onWindowClose() {
-    Neutralino.app.exit();
+    Neutralino.window.hide();
 }
 
 // Initialize Neutralino

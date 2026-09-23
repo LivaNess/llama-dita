@@ -1,4 +1,4 @@
-﻿# Esqueleto de Llamadita
+# Esqueleto de Llamadita
 
 Mapa de qué es cada parte, dónde vive y con qué se conecta. Sirve para dos cosas: que
 cualquiera (persona o agente) entienda el proyecto sin leer todo el código, y que nadie
@@ -221,6 +221,15 @@ prueba y con qué hay que tener cuidado.
 - **Depende de:** los cuatro documentos.
 - **Cómo se prueba:** `npm run verificar`.
 - **Cuidado:** corre solo en cada push a `main`. Si queda en rojo, algo del protocolo falta.
+
+### N. Fuentes y tipografía local
+- **Archivos:** `src/fonts/` (archivos `.woff2` locales de Google Sans Flex)
+- **Qué hace:** provee los archivos binarios de la tipografía variable para funcionamiento
+  100% autosuficiente y offline en la app de escritorio y en la web.
+- **Depende de:** nada, son assets estáticos locales empaquetados.
+- **Dependen de ella:** `src/brand.css`, `src/style.css` y `web/css/site.css`.
+- **Cómo se prueba:** desconectar internet y abrir la app; las tipografías cargan sin depender de CDNs externas.
+- **Cuidado:** son binarios pesados; mantener solo los cortes de caracteres indispensables (`latin` y `latin-ext`).
 
 ---
 

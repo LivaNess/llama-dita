@@ -92,6 +92,7 @@ body {
   color: var(--brand-cream);
   background: none;
   -webkit-text-fill-color: currentColor;
+  text-shadow: none;
 }
 .logo-tag {
   font-family: var(--font-display);
@@ -129,7 +130,32 @@ body {
   box-sizing: border-box;
 }
 .sidebar-user-avatar { background: linear-gradient(140deg, var(--brand-navy-2), var(--brand-blue)); color: #fff; font-family: var(--font-display); font-weight: 700; }
-.sidebar-mic-btn.active { background: rgba(91, 124, 250, 0.18); color: var(--brand-blue-soft); }
+.sidebar-mic-btn {
+  box-shadow: none !important;
+}
+.sidebar-mic-btn.active {
+  background: rgba(91, 124, 250, 0.16);
+  border-color: rgba(143, 166, 255, 0.28);
+  color: var(--brand-blue-soft);
+  box-shadow: none !important;
+}
+.sidebar-mic-btn.active:hover {
+  background: rgba(91, 124, 250, 0.25);
+  border-color: rgba(143, 166, 255, 0.45);
+  color: #ffffff;
+  box-shadow: none !important;
+}
+.sidebar-mic-btn.muted {
+  background: rgba(239, 68, 68, 0.14);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #f87171;
+  box-shadow: none !important;
+}
+.sidebar-mic-btn.muted:hover {
+  background: rgba(239, 68, 68, 0.22);
+  border-color: rgba(239, 68, 68, 0.5);
+  box-shadow: none !important;
+}
 
 /* ---------- Cabecera y controles ---------- */
 .app-header {

@@ -784,7 +784,81 @@ window.addEventListener('DOMContentLoaded', () => {
   initUpdater({ toast: showToast });
   // El enlace del mail o de la notificación abre la app y el chat (esquema llamadita://).
   initDeepLink({ toast: showToast, onOpenChat: (channelId) => openSocialChannel(channelId) });
+  // Bandeja del sistema (System Tray) e intercepción de la "X" para ocultar en segundo plano
+  initDesktopTrayAndWindow();
 });
+
+// Comportamiento de ventana de escritorio y bandeja del sistema (Neutralino)
+async function initDesktopTrayAndWindow() {
+  if (typeof window === 'undefined' || typeof window.NL_PORT === 'undefined') return;
+  try {
+    const nl = await import('@neutralinojs/lib');
+    try { await nl.init(); } catch (_) {}
+
+    // 1. Configurar icono y menú contextual en la bandeja del sistema (System Tray)
+    const tray = {
+      icon: '/resources/icons/trayIcon.png',
+      menuItems: [
+        { id: 'SHOW', text: 'Abrir Llamadita' },
+        { id: 'SEP', text: '-' },
+        { id: 'QUIT', text: 'Salir de Llamadita' }
+      ]
+    };
+    try {
+      await nl.os.setTray(tray);
+    } catch (e) {
+      console.warn('No se pudo inicializar la bandeja del sistema:', e);
+    }
+
+    // 2. Acciones del menú contextual de la bandeja
+    nl.events.on('trayMenuItemClicked', async (event) => {
+      const id = event?.detail?.id;
+      if (id === 'SHOW') {
+        await restoreDesktopWindow(nl);
+      } else if (id === 'QUIT') {
+        try { await nl.app.exit(); } catch (_) { window.close?.(); }
+      }
+    });
+
+    // 3. Interceptar clic en la "X" de la ventana para minimizar a la bandeja en lugar de salir
+    nl.events.on('windowClose', async () => {
+      try {
+        // Recordar si la ventana estaba maximizada para restaurarla con su tamaño original
+        try {
+          const isMax = await nl.window.isMaximized();
+          if (isMax) localStorage.setItem('llamadita_was_maximized', '1');
+          else localStorage.removeItem('llamadita_was_maximized');
+        } catch (_) {}
+
+        // Ocultar ventana: desaparece de la pantalla y de la barra de tareas de Windows,
+        // quedando activa en segundo plano en la bandeja de notificaciones.
+        await nl.window.hide();
+      } catch (err) {
+        console.warn('Error al ocultar ventana en windowClose:', err);
+      }
+    });
+  } catch (err) {
+    console.warn('Error configurando bandeja y ventana de escritorio:', err);
+  }
+}
+
+async function restoreDesktopWindow(nl) {
+  if (!nl) return;
+  try {
+    const wasMaximized = (await nl.window.isMaximized()) || (localStorage.getItem('llamadita_was_maximized') === '1');
+    const isMin = await nl.window.isMinimized();
+    if (isMin) {
+      await nl.window.unminimize();
+    }
+    await nl.window.show();
+    if (wasMaximized) {
+      await nl.window.maximize();
+    }
+    await nl.window.focus();
+  } catch (err) {
+    console.warn('Error restaurando ventana:', err);
+  }
+}
 
 // Solicitar permisos de notificación en navegador web con la primera interacción del usuario
 if (typeof window !== 'undefined' && 'Notification' in window) {

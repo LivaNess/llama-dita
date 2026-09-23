@@ -1150,14 +1150,14 @@ button.logo-tag { font: inherit; cursor: pointer; }
   background: rgba(16, 185, 129, 0.15);
   border-color: rgba(16, 185, 129, 0.4);
   color: #34d399;
-  box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+  box-shadow: none;
 }
 
 .sidebar-mic-btn.muted {
   background: rgba(239, 68, 68, 0.15);
   border-color: rgba(239, 68, 68, 0.4);
   color: #f87171;
-  box-shadow: 0 0 10px rgba(239, 68, 68, 0.2);
+  box-shadow: none;
 }
 
 .sidebar-mic-btn.vibrating {

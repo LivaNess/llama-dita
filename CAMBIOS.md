@@ -17,6 +17,27 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.3A · 2026-09-23 · Antigravity
+**Qué cambió.** Minimizado y ocultamiento al System Tray (bandeja del sistema / menú oculto de la barra de tareas) al hacer clic en la "X":
+- **Comportamiento de la "X" (Cerrar):** Al hacer clic en el botón cerrar ("X") de la ventana, la aplicación ya no finaliza su proceso bruscamente. En su lugar, intercepta el evento `windowClose` y oculta la ventana (`nl.window.hide()`).
+- **Oculto y limpio en la barra de tareas:** La ventana desaparece por completo de la pantalla y de la barra de tareas de Windows (`exitProcessOnClose: false`), manteniéndose en ejecución en segundo plano para seguir recibiendo llamadas, mensajes y notificaciones sin estorbar.
+- **Bandeja del sistema (System Tray):** Se configuró el icono de bandeja con menú contextual nativo conteniendo:
+  - *Abrir Llamadita* (restaura y enfoca la ventana en primer plano preservando si estaba maximizada).
+  - *Separador*.
+  - *Salir de Llamadita* (cierra efectivamente el proceso de la aplicación).
+**Por qué.** Permitir que el usuario cierre la ventana principal para no tenerla ocupando espacio visual en la barra de tareas mientras juega o trabaja, manteniéndose conectado en segundo plano.
+**Dónde.** `desktop/neutralino.config.json`, `src/main.js`, `desktop/resources/js/main.js`, `package.json`.
+**Cómo se verifica.** Iniciar la app de escritorio, hacer clic en la "X" superior derecha: la ventana desaparece de la pantalla y de la barra de tareas, quedando en el menú oculto de la bandeja del sistema. Al hacer clic derecho en el ícono de la llamita y elegir "Abrir Llamadita", la ventana se restaura enfocada. Al elegir "Salir de Llamadita", el proceso termina.
+
+### 0.24.2Z · 2026-09-23 · Antigravity
+**Qué cambió.** Eliminación de efectos de resplandor (glow/blur) en botones y marca para máxima nitidez y legibilidad:
+- **Botones de audio de escritorio (auriculares y micrófono):** Se retiró el `box-shadow` difuso verdoso de `.sidebar-mic-btn` activo y silenciado, dejándolos con bordes finos, sólidos y limpios alineados a la paleta de marca.
+- **Tipografía de marca Llamadita (web):** Se eliminó el `text-shadow` que generaba un halo borroso en el logotipo tanto de la cabecera superior como del pie de página, logrando que Google Sans Flex se lea con nitidez impecable.
+- **Marca de escritorio:** Se aseguró `text-shadow: none` en `.logo-title` para evitar cualquier artefacto de difuminado.
+**Por qué.** El resplandor difuminaba los bordes de los glifos de la marca y de los iconos de los controles de audio, perjudicando el contraste y la legibilidad sobre fondos oscuros.
+**Dónde.** `src/style.css`, `src/brand.css`, `web/css/site.css`.
+**Cómo se verifica.** Inspeccionar visualmente el botón de auriculares/micrófono en la app de escritorio y el nombre "Llamadita" en el encabezado y pie de página web; ambos se muestran nítidos sin halos difusos.
+
 ### 0.24.2Y · 2026-09-22 · Antigravity
 **Qué cambió.** Página dedicada de Licencias y Código Abierto y modernización tipográfica integral con Google Sans Flex modulando sus 6 variables:
 - **Página de Licencias de Código Abierto (`/licencias/`):** Catálogo exhaustivo de atribución y reconocimiento a la comunidad open-source para todas las dependencias: Neutralinojs (MIT), PeerJS (MIT), Supabase Client (MIT), Vite (MIT), rcedit (MIT), Google Sans Flex (SIL OFL 1.1), JetBrains Mono (SIL OFL 1.1), Inter (SIL OFL 1.1), Outfit (SIL OFL 1.1), Lucide / Feather Icons (ISC/MIT) y estándares abiertos W3C/IETF (WebRTC, Web Audio API, Web Cryptography). Textos legales completos integrados.

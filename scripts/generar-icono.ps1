@@ -1,9 +1,9 @@
 Add-Type -AssemblyName System.Drawing
 
-$srcPath = "C:\Users\juand\.gemini\antigravity\scratch\toki-podcast\public\brand\logo.png"
-$appIconPng = "C:\Users\juand\.gemini\antigravity\scratch\toki-podcast\desktop\resources\icons\appIcon.png"
-$appIco = "C:\Users\juand\.gemini\antigravity\scratch\toki-podcast\desktop\resources\icons\app.ico"
-$trayIcon = "C:\Users\juand\.gemini\antigravity\scratch\toki-podcast\desktop\resources\icons\trayIcon.png"
+$srcPath = "C:\Users\juand\.gemini\antigravity\scratch\llamadita\public\brand\logo.png"
+$appIconPng = "C:\Users\juand\.gemini\antigravity\scratch\llamadita\desktop\resources\icons\appIcon.png"
+$appIco = "C:\Users\juand\.gemini\antigravity\scratch\llamadita\desktop\resources\icons\app.ico"
+$trayIcon = "C:\Users\juand\.gemini\antigravity\scratch\llamadita\desktop\resources\icons\trayIcon.png"
 
 $src = [System.Drawing.Bitmap]::FromFile($srcPath)
 

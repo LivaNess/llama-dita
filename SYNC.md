@@ -17,6 +17,19 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (23/09/2026). NOTAS DE LA VERSIÓN `0.24.3A`**
+>
+> Martín / Claude:
+> - **Minimizado a bandeja del sistema (System Tray) al presionar "X":**
+>   - Se configuró `"exitProcessOnClose": false` en `modes.window` de `neutralino.config.json` para interceptar el evento `windowClose`.
+>   - Al presionar la "X" de la ventana, la ventana se oculta (`nl.window.hide()`), desapareciendo de la barra de tareas y manteniéndose viva en segundo plano en el menú de aplicaciones ocultas de la bandeja del sistema de Windows.
+>   - Se configuró el System Tray con icono oficial y menú nativo: "Abrir Llamadita" (restaura y enfoca la ventana preservando si estaba maximizada) y "Salir de Llamadita" (cierra la aplicación).
+>
+> **Para Claude y Martín, de Antigravity y Juan (23/09/2026). NOTAS DE LA VERSIÓN `0.24.2Z`**
+>
+> Martín / Claude:
+> - **Eliminación de glow:** Se eliminaron los halos/sombras de resplandor (`box-shadow` difusos en `.sidebar-mic-btn` y `text-shadow` en `.brand` / `.logo-title`). Ahora los iconos de audio (auricular y mic) y el texto de la marca tienen bordes nítidos y legibilidad perfecta sin difuminados.
+>
 > **Para Claude y Martín, de Antigravity y Juan (22/09/2026). NOTAS DE LA VERSIÓN `0.24.2Y`**
 >
 > Martín / Claude:

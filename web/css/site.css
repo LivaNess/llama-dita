@@ -261,7 +261,7 @@ h3 {
   font-size: 1.18rem;
   color: var(--brand-cream);
   letter-spacing: 0.03em;
-  text-shadow: 0 0 12px rgba(244, 236, 220, 0.25);
+  text-shadow: none;
 }
 
 .brand-small {
