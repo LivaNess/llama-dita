@@ -2539,7 +2539,7 @@ function mostrarPerfilAmigo(p, f) {
   const uName = (p.username || '').toLowerCase().trim();
   const esCEO = ['liva', 'devliva', 'dantey24'].includes(uName);
   const versionIngreso = obtenerVersionDeIngreso(p);
-  const esAlfaTester = true; // versión <= 0.24.2Z (todos los perfiles existentes hasta ahora)
+  const esAlfaTester = !p.joined_version || p.joined_version <= '0.24.2Z';
 
   const modalOverlay = document.createElement('div');
   modalOverlay.id = 'profileModalOverlay';
@@ -2565,38 +2565,29 @@ function mostrarPerfilAmigo(p, f) {
     handle: p.username,
     status: st.label,
     statusClass: st.cls,
-    contactText: '💬 Enviar mensaje',
-    avatarKey: p.avatar_key || '',
     avatarInitials: (p.display_name || p.username || '?').slice(0, 2).toUpperCase(),
-    showUserInfo: true,
     enableTilt: true,
     enableMobileTilt: false,
     behindGlowEnabled: true,
-    innerGradient: 'linear-gradient(145deg, #60496e8c 0%, #71C4FF44 100%)',
-    versionDesde: `v${versionIngreso}`,
+    versionDesde: versionIngreso,
     isAlphaTester: esAlfaTester,
     isCEO: esCEO,
     fechaUnion: fechaUnion,
     fechaAmigos: fechaAmigos,
-    canCall: online,
-    onContactClick: () => {
-      cerrar();
-      abrirChatPrivado(p);
-    },
-    onCallClick: () => {
-      cerrar();
-      callFriend(p);
-    },
     onClose: () => {
       cerrar();
     }
   });
 
+  // Si tiene avatar_key, resolvemos la URL firmada para el fondo cover
+  if (p.avatar_key) {
+    archivos.urlParaVer(p.avatar_key).then((url) => {
+      if (url) cardInstance.setAvatarUrl(url);
+    }).catch(() => {});
+  }
+
   modalOverlay.appendChild(cardInstance.element);
   document.body.appendChild(modalOverlay);
-
-  // Pintar foto de perfil con URL firmada si tiene avatar_key
-  pintarImagenes(modalOverlay);
 
   // Si no teníamos created_at de este perfil, lo consultamos en segundo plano
   if (!p.created_at) {

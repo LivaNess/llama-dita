@@ -17,6 +17,26 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.3E · 2026-09-23 · Antigravity
+**Qué cambió.** Rediseño estético y funcional completo de `ProfileCard` (ReactBits) con avatar en fondo cover, holográfico arcoíris, grano satinado, destellos y tipografía variable:
+- **Foto de perfil como fondo de la tarjeta:** La imagen del usuario se expande a pantalla completa dentro de la tarjeta (`background-size: cover`), con una viñeta oscura multicapa que garantiza legibilidad y contraste absoluto para todos los textos. Si el usuario no tiene avatar cargado, se muestra un fondo geométrico oscuro elegante con sus iniciales en marca de agua translúcida.
+- **Efecto holográfico ReactBits (Foil iridiscente, ruido y destellos):**
+  - **Foil arcoíris reflectivo:** Capa translúcida iridiscente reactiva con `mix-blend-mode: color-dodge` cuya posición e intensidad se modulan en tiempo real según el ángulo de inclinación 3D del cursor.
+  - **Textura de grano analógico:** Capa de ruido satinado mediante filtro SVG `feTurbulence` que brinda la sensación táctil de una tarjeta coleccionable física.
+  - **Destellos animados (sparkles):** Pequeños destellos vectoriales de 4 puntas en ubicaciones estratégicas con animación de respiración y flotación suave.
+- **Distinciones e insignias en esquina superior izquierda (Cero emojis):**
+  - Se eliminaron todos los emojis genéricos (sin ✨, 👑, 💬, 📞). En su lugar se emplean iconos vectoriales SVG limpios, minimalistas y nítidos.
+  - **Aura y resplandor especial CEO:** Para `liva`, `devliva` y `dantey24`, la tarjeta adquiere un contorno dorado luminoso y un Behind Glow ámbar cálido (`rgba(251, 191, 36, 0.45)`), acompañado de la insignia con corona vectorial.
+  - **Lógica Alfa Tester:** Para los usuarios fundadores (`<= 0.24.2Z`), el badge en la esquina superior izquierda muestra `Alfa Tester · v0.24.2Z` y se omite la etiqueta redundante "En Llamadita desde". Para usuarios nuevos que no cuenten con la distinción, se muestra "En Llamadita desde: v...".
+- **Identidad centrada y tipografía Google Sans Flex:**
+  - El nombre y `@usuario` se ubican en el centro de la tarjeta aprovechando los ejes variables de la fuente (`'wght' 780, 'wdth' 104, 'opsz' 36, 'ROND' 30`).
+- **Pie de tarjeta limpio:**
+  - Se removieron los botones redundantes de "Llamar" y "Enviar mensaje".
+  - Se visualizan de forma limpia y condensada la fecha de membresía ("Miembro desde...") y de amistad ("Amigos desde...").
+**Por qué.** Elevar el estándar estético de la aplicación eliminando elementos informales o con apariencia de IA, convirtiendo la tarjeta de perfil en un coleccionable holográfico reactivo de alta fidelidad que destaca la foto de los amigos y sus distinciones de forma elegante.
+**Dónde.** `src/components/profileCard.js`, `src/components/profileCard.css`, `src/social/panel.js`, `package.json`, `CAMBIOS.md`, `SYNC.md`.
+**Cómo se verifica.** Abrir la app en `http://localhost:3000/`, hacer clic sobre la foto de perfil de cualquier amigo en la barra lateral. Constatar que: (1) la foto del amigo aparece como fondo completo de la tarjeta con viñeta oscura; (2) al mover el cursor se percibe el foil iridiscente arcoíris, el grano satinado y los destellos flotantes; (3) en la esquina superior izquierda aparecen las distinciones con iconos SVG nítidos (sin emojis) y para `devliva`/`liva`/`dantey24` se despliega el aura dorada de CEO; (4) para los Alfa Testers no aparece "En Llamadita desde" en el pie sino solo su fecha de unión; (5) los botones de llamar/enviar mensaje ya no están presentes en la tarjeta.
+
 ### 0.24.3D · 2026-09-23 · Antigravity
 **Qué cambió.** Integración del componente interactivo `ProfileCard` (ReactBits) con efecto 3D Tilt, Behind Glow, versión de origen y badges exclusivos:
 - **Componente ProfileCard en JavaScript Vanilla y CSS puro (`src/components/profileCard.js` y `profileCard.css`):**

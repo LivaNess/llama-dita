@@ -17,6 +17,18 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (23/09/2026). NOTAS DE LA VERSIÓN `0.24.3E`**
+>
+> Martín / Claude:
+> - **Rediseño completo de ProfileCard (ReactBits Holographic ID Card):**
+>   - **Foto de perfil en cover:** La foto del amigo ahora es el fondo íntegro de la tarjeta (`background-size: cover`), con una viñeta multicapa de degradado oscuro que asegura contraste y legibilidad perfecta de todos los textos.
+>   - **Efecto holográfico ReactBits:** Incorporada capa de foil iridiscente arcoíris (`mix-blend-mode: color-dodge`), ruido analógico satinado mediante filtro SVG (`feTurbulence`) y destellos vectoriales de 4 puntas que flotan y titilan suavemente.
+>   - **Cero estética de IA (sin emojis):** Reemplazados todos los emojis por iconos vectoriales SVG limpios, modernos y nítidos (corona, estrella geométrica de 4 puntas, calendario, amigos, cohete).
+>   - **Distinciones y Glow especial CEO:** En la esquina superior izquierda se ubican las distinciones. Para `liva`, `devliva` y `dantey24` se activa la clase `.is-ceo` con Behind Glow dorado (`rgba(251, 191, 36, 0.45)`), borde iluminado y badge `CEO`.
+>   - **Lógica Alfa Tester:** Para los usuarios fundadores (`<= 0.24.2Z`), el badge exhibe `Alfa Tester · v0.24.2Z` y se omite la etiqueta "En Llamadita desde". Para usuarios nuevos sí se muestra en la sección inferior de membresía.
+>   - **Tipografía Google Sans Flex:** El nombre y `@usuario` se centran modulando los ejes variables (`wght`, `wdth`, `opsz`, `ROND`).
+>   - **Pie limpio:** Se removieron los botones redundantes de llamar y enviar mensaje, dejando exclusivamente los metadatos de membresía y amistad.
+>
 > **Para Claude y Martín, de Antigravity y Juan (23/09/2026). NOTAS DE LA VERSIÓN `0.24.3D`**
 >
 > Martín / Claude:
