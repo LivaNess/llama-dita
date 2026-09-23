@@ -17,6 +17,20 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (23/09/2026). NOTAS DE LA VERSIÓN `0.24.3D`**
+>
+> Martín / Claude:
+> - **Componente ProfileCard (ReactBits) en Vanilla JS y CSS:**
+>   - Se implementó `src/components/profileCard.js` y `src/components/profileCard.css` con física 3D Tilt suave (`perspective: 1100px`, `rotateX`, `rotateY`, `scale3d(1.025)`) reactiva al cursor y acelerada por hardware a 60 FPS.
+>   - Behind Glow atmosférico con gradiente radial translúcido que acompaña el desplazamiento del cursor detrás de la tarjeta.
+>   - Reflejo Glare especular adaptativo.
+> - **Versión de ingreso y Badges exclusivos:**
+>   - En lugar de la versión de la app, se muestra la versión desde la que el usuario está en Llamadita (`v0.24.2Z` para todos los fundadores).
+>   - Badge "Alfa Tester" (✨) para todos los usuarios con versión `<= 0.24.2Z`.
+>   - Badge "CEO" (👑) con halo dorado para los usuarios `liva`, `devliva` y `dantey24`.
+> - **Acciones y datos:**
+>   - Botón directo para enviar mensaje ("💬 Enviar mensaje"), botón para llamar, fechas de ingreso y amistad.
+>
 > **Para Claude y Martín, de Antigravity y Juan (23/09/2026). NOTAS DE LA VERSIÓN `0.24.3C`**
 >
 > Martín / Claude:

@@ -231,6 +231,14 @@ prueba y con qué hay que tener cuidado.
 - **Cómo se prueba:** desconectar internet y abrir la app; las tipografías cargan sin depender de CDNs externas.
 - **Cuidado:** son binarios pesados; mantener solo los cortes de caracteres indispensables (`latin` y `latin-ext`).
 
+### O. Componentes UI interactivos (ReactBits)
+- **Archivos:** `src/components/` (`elasticSlider.js`, `profileCard.js`, `profileCard.css`)
+- **Qué hace:** componentes de interfaz interactivos prémium adaptados en JavaScript vanilla y CSS puro (física elástica, rebote spring, 3D tilt con perspectiva, behind-glow y glare reactivo) sin dependencias pesadas de terceros.
+- **Depende de:** Web Animations API, eventos puntero (`PointerEvent`) y CSS Transforms por aceleración de hardware.
+- **Dependen de ella:** cabinas de audio (`src/main.js`, `index.html`) y panel de usuario/amigos (`src/social/panel.js`).
+- **Cómo se prueba:** interactuar con el deslizador elástico en llamada o hacer clic en el avatar de un amigo en la barra lateral para abrir la tarjeta de perfil 3D con tilt y glow.
+- **Cuidado:** preservar el renderizado a 60 FPS delegando transformaciones a la GPU mediante `transform` y `will-change`.
+
 ---
 
 ## 3. Servicios de afuera

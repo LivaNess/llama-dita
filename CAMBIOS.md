@@ -17,6 +17,27 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.3D · 2026-09-23 · Antigravity
+**Qué cambió.** Integración del componente interactivo `ProfileCard` (ReactBits) con efecto 3D Tilt, Behind Glow, versión de origen y badges exclusivos:
+- **Componente ProfileCard en JavaScript Vanilla y CSS puro (`src/components/profileCard.js` y `profileCard.css`):**
+  - **Física 3D Tilt con perspectiva:** Inclinación suave y reactiva al mover el cursor por la tarjeta (`rotateX`, `rotateY`, `scale3d`) con aceleración por hardware a 60 FPS y retorno elástico al salir del foco.
+  - **Behind Glow atmosférico:** Aura lumínica radial difusa detrás de la tarjeta (`behindGlowEnabled`) que acompaña la posición del cursor enriqueciendo la profundidad visual.
+  - **Reflejo especular Glare:** Brillo reactivo que simula la incidencia de la luz en la superficie de la tarjeta al inclinarla.
+  - **Gradiente interior personalizable:** Combinación de tonos profundos de Llamadita y gradiente translúcido (`linear-gradient(145deg, #60496e8c 0%, #71C4FF44 100%)`).
+- **Versión de ingreso y badges especiales de membresía:**
+  - **Versión de ingreso:** En lugar de la versión actual del cliente, se exhibe la versión desde la que el usuario está en Llamadita (`v0.24.2Z` para todos los usuarios fundadores).
+  - **Badge "Alfa Tester":** Insignia cósmica destacada con borde violeta/cian y resplandor sutil para todos los usuarios con versión `<= 0.24.2Z`.
+  - **Badge "CEO":** Insignia dorada exclusiva con corona (`👑 CEO`) para los usuarios `liva`, `devliva` y `dantey24`.
+  - **Badge de presencia:** Indicador de estado en tiempo real (Conectado, Ausente, No molestar, Desconectado) con aro sincronizado sobre el avatar grande.
+- **Acciones y datos de usuario:**
+  - Botón de contacto directo ("💬 Enviar mensaje") para abrir el chat privado.
+  - Botón de llamada ("📞 Llamar") activo si el usuario está conectado.
+  - Fechas de ingreso y de amistad formateadas prolijamente en español.
+  - Cierre intuitivo mediante botón `✕`, clic fuera de la tarjeta o tecla `Escape`.
+**Por qué.** Reemplazar la ventana básica provisional por una tarjeta de presentación premium inspirada en el componente ProfileCard de ReactBits, destacando a los Alfa Testers y miembros del equipo fundador (CEO) con impacto visual de vanguardia y cero impacto de rendimiento.
+**Dónde.** `src/components/profileCard.js`, `src/components/profileCard.css`, `src/social/panel.js`, `src/social/social.css`, `ESQUELETO.md`, `package.json`, `CAMBIOS.md`, `SYNC.md`.
+**Cómo se verifica.** Abrir la app (o `http://localhost:3000/`) y hacer clic en el avatar de un amigo (por ejemplo @devliva o cualquier usuario): se despliega la tarjeta 3D ProfileCard. Al mover el mouse sobre ella, la tarjeta se inclina tridimensionalmente con su reflejo glare y el glow posterior. Verificar la presencia del badge "Alfa Tester" y para devliva / liva / dantey24 el badge "CEO". Verificar que el botón "Enviar mensaje" abre el chat y "✕" o `Escape` cierran la tarjeta.
+
 ### 0.24.3C · 2026-09-23 · Antigravity
 **Qué cambió.** Borde de estado dinámico en avatar de amigos, unión de foto con nombre y modal interactivo de perfil:
 - **Borde de estado en avatar de amigos:** Se transformó el indicador de presencia (punto verde/amarillo/rojo/gris) en un contorno circular limpio y nítido directamente alrededor de la foto o iniciales del usuario (`border: 2px solid <color>` según estado: `#10b981` conectado, `#f59e0b` ausente, `#ef4444` no molestar, `#475569` desconectado).

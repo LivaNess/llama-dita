@@ -12,6 +12,7 @@ import * as api from './api.js';
 import * as cache from './cacheLocal.js';
 import * as archivos from './adjuntos.js';
 import { APP_VERSION } from '../updater.js';
+import { createProfileCard } from '../components/profileCard.js';
 
 const RING_TIMEOUT_MS = 45000;
 
@@ -2520,6 +2521,11 @@ function formatearFecha(isoString) {
   }
 }
 
+function obtenerVersionDeIngreso(p) {
+  if (p?.joined_version) return p.joined_version;
+  return '0.24.2Z';
+}
+
 function mostrarPerfilAmigo(p, f) {
   if (!p) return;
   document.getElementById('profileModalOverlay')?.remove();
@@ -2530,56 +2536,63 @@ function mostrarPerfilAmigo(p, f) {
   const fechaAmigos = f?.created_at ? formatearFecha(f.created_at) : null;
   const online = isOnline(p);
 
+  const uName = (p.username || '').toLowerCase().trim();
+  const esCEO = ['liva', 'devliva', 'dantey24'].includes(uName);
+  const versionIngreso = obtenerVersionDeIngreso(p);
+  const esAlfaTester = true; // versión <= 0.24.2Z (todos los perfiles existentes hasta ahora)
+
   const modalOverlay = document.createElement('div');
   modalOverlay.id = 'profileModalOverlay';
-  modalOverlay.className = 'profile-modal-overlay';
+  modalOverlay.className = 'profile-card-modal-overlay';
 
-  modalOverlay.innerHTML = `
-    <div class="profile-card-modal" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
-      <button type="button" class="profile-modal-close" id="btnProfileModalClose" title="Cerrar perfil" aria-label="Cerrar">✕</button>
-      
-      <div class="profile-modal-header">
-        <div class="profile-modal-avatar-disc status-${st.cls}">
-          ${fotoDe(p, `sc-foto-grande status-${st.cls}`)}
-        </div>
-        <div class="profile-modal-info">
-          <h3 id="profileModalTitle" class="profile-modal-name">${esc(nombre)}</h3>
-          <span class="profile-modal-handle">@${esc(p.username)}</span>
-          <div class="profile-status-badge status-${st.cls}">
-            <span class="sc-dot ${st.cls}"></span>
-            <span>${st.label}</span>
-          </div>
-        </div>
-      </div>
+  let cardInstance = null;
 
-      <div class="profile-modal-body">
-        <div class="profile-data-row">
-          <span class="profile-data-label">Se unió</span>
-          <span class="profile-data-value" id="profileJoinDate">${fechaUnion}</span>
-        </div>
-        ${fechaAmigos ? `
-          <div class="profile-data-row">
-            <span class="profile-data-label">Amigos desde</span>
-            <span class="profile-data-value">${fechaAmigos}</span>
-          </div>
-        ` : ''}
-        <div class="profile-data-row">
-          <span class="profile-data-label">Versión</span>
-          <span class="profile-data-value">v${APP_VERSION}</span>
-        </div>
-      </div>
+  const cerrar = () => {
+    modalOverlay.classList.add('closing');
+    setTimeout(() => {
+      cardInstance?.destroy?.();
+      modalOverlay.remove();
+    }, 150);
+    document.removeEventListener('keydown', onKey);
+  };
 
-      <div class="profile-modal-actions">
-        <button type="button" class="btn-profile-action btn-profile-chat" id="btnProfileOpenChat">
-          💬 Enviar mensaje
-        </button>
-        <button type="button" class="btn-profile-action btn-profile-call" id="btnProfileCall" ${online ? '' : 'disabled'}>
-          ${ICONO_TELEFONO} Llamar
-        </button>
-      </div>
-    </div>
-  `;
+  const onKey = (e) => {
+    if (e.key === 'Escape') cerrar();
+  };
 
+  cardInstance = createProfileCard({
+    name: nombre,
+    handle: p.username,
+    status: st.label,
+    statusClass: st.cls,
+    contactText: '💬 Enviar mensaje',
+    avatarKey: p.avatar_key || '',
+    avatarInitials: (p.display_name || p.username || '?').slice(0, 2).toUpperCase(),
+    showUserInfo: true,
+    enableTilt: true,
+    enableMobileTilt: false,
+    behindGlowEnabled: true,
+    innerGradient: 'linear-gradient(145deg, #60496e8c 0%, #71C4FF44 100%)',
+    versionDesde: `v${versionIngreso}`,
+    isAlphaTester: esAlfaTester,
+    isCEO: esCEO,
+    fechaUnion: fechaUnion,
+    fechaAmigos: fechaAmigos,
+    canCall: online,
+    onContactClick: () => {
+      cerrar();
+      abrirChatPrivado(p);
+    },
+    onCallClick: () => {
+      cerrar();
+      callFriend(p);
+    },
+    onClose: () => {
+      cerrar();
+    }
+  });
+
+  modalOverlay.appendChild(cardInstance.element);
   document.body.appendChild(modalOverlay);
 
   // Pintar foto de perfil con URL firmada si tiene avatar_key
@@ -2590,41 +2603,19 @@ function mostrarPerfilAmigo(p, f) {
     api.getProfile(p.id).then((full) => {
       if (full?.created_at) {
         p.created_at = full.created_at;
-        const el = document.getElementById('profileJoinDate');
+        const el = document.getElementById('profileCardJoinDate');
         if (el) el.textContent = formatearFecha(full.created_at);
       }
     }).catch(() => {
-      const el = document.getElementById('profileJoinDate');
+      const el = document.getElementById('profileCardJoinDate');
       if (el && el.textContent === 'Cargando…') el.textContent = 'Desconocida';
     });
   }
-
-  const cerrar = () => {
-    modalOverlay.classList.add('closing');
-    setTimeout(() => modalOverlay.remove(), 120);
-    document.removeEventListener('keydown', onKey);
-  };
-
-  const onKey = (e) => {
-    if (e.key === 'Escape') cerrar();
-  };
 
   document.addEventListener('keydown', onKey);
 
   modalOverlay.addEventListener('click', (e) => {
     if (e.target === modalOverlay) cerrar();
-  });
-
-  modalOverlay.querySelector('#btnProfileModalClose')?.addEventListener('click', cerrar);
-
-  modalOverlay.querySelector('#btnProfileOpenChat')?.addEventListener('click', () => {
-    cerrar();
-    abrirChatPrivado(p);
-  });
-
-  modalOverlay.querySelector('#btnProfileCall')?.addEventListener('click', () => {
-    cerrar();
-    callFriend(p);
   });
 }
 
