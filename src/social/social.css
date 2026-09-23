@@ -247,8 +247,53 @@
 #sidebarUserAvatar.con-foto { padding: 0; overflow: hidden; }
 #sidebarUserAvatar.con-foto img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 50%; }
 
-/* En la lista de amigos, la foto va antes que el puntito de estado. */
-.sidebar-friend-item .sc-foto { margin-right: .1rem; }
+/* Borde de estado para fotos de perfil y avatar de amigos */
+.sc-foto.status-online,
+.sc-foto-grande.status-online {
+  border: 2px solid #10b981;
+}
+.sc-foto.status-idle,
+.sc-foto-grande.status-idle {
+  border: 2px solid #f59e0b;
+}
+.sc-foto.status-dnd,
+.sc-foto-grande.status-dnd {
+  border: 2px solid #ef4444;
+}
+.sc-foto.status-offline,
+.sc-foto-grande.status-offline {
+  border: 2px solid #475569;
+}
+
+.sidebar-friend-avatar-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+  outline: none;
+  transition: transform 0.15s ease;
+}
+.sidebar-friend-avatar-btn:hover {
+  transform: scale(1.08);
+}
+.sidebar-friend-avatar-btn:active {
+  transform: scale(0.95);
+}
+.sidebar-friend-avatar-btn:focus-visible {
+  outline: 2px solid var(--brand-blue-soft, #8fa6ff);
+  outline-offset: 2px;
+}
+.sidebar-friend-avatar-btn .sc-foto {
+  width: 32px;
+  height: 32px;
+  box-sizing: border-box;
+}
 
 /* La cabecera del cajón con foto de verdad en vez de las iniciales. */
 .sc-avatar.con-foto { padding: 0; overflow: hidden; }
@@ -673,6 +718,271 @@ select option,
   font-size: 0.72rem;
   opacity: 0.65;
   color: #94a3b8;
+}
+
+/* ==================================================================
+   Modal de Perfil de Usuario
+   ================================================================== */
+.profile-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 8, 16, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 250;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: profileOverlayFade 0.15s ease-out;
+}
+
+.profile-modal-overlay.closing {
+  opacity: 0;
+  transition: opacity 0.12s ease-out;
+}
+
+@keyframes profileOverlayFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.profile-card-modal {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  background: #0f1629;
+  border: 1px solid rgba(143, 166, 255, 0.22);
+  border-radius: 18px;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  padding: 1.5rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  color: #f8fafc;
+  animation: profileCardPop 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+@keyframes profileCardPop {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.profile-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #94a3b8;
+  width: 28px;
+  height: 28px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.profile-modal-close:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  transform: scale(1.05);
+}
+
+.profile-modal-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.65rem;
+  padding-top: 0.4rem;
+}
+
+.profile-modal-avatar-disc {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-modal-avatar-disc .sc-foto-grande {
+  width: 74px;
+  height: 74px;
+  font-size: 1.6rem;
+  border-radius: 50%;
+  box-sizing: border-box;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+
+.profile-modal-avatar-disc .sc-foto-grande.status-online {
+  border: 3px solid #10b981;
+}
+
+.profile-modal-avatar-disc .sc-foto-grande.status-idle {
+  border: 3px solid #f59e0b;
+}
+
+.profile-modal-avatar-disc .sc-foto-grande.status-dnd {
+  border: 3px solid #ef4444;
+}
+
+.profile-modal-avatar-disc .sc-foto-grande.status-offline {
+  border: 3px solid #475569;
+}
+
+.profile-modal-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.profile-modal-name {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.2px;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.profile-modal-handle {
+  font-size: 0.78rem;
+  color: var(--text-muted, #94a3b8);
+  font-family: var(--font-sans);
+}
+
+.profile-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  margin-top: 0.35rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.profile-status-badge.status-online {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #34d399;
+}
+
+.profile-status-badge.status-idle {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #fbbf24;
+}
+
+.profile-status-badge.status-dnd {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
+
+.profile-status-badge.status-offline {
+  background: rgba(100, 116, 139, 0.12);
+  border-color: rgba(100, 116, 139, 0.3);
+  color: #94a3b8;
+}
+
+.profile-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 0.75rem 0.9rem;
+}
+
+.profile-data-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+}
+
+.profile-data-label {
+  color: var(--text-muted, #94a3b8);
+}
+
+.profile-data-value {
+  color: #e2e8f0;
+  font-weight: 600;
+  text-align: right;
+}
+
+.profile-modal-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.2rem;
+}
+
+.btn-profile-action {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.8rem;
+  border-radius: 9px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s ease;
+}
+
+.btn-profile-chat {
+  background: rgba(91, 124, 250, 0.2);
+  border: 1px solid rgba(91, 124, 250, 0.4);
+  color: #93c5fd;
+}
+
+.btn-profile-chat:hover {
+  background: rgba(91, 124, 250, 0.35);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.btn-profile-call {
+  background: rgba(16, 185, 129, 0.18);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #34d399;
+}
+
+.btn-profile-call:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.32);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.btn-profile-call:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.btn-profile-call .sc-icono-tel {
+  width: 14px;
+  height: 14px;
 }
 
 

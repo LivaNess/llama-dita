@@ -11,6 +11,7 @@ import { guardarSesion, recuperarSesion } from './sesionGuardada.js';
 import * as api from './api.js';
 import * as cache from './cacheLocal.js';
 import * as archivos from './adjuntos.js';
+import { APP_VERSION } from '../updater.js';
 
 const RING_TIMEOUT_MS = 45000;
 
@@ -164,10 +165,15 @@ function fotoDe(perfil, clase = 'sc-foto') {
   return `<span class="${clase}"><img data-key="${esc(perfil.avatar_key)}" alt="${esc(nombre)}" loading="lazy" /></span>`;
 }
 
-function statusDot(p) {
+function getStatus(p) {
   const st = p ? state.online.get(p.id) : null;
   const cls = st ? (st === 'dnd' ? 'dnd' : st === 'idle' ? 'idle' : 'online') : 'offline';
   const label = st ? ({ online: 'Conectado', idle: 'Ausente', dnd: 'No molestar' }[st] || 'Conectado') : 'Desconectado';
+  return { cls, label };
+}
+
+function statusDot(p) {
+  const { cls, label } = getStatus(p);
   return `<span class="sc-dot ${cls}" title="${label}"></span>`;
 }
 
@@ -2139,20 +2145,24 @@ function renderSidebar() {
           const isSelected = esDirecto(state.currentChannel) && state.currentChannel?.otro?.id === p.id;
           const inCall = hooks.isCallActiveWith ? hooks.isCallActiveWith(p) : false;
           const muted = isChatMuted(p.id);
+          const st = getStatus(p);
           return `
-            <div class="sidebar-friend-item sc-clickable ${isSelected ? 'active' : ''}" data-sidebar-dm="${p.id}" role="button" tabindex="0" title="${isSelected ? 'Cerrar chat' : 'Abrir chat privado'} con ${esc(p.display_name || p.username)}${muted ? ' · Silenciado' : ''} · Clic derecho para opciones">
-              ${fotoDe(p)}
-              ${statusDot(p)}
-              <div class="friend-info">
+            <div class="sidebar-friend-item ${isSelected ? 'active' : ''}" data-friend-id="${p.id}">
+              <button type="button" class="sidebar-friend-avatar-btn" data-open-profile="${p.id}" title="Ver perfil de ${esc(p.display_name || p.username)}" aria-label="Ver perfil de ${esc(p.display_name || p.username)}">
+                ${fotoDe(p, `sc-foto status-${st.cls}`)}
+              </button>
+              <div class="friend-info sc-clickable" data-sidebar-dm="${p.id}" role="button" tabindex="0" title="${isSelected ? 'Cerrar chat' : 'Abrir chat privado'} con ${esc(p.display_name || p.username)}${muted ? ' · Silenciado' : ''} · Clic derecho para opciones">
                 <span class="friend-name">${esc(p.display_name || p.username)}</span>
                 <span class="friend-handle">@${esc(p.username)}</span>
               </div>
-              ${muted ? `<span class="sc-chat-muted-icon" title="Notificaciones silenciadas">🔕</span>` : ''}
-              ${inCall ? `
-                <button class="btn-friend-call in-call" data-sidebar-hangup="${p.id}" title="Colgar llamada">${ICONO_COLGAR}</button>
-              ` : `
-                <button class="btn-friend-call" data-sidebar-call="${p.id}" title="Llamar" ${isOnline(p) ? '' : 'disabled'}>${ICONO_TELEFONO}</button>
-              `}
+              <div class="friend-actions">
+                ${muted ? `<span class="sc-chat-muted-icon" title="Notificaciones silenciadas">🔕</span>` : ''}
+                ${inCall ? `
+                  <button class="btn-friend-call in-call" data-sidebar-hangup="${p.id}" title="Colgar llamada">${ICONO_COLGAR}</button>
+                ` : `
+                  <button class="btn-friend-call" data-sidebar-call="${p.id}" title="Llamar" ${isOnline(p) ? '' : 'disabled'}>${ICONO_TELEFONO}</button>
+                `}
+              </div>
             </div>
           `;
         }).join('');
@@ -2172,26 +2182,36 @@ function renderSidebar() {
           });
         });
 
-        // El cuerpo del renglón abre o cierra la conversación privada si ya está abierta
-        friendsList.querySelectorAll('[data-sidebar-dm]').forEach((el) => {
-          const friendId = el.dataset.sidebarDm;
+        friendsList.querySelectorAll('[data-open-profile]').forEach((b) => {
+          b.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const item = friends.find((x) => x.p.id === b.dataset.openProfile);
+            if (item) mostrarPerfilAmigo(item.p, item.f);
+          });
+        });
+
+        // El nombre y la fila abren o cierran la conversación privada
+        friendsList.querySelectorAll('.sidebar-friend-item').forEach((el) => {
+          const friendId = el.dataset.friendId;
           const friend = friends.find((x) => x.p.id === friendId)?.p;
           if (friend) {
             el.addEventListener('contextmenu', (e) => showFriendContextMenu(e, friend));
           }
           const alternar = () => {
-            const friendId = el.dataset.sidebarDm;
             if (esDirecto(state.currentChannel) && state.currentChannel?.otro?.id === friendId) {
               closeChannel();
             } else {
-              const friend = friends.find((x) => x.p.id === friendId)?.p;
               if (friend) abrirChatPrivado(friend);
             }
           };
           el.addEventListener('click', (e) => {
-            if (!e.target.closest('[data-sidebar-call]') && !e.target.closest('[data-sidebar-hangup]')) alternar();
+            if (e.target.closest('[data-open-profile]') || e.target.closest('[data-sidebar-call]') || e.target.closest('[data-sidebar-hangup]')) {
+              return;
+            }
+            alternar();
           });
-          el.addEventListener('keydown', (e) => {
+          const infoEl = el.querySelector('.friend-info');
+          infoEl?.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
               alternar();
@@ -2367,6 +2387,9 @@ function showFriendContextMenu(e, friend) {
 
   function renderMainMenu() {
     menu.innerHTML = `
+      <button type="button" data-action="profile">
+        <span>👤 Ver perfil</span>
+      </button>
       <button type="button" data-action="chat">
         <span>💬 Abrir chat privado</span>
       </button>
@@ -2405,6 +2428,11 @@ function showFriendContextMenu(e, friend) {
   }
 
   function bindMenuEvents() {
+    menu.querySelector('[data-action="profile"]')?.addEventListener('click', () => {
+      menu.remove();
+      const f = state.friendships.find((x) => x.requester_id === friend.id || x.addressee_id === friend.id);
+      mostrarPerfilAmigo(friend, f);
+    });
     menu.querySelector('[data-action="chat"]')?.addEventListener('click', () => {
       menu.remove();
       abrirChatPrivado(friend);
@@ -2472,6 +2500,132 @@ function showFriendContextMenu(e, friend) {
     document.addEventListener('pointerdown', dismiss);
     document.addEventListener('keydown', onKeyDown);
   }, 10);
+}
+
+// ------------------------------------------------------------------
+// Perfil de Usuario (Modal básico)
+// ------------------------------------------------------------------
+function formatearFecha(isoString) {
+  if (!isoString) return 'Desconocida';
+  try {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return 'Desconocida';
+    return d.toLocaleDateString('es-AR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  } catch {
+    return 'Desconocida';
+  }
+}
+
+function mostrarPerfilAmigo(p, f) {
+  if (!p) return;
+  document.getElementById('profileModalOverlay')?.remove();
+
+  const st = getStatus(p);
+  const nombre = p.display_name || p.username;
+  const fechaUnion = p.created_at ? formatearFecha(p.created_at) : 'Cargando…';
+  const fechaAmigos = f?.created_at ? formatearFecha(f.created_at) : null;
+  const online = isOnline(p);
+
+  const modalOverlay = document.createElement('div');
+  modalOverlay.id = 'profileModalOverlay';
+  modalOverlay.className = 'profile-modal-overlay';
+
+  modalOverlay.innerHTML = `
+    <div class="profile-card-modal" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+      <button type="button" class="profile-modal-close" id="btnProfileModalClose" title="Cerrar perfil" aria-label="Cerrar">✕</button>
+      
+      <div class="profile-modal-header">
+        <div class="profile-modal-avatar-disc status-${st.cls}">
+          ${fotoDe(p, `sc-foto-grande status-${st.cls}`)}
+        </div>
+        <div class="profile-modal-info">
+          <h3 id="profileModalTitle" class="profile-modal-name">${esc(nombre)}</h3>
+          <span class="profile-modal-handle">@${esc(p.username)}</span>
+          <div class="profile-status-badge status-${st.cls}">
+            <span class="sc-dot ${st.cls}"></span>
+            <span>${st.label}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-modal-body">
+        <div class="profile-data-row">
+          <span class="profile-data-label">Se unió</span>
+          <span class="profile-data-value" id="profileJoinDate">${fechaUnion}</span>
+        </div>
+        ${fechaAmigos ? `
+          <div class="profile-data-row">
+            <span class="profile-data-label">Amigos desde</span>
+            <span class="profile-data-value">${fechaAmigos}</span>
+          </div>
+        ` : ''}
+        <div class="profile-data-row">
+          <span class="profile-data-label">Versión</span>
+          <span class="profile-data-value">v${APP_VERSION}</span>
+        </div>
+      </div>
+
+      <div class="profile-modal-actions">
+        <button type="button" class="btn-profile-action btn-profile-chat" id="btnProfileOpenChat">
+          💬 Enviar mensaje
+        </button>
+        <button type="button" class="btn-profile-action btn-profile-call" id="btnProfileCall" ${online ? '' : 'disabled'}>
+          ${ICONO_TELEFONO} Llamar
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modalOverlay);
+
+  // Pintar foto de perfil con URL firmada si tiene avatar_key
+  pintarImagenes(modalOverlay);
+
+  // Si no teníamos created_at de este perfil, lo consultamos en segundo plano
+  if (!p.created_at) {
+    api.getProfile(p.id).then((full) => {
+      if (full?.created_at) {
+        p.created_at = full.created_at;
+        const el = document.getElementById('profileJoinDate');
+        if (el) el.textContent = formatearFecha(full.created_at);
+      }
+    }).catch(() => {
+      const el = document.getElementById('profileJoinDate');
+      if (el && el.textContent === 'Cargando…') el.textContent = 'Desconocida';
+    });
+  }
+
+  const cerrar = () => {
+    modalOverlay.classList.add('closing');
+    setTimeout(() => modalOverlay.remove(), 120);
+    document.removeEventListener('keydown', onKey);
+  };
+
+  const onKey = (e) => {
+    if (e.key === 'Escape') cerrar();
+  };
+
+  document.addEventListener('keydown', onKey);
+
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) cerrar();
+  });
+
+  modalOverlay.querySelector('#btnProfileModalClose')?.addEventListener('click', cerrar);
+
+  modalOverlay.querySelector('#btnProfileOpenChat')?.addEventListener('click', () => {
+    cerrar();
+    abrirChatPrivado(p);
+  });
+
+  modalOverlay.querySelector('#btnProfileCall')?.addEventListener('click', () => {
+    cerrar();
+    callFriend(p);
+  });
 }
 
 // ------------------------------------------------------------------

@@ -17,6 +17,24 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.3C · 2026-09-23 · Antigravity
+**Qué cambió.** Borde de estado dinámico en avatar de amigos, unión de foto con nombre y modal interactivo de perfil:
+- **Borde de estado en avatar de amigos:** Se transformó el indicador de presencia (punto verde/amarillo/rojo/gris) en un contorno circular limpio y nítido directamente alrededor de la foto o iniciales del usuario (`border: 2px solid <color>` según estado: `#10b981` conectado, `#f59e0b` ausente, `#ef4444` no molestar, `#475569` desconectado).
+- **Eliminación del punto intermedio:** Se removió el punto `.sc-dot` que quedaba entre la foto y el nombre en la barra lateral, unificando visualmente la foto y los textos de nombre y `@usuario` con espaciado natural.
+- **Sectores interactivos separados:**
+  - *Sector de foto (Avatar):* Al hacer clic en la foto del amigo se despliega una ventana modal con el perfil de la persona.
+  - *Sector de nombre / usuario:* Al hacer clic en el nombre se abre o cierra la conversación privada de chat como habitualmente.
+  - *Sector de llamada:* El botón del teléfono queda claramente separado en su propio espacio en la parte derecha para iniciar o colgar llamadas sin interferir con el chat ni el perfil.
+- **Ventana de Perfil de Usuario básica y funcional:**
+  - Muestra foto de perfil ampliada con su aro de estado, nombre completo, `@usuario` y badge de presencia.
+  - Datos del perfil: fecha en la que se unió a Llamadita (`created_at` del perfil formateado en español), fecha de amistad y versión de la aplicación.
+  - Acciones rápidas: "💬 Enviar mensaje" (abre el chat privado) y "📞 Llamar" (inicia llamada si el usuario está conectado).
+  - Cierre intuitivo mediante botón "✕", clic fuera del modal o presionando la tecla Escape.
+  - También disponible desde el menú contextual (clic derecho sobre el amigo -> "👤 Ver perfil").
+**Por qué.** Solicitud de Juan para modernizar la lista de amigos eliminando el punto intermedio redundante, destacando el estado sobre el avatar y permitiendo consultar la tarjeta/perfil del amigo antes de integrar una plantilla de tarjeta enriquecida.
+**Dónde.** `src/social/panel.js`, `src/social/api.js`, `src/social/social.css`, `src/style.css`, `package.json`, `CAMBIOS.md`, `SYNC.md`.
+**Cómo se verifica.** Abrir la aplicación y observar la lista de amigos en la barra lateral: la foto tiene el borde del color de su estado y el nombre se ubica junto a ella sin ningún punto en el medio. Hacer clic en la foto de un amigo: se abre la ventana emergente con su perfil, fecha de unión, arroba, versión y botones de acción. Hacer clic en el nombre: abre el chat privado. Hacer clic en el teléfono: llama. Presionar Escape o hacer clic fuera: cierra el perfil.
+
 ### 0.24.3B · 2026-09-23 · Antigravity
 **Qué cambió.** Modernización de las cabinas de llamada e integración del componente interactivo `ElasticSlider` (ReactBits):
 - **Liberación de la caja rígida:** Se eliminó el contenedor rectangular encerrado `.booth-controls-section`, integrando los controles de manera orgánica, limpia y aireada en la parte inferior de las tarjetas de los participantes.

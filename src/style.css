@@ -1085,6 +1085,7 @@ button.logo-tag { font: inherit; cursor: pointer; }
   flex-direction: column;
   flex: 1;
   min-width: 0;
+  cursor: pointer;
 }
 
 .sidebar-friend-item .friend-name {
@@ -1094,6 +1095,11 @@ button.logo-tag { font: inherit; cursor: pointer; }
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: color 0.12s ease;
+}
+
+.sidebar-friend-item:hover .friend-name {
+  color: #fff;
 }
 
 .sidebar-friend-item .friend-handle {
@@ -1102,6 +1108,14 @@ button.logo-tag { font: inherit; cursor: pointer; }
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.sidebar-friend-item .friend-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .sidebar-friend-item .btn-friend-call {

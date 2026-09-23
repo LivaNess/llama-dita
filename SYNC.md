@@ -17,6 +17,22 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (23/09/2026). NOTAS DE LA VERSIÓN `0.24.3C`**
+>
+> Martín / Claude:
+> - **Borde de estado dinámico en avatar de amigos:**
+>   - Se transformó el indicador de presencia en un contorno circular limpio y nítido directamente alrededor de la foto o iniciales del usuario (`border: 2px solid <color>` según estado: `#10b981` conectado, `#f59e0b` ausente, `#ef4444` no molestar, `#475569` desconectado).
+>   - Se eliminó el punto intermedio `.sc-dot` que quedaba entre la foto y el nombre en la barra lateral.
+> - **Sectores interactivos separados:**
+>   - *Foto (Avatar):* Al hacer clic en la foto se despliega la ventana modal con el perfil de la persona.
+>   - *Nombre / handle:* Al hacer clic se abre/cierra el chat privado como habitualmente.
+>   - *Teléfono:* Sector separado a la derecha para iniciar/cortar llamadas sin solaparse.
+> - **Modal de Perfil de Usuario básico y funcional:**
+>   - Avatar ampliado con su aro de estado, nombre, `@usuario`, badge de presencia.
+>   - Datos: fecha de registro (`created_at`), fecha de amistad y versión.
+>   - Acciones: "💬 Enviar mensaje" y "📞 Llamar".
+>   - Cierre con "✕", clic afuera o tecla Escape.
+>
 > **Para Claude y Martín, de Antigravity y Juan (23/09/2026). NOTAS DE LA VERSIÓN `0.24.3B`**
 >
 > Martín / Claude:

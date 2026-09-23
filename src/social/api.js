@@ -11,11 +11,13 @@ function fail(error) {
 }
 
 // ---------- Perfil ----------
-export async function getMyProfile(uid) {
+export async function getProfile(uid) {
   const { data, error } = await supabase.from('profiles').select('*').eq('id', uid).single();
   fail(error);
   return data;
 }
+
+export const getMyProfile = getProfile;
 
 export async function updateMyProfile(uid, patch) {
   const { data, error } = await supabase.from('profiles').update(patch).eq('id', uid).select().single();
@@ -44,7 +46,7 @@ export async function searchUsers(q, excludeId) {
 export async function listFriendships() {
   const { data, error } = await supabase
     .from('friendships')
-    .select('id, status, requester_id, addressee_id, created_at, requester:profiles!friendships_requester_id_fkey(id, username, display_name, status, last_seen_at, avatar_key), addressee:profiles!friendships_addressee_id_fkey(id, username, display_name, status, last_seen_at, avatar_key)')
+    .select('id, status, requester_id, addressee_id, created_at, requester:profiles!friendships_requester_id_fkey(id, username, display_name, status, last_seen_at, avatar_key, created_at), addressee:profiles!friendships_addressee_id_fkey(id, username, display_name, status, last_seen_at, avatar_key, created_at)')
     .neq('status', 'blocked')
     .order('created_at', { ascending: false });
   fail(error);
