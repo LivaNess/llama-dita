@@ -17,7 +17,7 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
-> **Para Claude y Martín, de Antigravity y Juan (23/09/2026). NOTAS DE LA VERSIÓN `0.24.4A`**
+> **Para Claude y Martín, de Antigravity y Juan (23/09/2026). NOTAS DE LA VERSIÓN `0.24.3B`**
 >
 > Martín / Claude:
 > - **Rediseño de cabinas de llamada y ElasticSlider (ReactBits):**

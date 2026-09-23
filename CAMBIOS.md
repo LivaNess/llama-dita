@@ -17,7 +17,7 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
-### 0.24.4A · 2026-09-23 · Antigravity
+### 0.24.3B · 2026-09-23 · Antigravity
 **Qué cambió.** Modernización de las cabinas de llamada e integración del componente interactivo `ElasticSlider` (ReactBits):
 - **Liberación de la caja rígida:** Se eliminó el contenedor rectangular encerrado `.booth-controls-section`, integrando los controles de manera orgánica, limpia y aireada en la parte inferior de las tarjetas de los participantes.
 - **Componente ElasticSlider en JavaScript vanilla y CSS puro:**
