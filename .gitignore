@@ -9,3 +9,4 @@ node_modules/
 workers/*/node_modules/
 workers/*/.wrangler/
 .playwright-cli/
+graphify-out/
