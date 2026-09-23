@@ -264,15 +264,13 @@
                 <div class="booth-user-name" id="hostUserName">Usuario Local</div>
               </div>
 
-              <!-- Controles estéticos inferiores -->
-              <div class="booth-controls-section">
-                <div class="booth-slider-row">
-                  <div class="booth-slider-header">
-                    <span class="booth-slider-title">Sensibilidad / Ganancia</span>
-                    <span id="sensitivityVal" class="booth-slider-val">160%</span>
-                  </div>
-                  <input type="range" id="micSensitivityRange" min="50" max="350" value="160" class="custom-range" />
+              <!-- Control elástico de ganancia/sensibilidad sin caja rígida -->
+              <div class="booth-slider-container">
+                <div class="booth-slider-header">
+                  <span class="booth-slider-title">Sensibilidad / Ganancia</span>
+                  <span id="sensitivityVal" class="booth-slider-val">160%</span>
                 </div>
+                <div id="hostElasticSlider" class="booth-elastic-mount"></div>
               </div>
             </section>
 
@@ -292,23 +290,13 @@
                 <div class="booth-user-name" id="guestUserName">Participante</div>
               </div>
 
-              <!-- Controles estéticos inferiores con regulador de volumen del amigo -->
-              <div class="booth-controls-section">
-                <div class="booth-slider-row booth-slider-row--with-btn">
-                  <div class="booth-slider-header">
-                    <span class="booth-slider-title">Volumen de tu amigo</span>
-                    <span id="remoteVolumeVal" class="booth-slider-val">100%</span>
-                  </div>
-                  <div class="booth-slider-input-row">
-                    <input type="range" id="remoteVolumeRange" min="0" max="100" value="100" class="custom-range" />
-                    <button class="btn-control btn-mute-icon" id="btnToggleRemoteAudio" title="Silenciar audio de tu amigo">
-                      <svg id="btnToggleRemoteAudioIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                      </svg>
-                    </button>
-                  </div>
+              <!-- Control elástico de volumen de amigo sin caja rígida -->
+              <div class="booth-slider-container">
+                <div class="booth-slider-header">
+                  <span class="booth-slider-title">Volumen de tu amigo</span>
+                  <span id="remoteVolumeVal" class="booth-slider-val">100%</span>
                 </div>
+                <div id="guestElasticSlider" class="booth-elastic-mount"></div>
               </div>
             </section>
           </div>

@@ -17,6 +17,15 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (23/09/2026). NOTAS DE LA VERSIÓN `0.24.4A`**
+>
+> Martín / Claude:
+> - **Rediseño de cabinas de llamada y ElasticSlider (ReactBits):**
+>   - Se eliminaron las cajas rígidas rectangulares `.booth-controls-section` al pie de las tarjetas de los participantes.
+>   - Se construyó el módulo `src/components/elasticSlider.js` en vanilla JS + CSS con física de estiramiento `decay` y rebote resorte (spring bounce).
+>   - El track se expande de 7px a 11px al pasar el cursor o arrastrar (`setPointerCapture`).
+>   - La sensibilidad del micrófono propio (50% a 350%) y el volumen del amigo (0% a 100%) usan el nuevo slider con iconos interactivos dinámicos y silenciador integrado.
+>
 > **Para Claude y Martín, de Antigravity y Juan (23/09/2026). NOTAS DE LA VERSIÓN `0.24.3A`**
 >
 > Martín / Claude:

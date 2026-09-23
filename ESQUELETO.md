@@ -68,12 +68,12 @@ prueba y con qué hay que tener cuidado.
 - **Cuidado:** si el permiso de micrófono queda sin responder, el navegador no contesta
   nunca; por eso el arranque no espera al micrófono para conectarse.
 
-### C. Visualizadores
-- **Archivos:** `src/components/visualizer.js`
-- **Qué hace:** dibuja el espectro y la animación de voz en canvas.
-- **Depende de:** audio.
-- **Dependen de ella:** arranque.
-- **Cómo se prueba:** a ojo, hablando.
+### C. Visualizadores y componentes interactivos
+- **Archivos:** `src/components/visualizer.js`, `src/components/elasticSlider.js`
+- **Qué hace:** dibuja el espectro y animación de voz en canvas, y provee controles interactivos fluidos (deslizador elástico ElasticSlider en cabinas de llamada).
+- **Depende de:** audio y motor de renderizado del navegador.
+- **Dependen de ella:** arranque e interfaz de llamadas.
+- **Cómo se prueba:** a ojo, hablando en llamada y deslizando los controles de volumen y ganancia.
 
 ### D. Red y voz
 - **Archivos:** `src/network/peerManager.js`

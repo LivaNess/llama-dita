@@ -4,6 +4,7 @@ import { initSocial, updateSocialCallState, getSocialState, openSocialChannel } 
 import { urlParaVer } from './social/adjuntos.js';
 import { initUpdater } from './updater.js';
 import { initDeepLink } from './social/deeplink.js';
+import { createElasticSlider } from './components/elasticSlider.js';
 
 // DOM Elements
 const audioPermissionBanner = document.getElementById('audioPermissionBanner');
@@ -24,7 +25,7 @@ const hostUserName = document.getElementById('hostUserName');
 const hostAvatarContent = document.getElementById('hostAvatarContent');
 const hostVocalAura = document.getElementById('hostVocalAura');
 const hostAvatarDisc = document.getElementById('hostAvatarDisc');
-const micSensitivityRange = document.getElementById('micSensitivityRange');
+const hostElasticSliderMount = document.getElementById('hostElasticSlider');
 const sensitivityVal = document.getElementById('sensitivityVal');
 
 // Remote Booth DOM
@@ -33,10 +34,8 @@ const guestUserName = document.getElementById('guestUserName');
 const guestAvatarContent = document.getElementById('guestAvatarContent');
 const guestVocalAura = document.getElementById('guestVocalAura');
 const guestAvatarDisc = document.getElementById('guestAvatarDisc');
-const remoteVolumeRange = document.getElementById('remoteVolumeRange');
+const guestElasticSliderMount = document.getElementById('guestElasticSlider');
 const remoteVolumeVal = document.getElementById('remoteVolumeVal');
-const btnToggleRemoteAudio = document.getElementById('btnToggleRemoteAudio');
-const btnToggleRemoteAudioIcon = document.getElementById('btnToggleRemoteAudioIcon');
 const remoteAudioElement = document.getElementById('remoteAudioElement');
 const toastContainer = document.getElementById('toastContainer');
 
@@ -317,23 +316,114 @@ async function init() {
 
   await startMicrophone();
   setupNetworking();
+  initBoothSliders();
   updateMainViews();
   requestAnimationFrame(renderAudioMetrics);
 }
 
-// Microphone sensitivity range slider
-micSensitivityRange?.addEventListener('input', (e) => {
-  const val = parseInt(e.target.value, 10);
-  if (sensitivityVal) sensitivityVal.textContent = `${val}%`;
-  audioManager.setMicSensitivity(val / 100);
-});
+// Deslizadores elásticos de cabina (física de resorte de ReactBits adaptada para Llamadita)
+let hostElasticSlider = null;
+let guestElasticSlider = null;
 
-// Remote friend volume slider
-remoteVolumeRange?.addEventListener('input', (e) => {
-  const val = parseInt(e.target.value, 10);
-  if (remoteVolumeVal) remoteVolumeVal.textContent = `${val}%`;
-  if (remoteAudioElement) remoteAudioElement.volume = val / 100;
-});
+const ICON_MIC_LOW = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>`;
+const ICON_MIC_HIGH = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/><path d="M22 8a10 10 0 0 1 0 8"/><path d="M2 8a10 10 0 0 0 0 8"/></svg>`;
+
+const ICON_SPEAKER_MUTE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>`;
+const ICON_SPEAKER_LOW = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`;
+const ICON_SPEAKER_HIGH = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`;
+
+function initBoothSliders() {
+  if (hostElasticSliderMount && !hostElasticSlider) {
+    hostElasticSlider = createElasticSlider({
+      container: hostElasticSliderMount,
+      startingValue: 50,
+      maxValue: 350,
+      defaultValue: 160,
+      stepSize: 5,
+      isStepped: true,
+      leftIcon: ICON_MIC_LOW,
+      rightIcon: ICON_MIC_HIGH,
+      leftIconTitle: 'Sensibilidad mínima (50%)',
+      rightIconTitle: 'Sensibilidad máxima (350%)',
+      onLeftIconClick: () => {
+        hostElasticSlider?.setValue(50);
+        audioManager.setMicSensitivity(0.5);
+        if (sensitivityVal) sensitivityVal.textContent = '50%';
+      },
+      onRightIconClick: () => {
+        hostElasticSlider?.setValue(350);
+        audioManager.setMicSensitivity(3.5);
+        if (sensitivityVal) sensitivityVal.textContent = '350%';
+      },
+      onChange: (val) => {
+        const rounded = Math.round(val);
+        if (sensitivityVal) sensitivityVal.textContent = `${rounded}%`;
+        audioManager.setMicSensitivity(rounded / 100);
+      },
+      ariaLabel: 'Sensibilidad y ganancia del micrófono'
+    });
+  }
+
+  if (guestElasticSliderMount && !guestElasticSlider) {
+    guestElasticSlider = createElasticSlider({
+      container: guestElasticSliderMount,
+      startingValue: 0,
+      maxValue: 100,
+      defaultValue: 100,
+      stepSize: 1,
+      isStepped: true,
+      leftIcon: isRemoteMuted ? ICON_SPEAKER_MUTE : ICON_SPEAKER_LOW,
+      rightIcon: ICON_SPEAKER_HIGH,
+      leftIconTitle: isRemoteMuted ? 'Activar audio de tu amigo' : 'Silenciar audio de tu amigo',
+      rightIconTitle: 'Volumen al 100%',
+      onLeftIconClick: () => {
+        isRemoteMuted = !isRemoteMuted;
+        if (remoteAudioElement) remoteAudioElement.muted = isRemoteMuted;
+        syncRemoteMuteIcon();
+        showToast(isRemoteMuted ? 'Audio de tu amigo silenciado' : 'Audio de tu amigo activado');
+      },
+      onRightIconClick: () => {
+        guestElasticSlider?.setValue(100);
+        if (remoteAudioElement) {
+          remoteAudioElement.volume = 1;
+          remoteAudioElement.muted = false;
+        }
+        isRemoteMuted = false;
+        syncRemoteMuteIcon();
+        if (remoteVolumeVal) remoteVolumeVal.textContent = '100%';
+      },
+      onChange: (val) => {
+        const rounded = Math.round(val);
+        if (remoteVolumeVal) remoteVolumeVal.textContent = `${rounded}%`;
+        if (remoteAudioElement) {
+          remoteAudioElement.volume = rounded / 100;
+          if (isRemoteMuted && rounded > 0) {
+            isRemoteMuted = false;
+            remoteAudioElement.muted = false;
+            syncRemoteMuteIcon();
+          }
+        }
+      },
+      ariaLabel: 'Volumen de tu amigo'
+    });
+  }
+}
+
+function syncRemoteMuteIcon() {
+  if (!guestElasticSlider) return;
+  const leftIconEl = guestElasticSliderMount?.querySelector('.elastic-icon-left');
+  if (leftIconEl) {
+    if (isRemoteMuted) {
+      leftIconEl.classList.add('muted');
+      leftIconEl.title = 'Activar audio de tu amigo';
+      guestElasticSlider.setLeftIcon(ICON_SPEAKER_MUTE);
+    } else {
+      leftIconEl.classList.remove('muted');
+      leftIconEl.title = 'Silenciar audio de tu amigo';
+      guestElasticSlider.setLeftIcon(ICON_SPEAKER_LOW);
+    }
+  }
+}
 
 // Sincronización del botón de ensordecer (auriculares)
 function syncDeafenUi() {
@@ -670,22 +760,6 @@ const ICON_AUDIO_ON = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></pol
 // SVG para ícono de audio silenciado (altavoz con X)
 const ICON_AUDIO_MUTED = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>`;
 
-// Silenciar / Activar audio remoto (amigo)
-btnToggleRemoteAudio?.addEventListener('click', () => {
-  isRemoteMuted = !isRemoteMuted;
-  if (remoteAudioElement) remoteAudioElement.muted = isRemoteMuted;
-
-  if (isRemoteMuted) {
-    btnToggleRemoteAudio.className = 'btn-control btn-mute-icon muted';
-    if (btnToggleRemoteAudioIcon) btnToggleRemoteAudioIcon.innerHTML = ICON_AUDIO_MUTED;
-    btnToggleRemoteAudio.title = 'Activar audio de tu amigo';
-  } else {
-    btnToggleRemoteAudio.className = 'btn-control btn-mute-icon';
-    if (btnToggleRemoteAudioIcon) btnToggleRemoteAudioIcon.innerHTML = ICON_AUDIO_ON;
-    btnToggleRemoteAudio.title = 'Silenciar audio de tu amigo';
-  }
-});
-
 // Salir de la llamada: corta, vuelve a una sala propia vacía y deja la app en standby.
 function leaveCall(sendSignal = true) {
   if (sendSignal) {
@@ -708,6 +782,12 @@ function leaveCall(sendSignal = true) {
     guestVocalAura.style.transform = 'scale(1)';
     guestVocalAura.style.opacity = '0.05';
   }
+
+  // Reset de volumen de amigo
+  if (remoteVolumeVal) remoteVolumeVal.textContent = '100%';
+  guestElasticSlider?.setValue(100);
+  isRemoteMuted = false;
+  syncRemoteMuteIcon();
 
   updateBoothProfiles();
   setCallStatus('Sin llamada');

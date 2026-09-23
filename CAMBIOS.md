@@ -17,6 +17,19 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.4A · 2026-09-23 · Antigravity
+**Qué cambió.** Modernización de las cabinas de llamada e integración del componente interactivo `ElasticSlider` (ReactBits):
+- **Liberación de la caja rígida:** Se eliminó el contenedor rectangular encerrado `.booth-controls-section`, integrando los controles de manera orgánica, limpia y aireada en la parte inferior de las tarjetas de los participantes.
+- **Componente ElasticSlider en JavaScript vanilla y CSS puro:**
+  - Adaptación 100% libre de dependencias pesadas basada en el componente de ReactBits, con física elástica (`decay` sigmoidal) y animación de resorte amortiguado (spring bounce) al soltar.
+  - Expansión de altura suave (de 7px a 11px) al pasar el cursor o arrastrar (`pointerdown` con `setPointerCapture`).
+  - Animación elástica lateral de estiramiento horizontal (`scaleX`, `scaleY`, `transformOrigin`) y desplazamiento/escala reactiva de los iconos laterales.
+- **Control de Ganancia / Sensibilidad Local (Tú):** Rango de 50% a 350% con iconos de micrófono mínimo/máximo interactivos y porcentaje dinámico en tiempo real.
+- **Control de Volumen Remoto (Amigo):** Rango de 0% a 100% con icono izquierdo interactivo que actúa como botón de mute/desmuteo rápido (con cambio dinámico de icono y estado tachado en rojo) e icono derecho para volumen máximo.
+**Por qué.** La caja rígida anterior y el input tipo range por defecto resultaban toscos y visualmente pesados. El nuevo deslizador elástico aporta un acabado prémium y fluido acorde al resto de la aplicación.
+**Dónde.** `src/components/elasticSlider.js`, `index.html`, `src/style.css`, `src/main.js`, `ESQUELETO.md`, `package.json`.
+**Cómo se verifica.** Entrar a una llamada (o emular vista de llamada): observar las tarjetas de audio sin marcos rígidos al pie. Deslizar la ganancia propia o el volumen del amigo observando la animación elástica que se estira y rebota al sobrepasar los bordes. Tocar el altavoz izquierdo del amigo para silenciarlo instantáneamente.
+
 ### 0.24.3A · 2026-09-23 · Antigravity
 **Qué cambió.** Minimizado y ocultamiento al System Tray (bandeja del sistema / menú oculto de la barra de tareas) al hacer clic en la "X":
 - **Comportamiento de la "X" (Cerrar):** Al hacer clic en el botón cerrar ("X") de la ventana, la aplicación ya no finaliza su proceso bruscamente. En su lugar, intercepta el evento `windowClose` y oculta la ventana (`nl.window.hide()`).
