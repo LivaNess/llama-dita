@@ -17,6 +17,27 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.5C · 2026-09-24 · Antigravity
+**Qué cambió.** Solución definitiva de colisión de puertos de Neutralino (`NE_CL_IVCTOKN`), control de instancia única (Single Instance) y restauración suave de ventana:
+- **Puerto dinámico del servidor local (`"port": 0`):**
+  - Se configuró `"port": 0` en `desktop/neutralino.config.json`. Neutralino ahora solicita dinámicamente puertos efímeros libres al sistema operativo al iniciar, erradicando para siempre el bloqueo o choque por el puerto estático 24024.
+- **Control de instancia única (Single Instance Guard):**
+  - Se implementó `ensureSingleInstance(nl)` al iniciar la aplicación de escritorio (`DOMContentLoaded`).
+  - Al abrirse una nueva copia de `Llamadita.exe` mientras la app ya se encuentra activa en segundo plano (minimizada en el System Tray):
+    - La nueva copia detecta la existencia del proceso primario mediante registro rápido de PID (`.tmp/active_instance.pid` y `%TEMP%\llamadita_active_instance.pid`) o escaneo de procesos del SO (`tasklist` / PowerShell `StartTime`).
+    - Envía la señal `llamadita://focus` (o el deep link/canal que haya recibido por parámetros) mediante `.tmp/enlace.txt` y `%TEMP%\llamadita_enlace.txt`.
+    - La instancia primaria lee el enlace, desminimiza, restaura tamaño maximizado si correspondía, trae su ventana al frente de Windows de inmediato y la enfoca.
+    - La segunda copia oculta su ventana y se cierra limpiamente de inmediato (`nl.app.exit()`), sin ventanas residuales, sin procesos huérfanos y sin errores de token.
+- **Enfoque garantizado al frente en Windows:**
+  - En `restoreDesktopWindow` y `enfocarVentana` se agregó activación forzada al frente con micro-alternancia de `setAlwaysOnTop`, asegurando que el administrador de ventanas de Windows sitúe a Llamadita al frente por encima de navegadores u otras aplicaciones al restaurarse.
+**Por qué.** Al intentar abrir la aplicación cuando ya estaba minimizada en segundo plano en la bandeja del sistema, el puerto fijo 24024 provocaba que la nueva instancia intentara conectarse al WebSocket de la instancia previa con un token distinto, disparando el error fatal `NE_CL_IVCTOKN` en pantalla.
+**Dónde.** `desktop/neutralino.config.json`, `src/main.js`, `src/social/deeplink.js`, `package.json`, `CAMBIOS.md`, `SYNC.md`.
+**Cómo se verifica.**
+1. Ejecutar `npm run build` y corroborar compilación exitosa.
+2. Ejecutar `npm run build:desktop` y corroborar empaquetado de `resources.neu` sin errores.
+3. Ejecutar `npm run verificar` y validar cumplimiento de protocolo.
+4. Con una instancia de Llamadita ejecutándose en la bandeja del sistema, ejecutar nuevamente el acceso directo de Llamadita: verificar que la ventana en bandeja se restaura y pasa al frente de la pantalla inmediatamente sin generar error `NE_CL_IVCTOKN` ni duplicar procesos.
+
 ### 0.24.5B · 2026-09-24 · Antigravity
 **Qué cambió.** Pulido milimétrico de alineaciones, radios y layout visual, restauración de la flecha de actualización, precarga instantánea de fotos de perfil y pantalla splash de inicio:
 - **Burbujas de conversación ergonómicas (`.sc-msg`):**

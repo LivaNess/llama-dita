@@ -813,7 +813,19 @@ btnLeaveCall?.addEventListener('click', () => {
 });
 
 // Start the app on load
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
+  // En escritorio (Neutralino), verificar si ya hay una instancia previa corriendo para no duplicar procesos ni colisionar
+  if (typeof window !== 'undefined' && typeof window.NL_PORT !== 'undefined') {
+    try {
+      const nl = await import('@neutralinojs/lib');
+      try { await nl.init(); } catch (_) {}
+      const isPrimary = await ensureSingleInstance(nl);
+      if (!isPrimary) return; // Se restauró la instancia existente y esta copia se cerró
+    } catch (e) {
+      console.warn('Error comprobando instancia única de escritorio:', e);
+    }
+  }
+
   init();
   // Cuenta, amigos, canales y llamadas directas (Supabase). Aditivo a la sala P2P.
   // No espera al micrófono: la cuenta tiene que estar disponible aunque el permiso demore o falle.
@@ -891,6 +903,105 @@ window.addEventListener('DOMContentLoaded', () => {
   initDesktopTrayAndWindow();
 });
 
+// Instancia única en escritorio: si el usuario vuelve a abrir Llamadita teniendo ya
+// la app minimizada en segundo plano (System Tray), restaura la existente y sale de inmediato.
+async function ensureSingleInstance(nl) {
+  if (!nl || typeof window === 'undefined' || typeof window.NL_PORT === 'undefined') return true;
+  try {
+    const myPid = window.NL_PID || (await nl.app.getProcessId().catch(() => null));
+    if (!myPid) return true;
+
+    const ruta = window.NL_PATH || '.';
+    const tempDir = (await nl.os.getEnv('TEMP').catch(() => '')) || 'C:\\Windows\\Temp';
+    const pidFile = `${ruta}/.tmp/active_instance.pid`;
+    const tempPidFile = `${tempDir}\\llamadita_active_instance.pid`;
+
+    let existingPid = null;
+
+    // 1. Intentar leer PID activo registrado previamente
+    try {
+      existingPid = (await nl.filesystem.readFile(pidFile)).trim();
+    } catch (_) {
+      try {
+        existingPid = (await nl.filesystem.readFile(tempPidFile)).trim();
+      } catch (_) {}
+    }
+
+    // 2. Si hay un PID registrado diferente al nuestro, verificar si sigue vivo en Windows
+    let isOtherInstanceRunning = false;
+    if (existingPid && existingPid !== String(myPid)) {
+      try {
+        const checkCmd = `tasklist /FI "PID eq ${existingPid}" /NH`;
+        const checkRes = await nl.os.execCommand(checkCmd);
+        const out = (checkRes?.stdOut || '').toLowerCase();
+        if (out.includes(String(existingPid)) || out.includes('llamadita')) {
+          isOtherInstanceRunning = true;
+        }
+      } catch (_) {}
+    }
+
+    // 3. Respaldo: si no había archivo de PID o el proceso murió, verificar si hay múltiples procesos Llamadita
+    if (!isOtherInstanceRunning) {
+      try {
+        const listCmd = 'tasklist /FI "IMAGENAME eq Llamadita*" /FO CSV /NH';
+        const listRes = await nl.os.execCommand(listCmd);
+        const out = listRes?.stdOut || '';
+        const matches = out.match(/"?Llamadita[^"\r\n]*"?,\s*"(\d+)"/gi);
+        if (matches && matches.length > 1) {
+          // Consultar el proceso más antiguo por fecha de inicio en el SO
+          const sortCmd = `powershell -NoProfile -NonInteractive -Command "(Get-Process -Name Llamadita* -ErrorAction SilentlyContinue | Sort-Object StartTime | Select-Object -First 1).Id"`;
+          const sortRes = await nl.os.execCommand(sortCmd);
+          const oldestPid = (sortRes?.stdOut || '').trim();
+          if (oldestPid && oldestPid !== String(myPid)) {
+            isOtherInstanceRunning = true;
+          }
+        }
+      } catch (_) {}
+    }
+
+    // 4. Si otra instancia anterior ya está activa:
+    if (isOtherInstanceRunning) {
+      console.log('Otra instancia de Llamadita ya está activa en segundo plano. Restaurando ventana y cerrando proceso duplicado...');
+      const args = (window.NL_ARGS || []).join(' ');
+      const deepLink = args.match(/llamadita:\/\/[^\s"']+/i)?.[0] || 'llamadita://focus';
+
+      try {
+        await nl.filesystem.createDirectory(`${ruta}/.tmp`);
+        await nl.filesystem.writeFile(`${ruta}/.tmp/enlace.txt`, deepLink);
+      } catch (_) {}
+
+      try {
+        await nl.filesystem.writeFile(`${tempDir}\\llamadita_enlace.txt`, deepLink);
+      } catch (_) {}
+
+      try { await nl.window.hide(); } catch (_) {}
+      await new Promise(r => setTimeout(r, 200));
+      try { await nl.app.exit(); } catch (_) { window.close?.(); }
+      return false;
+    }
+
+    // 5. Somos la instancia principal: registrar nuestro PID
+    try {
+      await nl.filesystem.createDirectory(`${ruta}/.tmp`);
+      await nl.filesystem.writeFile(pidFile, String(myPid));
+    } catch (_) {}
+    try {
+      await nl.filesystem.writeFile(tempPidFile, String(myPid));
+    } catch (_) {}
+
+    // Limpiar archivo de PID al cerrarse la aplicación
+    window.addEventListener('beforeunload', () => {
+      try { nl.filesystem.remove(pidFile); } catch (_) {}
+      try { nl.filesystem.remove(tempPidFile); } catch (_) {}
+    });
+
+    return true;
+  } catch (err) {
+    console.warn('Error en ensureSingleInstance:', err);
+    return true;
+  }
+}
+
 // Comportamiento de ventana de escritorio y bandeja del sistema (Neutralino)
 async function initDesktopTrayAndWindow() {
   if (typeof window === 'undefined' || typeof window.NL_PORT === 'undefined') return;
@@ -919,6 +1030,12 @@ async function initDesktopTrayAndWindow() {
       if (id === 'SHOW') {
         await restoreDesktopWindow(nl);
       } else if (id === 'QUIT') {
+        try {
+          const ruta = window.NL_PATH || '.';
+          const tempDir = (await nl.os.getEnv('TEMP').catch(() => '')) || 'C:\\Windows\\Temp';
+          await nl.filesystem.remove(`${ruta}/.tmp/active_instance.pid`).catch(() => {});
+          await nl.filesystem.remove(`${tempDir}\\llamadita_active_instance.pid`).catch(() => {});
+        } catch (_) {}
         try { await nl.app.exit(); } catch (_) { window.close?.(); }
       }
     });
@@ -958,6 +1075,10 @@ async function restoreDesktopWindow(nl) {
       await nl.window.maximize();
     }
     await nl.window.focus();
+    try {
+      await nl.window.setAlwaysOnTop(true);
+      await nl.window.setAlwaysOnTop(false);
+    } catch (_) {}
   } catch (err) {
     console.warn('Error restaurando ventana:', err);
   }

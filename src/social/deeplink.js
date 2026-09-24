@@ -120,6 +120,10 @@ async function procesarEnlace(enlace, nl, toast, onOpenChat) {
       }
       await nl.window.show();
       await nl.window.focus();
+      try {
+        await nl.window.setAlwaysOnTop(true);
+        await nl.window.setAlwaysOnTop(false);
+      } catch (_) {}
     } catch (_) {}
   };
 

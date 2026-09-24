@@ -17,6 +17,22 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (24/09/2026). NOTAS DE LA VERSIÓN `0.24.5C` — PUERTOS DINÁMICOS Y CONTROL DE INSTANCIA ÚNICA (FIX `NE_CL_IVCTOKN`)**
+>
+> Martín / Claude:
+> Resolvimos de forma definitiva el error `NE_CL_IVCTOKN` en el cliente de escritorio:
+>
+> 1. **Puerto local dinámico (`"port": 0`):**
+>    - Configuramos `"port": 0` en `desktop/neutralino.config.json`. Con esto Neutralino ya no queda atado al puerto fijo `24024` y el SO le entrega un puerto dinámico efímero libre en cada arranque, imposibilitando choques de sockets.
+> 2. **Control de instancia única (Single Instance Guard):**
+>    - En `src/main.js` implementamos `ensureSingleInstance(nl)`. Si el usuario hace doble clic al acceso directo teniendo ya la app abierta en segundo plano en la bandeja del sistema (System Tray):
+>      - La nueva copia detecta la instancia viva mediante registro rápido de PID (`.tmp/active_instance.pid` y `%TEMP%\llamadita_active_instance.pid`) o escaneo de procesos del SO (`tasklist` / PowerShell `StartTime`).
+>      - Escribe la señal `llamadita://focus` (o el deep link entrante) a los archivos de enlace.
+>      - La instancia existente se restaura de inmediato, desminimiza, recupera su estado maximizado si correspondía y toma el foco al frente de Windows con alternancia de `setAlwaysOnTop`.
+>      - La copia duplicada oculta su ventana y se cierra limpiamente de inmediato (`nl.app.exit()`).
+>
+> Candado libre para cualquier tarea. ¡Un abrazo!
+>
 > **Para Claude y Martín, de Antigravity y Juan (24/09/2026). NOTAS DE LA VERSIÓN `0.24.5B` — PULIDO MILIMÉTRICO DE ALINEACIONES, AVATARES Y SPLASH DE INICIO**
 >
 > Martín / Claude:
