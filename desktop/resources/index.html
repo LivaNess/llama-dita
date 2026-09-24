@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:ROND,opsz,slnt,wdth,wght@0..100,6..144,-10..0,25..151,1..1000&family=Outfit:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="/assets/index-DmmS3Q30.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-jnKEUxQ5.css">
+  <script type="module" crossorigin src="/assets/index-7C44IRlw.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-CUltcAW6.css">
 </head>
 <body>
   <!-- Pantalla Splash / Cargador inicial: previene el parpadeo de la ventana de inicio de sesión -->
@@ -275,6 +275,14 @@
           <div class="studio-booths-row">
             <!-- PARTICIPANTE LOCAL (TÚ) -->
             <section class="studio-booth booth-host" id="hostBooth">
+              <div class="booth-badge-header">
+                <span class="booth-status-chip host-chip">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+                  <span id="hostBoothChipText">Tu cabina</span>
+                </span>
+                <span class="booth-speaking-indicator" id="hostSpeakingStatus">En silencio</span>
+              </div>
+
               <div class="booth-visual-center">
                 <div class="avatar-wrapper">
                   <div class="vocal-aura" id="hostVocalAura"></div>
@@ -297,6 +305,14 @@
 
             <!-- PARTICIPANTE REMOTO (AMIGO) -->
             <section class="studio-booth booth-guest" id="guestBooth">
+              <div class="booth-badge-header">
+                <span class="booth-status-chip guest-chip">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                  <span id="guestBoothChipText">Participante</span>
+                </span>
+                <span class="booth-speaking-indicator" id="guestSpeakingStatus">En silencio</span>
+              </div>
+
               <div class="booth-visual-center">
                 <div class="avatar-wrapper">
                   <div class="vocal-aura" id="guestVocalAura"></div>
@@ -322,27 +338,81 @@
             </section>
           </div>
 
-          <!-- BARRA DE LLAMADA: DEBAJO Y EN MEDIO DE LAS DOS TARJETAS -->
+          <!-- BARRA DE LLAMADA: FLOTANTE DEBAJO Y EN MEDIO DE LAS DOS TARJETAS -->
           <div class="studio-call-bar" id="studioCallBar">
-            <div class="call-status-pill" id="callStatus">Sin llamada</div>
-            <button class="btn-hangup" id="btnLeaveCall" title="Cortar la llamada" hidden>
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91"></path>
-                <line x1="22" y1="2" x2="2" y2="22"></line>
-              </svg>
-              <span>Salir de la llamada</span>
-            </button>
+            <div class="call-bar-status-group">
+              <div class="call-live-indicator">
+                <span class="call-live-dot" id="callLiveDot"></span>
+                <span class="call-live-timer" id="callDurationTimer">00:00</span>
+              </div>
+              <div class="call-status-pill" id="callStatus">Sin llamada</div>
+            </div>
+            <div class="call-bar-actions">
+              <button class="btn-hangup" id="btnLeaveCall" title="Cortar la llamada" hidden>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91"></path>
+                  <line x1="22" y1="2" x2="2" y2="22"></line>
+                </svg>
+                <span>Cortar llamada</span>
+              </button>
+            </div>
           </div>
         </main>
 
-        <!-- VISTA 3: STANDBY LIMPIO (CUANDO NO HAY CHAT Y NO HAY SESIÓN CONECTADA) -->
+        <!-- VISTA 3: STANDBY / HUB DE REPOSO Y BIENVENIDA -->
         <section class="main-view standby-view" id="standbyView">
           <div class="standby-card" id="standbyCard">
-            <div class="standby-icon" id="standbyIcon">
-              <img src="/brand/logo-mark-light.svg" alt="" width="88" height="88" />
+            <!-- Imagotipo oficial con aura sutil -->
+            <div class="standby-icon-wrapper">
+              <div class="standby-icon" id="standbyIcon">
+                <img src="/brand/logo-mark-light.svg" alt="Llamadita" width="76" height="76" />
+              </div>
             </div>
-            <h3 class="standby-title" id="standbyTitle">Sin sesión activa</h3>
-            <p class="standby-desc" id="standbyDesc">Elegí un canal o llamá a un amigo desde la barra lateral para empezar.</p>
+
+            <!-- Título y descripción dinámicos -->
+            <div class="standby-text-block">
+              <h3 class="standby-title" id="standbyTitle">Sin sesión activa</h3>
+              <p class="standby-desc" id="standbyDesc">Elegí un canal o llamá a un amigo desde la barra lateral para empezar.</p>
+            </div>
+
+            <!-- Acciones rápidas (visibles cuando hay sesión) -->
+            <div class="standby-quick-actions" id="standbyQuickActions" style="display: none;">
+              <button type="button" class="standby-action-card" id="btnStandbyCreateChannel">
+                <div class="standby-action-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                </div>
+                <div class="standby-action-info">
+                  <span class="standby-action-title">Crear un canal</span>
+                  <span class="standby-action-desc">Canal de texto o sala de voz</span>
+                </div>
+              </button>
+
+              <button type="button" class="standby-action-card" id="btnStandbyAddFriend">
+                <div class="standby-action-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <line x1="19" y1="8" x2="19" y2="14"></line>
+                    <line x1="22" y1="11" x2="16" y2="11"></line>
+                  </svg>
+                </div>
+                <div class="standby-action-info">
+                  <span class="standby-action-title">Añadir un amigo</span>
+                  <span class="standby-action-desc">Buscá por su @usuario</span>
+                </div>
+              </button>
+            </div>
+
+            <!-- Píldora de estado del sistema -->
+            <div class="standby-status-pill" id="standbyStatusPill" style="display: none;">
+              <span class="standby-status-dot"></span>
+              <span class="standby-status-label">Audio estéreo · Conexión directa P2P</span>
+            </div>
+
+            <!-- Formulario de Login (cuando está deslogueado) -->
             <div class="standby-login-container" id="standbyLoginContainer" style="display: none;"></div>
           </div>
         </section>

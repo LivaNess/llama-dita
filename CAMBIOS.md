@@ -17,6 +17,30 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.6A · 2026-09-24 · Antigravity
+**Qué cambió.** Overhaul Visual Fase 3: Rediseño completo de la Pantalla de Standby (Home / Reposo) y Cabinas de Estudio de Llamada:
+- **Pantalla de Standby (Hub de Bienvenida):**
+  - **Saludo personalizado y dinámico:** Reemplazado el antiguo texto "Sin sesión activa" (que aparecía incluso con sesión iniciada) por un saludo cálido con el nombre del usuario (`¡Hola de nuevo, [Nombre]!`) y subtítulo ergonómico.
+  - **Accesos Rápidos (Quick Actions):** Integradas dos tarjetas de acción directa para "Crear un canal" (dispara el wizard modal centrado) y "Añadir un amigo" (abre el modal centrado para buscar por `@usuario`), reutilizando 100% de los flujos ya validados.
+  - **Píldora de estado de red:** Indicador visual "Audio estéreo · Conexión directa P2P" con punto verde pulsante.
+  - **Imagotipo oficial con micro-elevación:** Squircle translúcido en cristal oscuro con borde de luz cenital `inset 0 1px 0 rgba(255,255,255,0.14)`.
+- **Cabinas de Llamada (Studio Booths View):**
+  - **Erradicación de clichés de IA:** Eliminadas las líneas sólidas superiores de 3px (`border-top`) y el resplandor difuso de 25px (`box-shadow: 0 0 25px`). Tarjetas monolíticas con `backdrop-filter: blur(20px)`, bordes calibrados a `rgba(143,166,255,0.12)`, oclusión ambiental y rim light superior.
+  - **Chips de cabecera e indicadores en vivo:**
+    - Host: Chip vectorial "Tu cabina" con icono de micrófono + indicador de habla en tiempo real ("En silencio", "Hablando" con halo verde, o "Silenciado" en rojo).
+    - Guest: Chip vectorial "Con [Amigo]" con icono de usuario + indicador de habla en vivo de la otra persona.
+  - **Aros acústicos y avatares:** Disco de avatar ampliado a 108px con aro físico concéntrico nítido de alta fidelidad (`box-shadow: 0 0 0 3.5px rgba(91,124,250,0.32)`) y ondas radiales acústicas fluidas (`.vocal-aura`).
+  - **Paleta oficial en sliders y auras:** Erradicado el cian discordante (`#06b6d4`); reemplazado por azul eléctrico oficial (`--brand-blue`) para el host y azul suave (`--brand-blue-soft`) para el amigo.
+- **Barra de Llamada Flotante (`#studioCallBar`):**
+  - Cápsula aerodinámica monolítica en pastilla completa (`border-radius: 9999px`) con `backdrop-filter: blur(20px)`.
+  - **Cronómetro de llamada en tiempo real (`#callDurationTimer`):** Temporizador activo (`00:00`, `01:23`) sincronizado con la conexión WebRTC.
+  - Botón "Cortar llamada" en degradado rojo carmesí sutil con micro-física táctil.
+**Por qué.** La pantalla de inicio mostraba "Sin sesión activa" para usuarios autenticados, y las cabinas de llamada mantenían patrones visuales heredados (bordes de color superiores, resplandor desenfocado de IA y falta de temporizador en llamada).
+**Dónde.** `index.html`, `src/style.css`, `src/main.js`, `src/social/panel.js`, `package.json`, `CAMBIOS.md`, `SYNC.md`.
+**Cómo se verifica.**
+1. Al abrir la app sin conversación activa, observar la pantalla de bienvenida con el imagotipo oficial, tu nombre, las acciones rápidas ("Crear un canal", "Añadir un amigo") y la píldora de audio estéreo.
+2. Iniciar una llamada directa con un amigo o entrar a voz: verificar que las tarjetas de cabina exhiben los chips de cabecera ("Tu cabina", "Con [Nombre]"), los indicadores en vivo de voz ("Hablando", "En silencio", "Silenciado") y el cronómetro activo en la barra flotante inferior.
+
 ### 0.24.5E · 2026-09-24 · Antigravity
 **Qué cambió.** Persistencia en disco de avatares en Base64 y precarga instantánea en fotograma 0 de la lista de amigos y perfil:
 - **Caché de avatares persistente en disco (`%LOCALAPPDATA%/Llamadita/avatar_cache.json`):**

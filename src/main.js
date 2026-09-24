@@ -27,6 +27,8 @@ const hostVocalAura = document.getElementById('hostVocalAura');
 const hostAvatarDisc = document.getElementById('hostAvatarDisc');
 const hostElasticSliderMount = document.getElementById('hostElasticSlider');
 const sensitivityVal = document.getElementById('sensitivityVal');
+const hostSpeakingStatus = document.getElementById('hostSpeakingStatus');
+const hostBoothChipText = document.getElementById('hostBoothChipText');
 
 // Remote Booth DOM
 const guestBooth = document.getElementById('guestBooth');
@@ -37,7 +39,41 @@ const guestAvatarDisc = document.getElementById('guestAvatarDisc');
 const guestElasticSliderMount = document.getElementById('guestElasticSlider');
 const remoteVolumeVal = document.getElementById('remoteVolumeVal');
 const remoteAudioElement = document.getElementById('remoteAudioElement');
+const guestSpeakingStatus = document.getElementById('guestSpeakingStatus');
+const guestBoothChipText = document.getElementById('guestBoothChipText');
 const toastContainer = document.getElementById('toastContainer');
+
+// Cronómetro de llamada activa en tiempo real
+const callDurationTimer = document.getElementById('callDurationTimer');
+const callLiveDot = document.getElementById('callLiveDot');
+let callStartTime = null;
+let callDurationInterval = null;
+
+function startCallTimer() {
+  stopCallTimer();
+  callStartTime = Date.now();
+  updateCallDurationDisplay();
+  callDurationInterval = setInterval(updateCallDurationDisplay, 1000);
+  if (callLiveDot) callLiveDot.classList.add('active');
+}
+
+function stopCallTimer() {
+  if (callDurationInterval) {
+    clearInterval(callDurationInterval);
+    callDurationInterval = null;
+  }
+  callStartTime = null;
+  if (callDurationTimer) callDurationTimer.textContent = '00:00';
+  if (callLiveDot) callLiveDot.classList.remove('active');
+}
+
+function updateCallDurationDisplay() {
+  if (!callDurationTimer || !callStartTime) return;
+  const elapsedSec = Math.floor((Date.now() - callStartTime) / 1000);
+  const m = Math.floor(elapsedSec / 60);
+  const s = elapsedSec % 60;
+  callDurationTimer.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
 
 // Layout Views, Footer Mic & Loopback Monitor
 const channelChatView = document.getElementById('channelChatView');
@@ -153,6 +189,7 @@ async function updateBoothProfiles() {
   // 1. Host (Local)
   const localName = social?.me?.display_name || social?.me?.username || 'Tú';
   if (hostUserName) hostUserName.textContent = localName;
+  if (hostBoothChipText) hostBoothChipText.textContent = 'Tu cabina';
   if (hostAvatarContent) {
     if (social?.me?.avatar_key) {
       const cached = obtenerAvatarCache(social.me.avatar_key);
@@ -177,6 +214,7 @@ async function updateBoothProfiles() {
   // 2. Guest (Remote)
   const remoteName = conQuien || 'Participante';
   if (guestUserName) guestUserName.textContent = remoteName;
+  if (guestBoothChipText) guestBoothChipText.textContent = conQuien ? `Con ${conQuien}` : 'Participante';
   if (guestAvatarContent) {
     let friendAvatarKey = conQuienAvatarKey || null;
 
@@ -494,6 +532,7 @@ function setupNetworking() {
   peerManager.onConnectionStatusChange = (status, msg) => {
     if (status === 'connected') {
       isConnected = true;
+      startCallTimer();
       setCallStatus(conQuien ? `En llamada con ${conQuien}` : 'En llamada');
       updateSocialCallState();
       updateBoothProfiles();
@@ -504,16 +543,20 @@ function setupNetworking() {
       );
     } else if (status === 'waiting') {
       isConnected = false;
+      stopCallTimer();
       setCallStatus(conQuien ? `Llamando a ${conQuien}…` : 'Esperando participante…');
     } else if (status === 'connecting') {
       isConnected = false;
+      stopCallTimer();
       setCallStatus('Conectando…');
     } else if (status === 'disconnected') {
+      stopCallTimer();
       if (isConnected || conQuien) {
         showToast(conQuien ? `${conQuien} cortó la llamada` : 'Llamada finalizada');
         leaveCall(false);
       }
     } else if (status === 'error') {
+      stopCallTimer();
       showToast(msg || 'Error de conexión', 4000);
     }
     updateMainViews();
@@ -609,24 +652,36 @@ function renderAudioMetrics(ahora = 0) {
     if (audioPermissionBanner) audioPermissionBanner.style.display = 'flex';
   } else if (audioManager.isMuted) {
     hostAvatarDisc?.classList.remove('active');
+    if (hostSpeakingStatus) {
+      hostSpeakingStatus.textContent = 'Silenciado';
+      hostSpeakingStatus.className = 'booth-speaking-indicator is-muted';
+    }
     if (hostVocalAura) {
       hostVocalAura.style.transform = 'scale(1)';
-      hostVocalAura.style.opacity = '0.08';
+      hostVocalAura.style.opacity = '0.04';
     }
   } else {
     const { volume, isSpeaking } = audioManager.localMetrics;
     if (isSpeaking) {
       hostAvatarDisc?.classList.add('active');
-      const scale = 1 + (volume / 100) * 0.9;
+      if (hostSpeakingStatus) {
+        hostSpeakingStatus.textContent = 'Hablando';
+        hostSpeakingStatus.className = 'booth-speaking-indicator is-speaking';
+      }
+      const scale = 1 + (volume / 100) * 0.75;
       if (hostVocalAura) {
         hostVocalAura.style.transform = `scale(${scale})`;
-        hostVocalAura.style.opacity = `${0.35 + (volume / 100) * 0.65}`;
+        hostVocalAura.style.opacity = `${0.35 + (volume / 100) * 0.5}`;
       }
     } else {
       hostAvatarDisc?.classList.remove('active');
+      if (hostSpeakingStatus) {
+        hostSpeakingStatus.textContent = 'En silencio';
+        hostSpeakingStatus.className = 'booth-speaking-indicator';
+      }
       if (hostVocalAura) {
         hostVocalAura.style.transform = 'scale(1)';
-        hostVocalAura.style.opacity = '0.12';
+        hostVocalAura.style.opacity = '0.08';
       }
     }
   }
@@ -636,23 +691,35 @@ function renderAudioMetrics(ahora = 0) {
     const { volume, isSpeaking } = audioManager.remoteMetrics;
     if (isSpeaking) {
       guestAvatarDisc?.classList.add('active');
-      const scale = 1 + (volume / 100) * 0.9;
+      if (guestSpeakingStatus) {
+        guestSpeakingStatus.textContent = 'Hablando';
+        guestSpeakingStatus.className = 'booth-speaking-indicator is-speaking';
+      }
+      const scale = 1 + (volume / 100) * 0.75;
       if (guestVocalAura) {
         guestVocalAura.style.transform = `scale(${scale})`;
-        guestVocalAura.style.opacity = `${0.35 + (volume / 100) * 0.65}`;
+        guestVocalAura.style.opacity = `${0.35 + (volume / 100) * 0.5}`;
       }
     } else {
       guestAvatarDisc?.classList.remove('active');
+      if (guestSpeakingStatus) {
+        guestSpeakingStatus.textContent = 'En silencio';
+        guestSpeakingStatus.className = 'booth-speaking-indicator';
+      }
       if (guestVocalAura) {
         guestVocalAura.style.transform = 'scale(1)';
-        guestVocalAura.style.opacity = '0.12';
+        guestVocalAura.style.opacity = '0.08';
       }
     }
   } else {
     guestAvatarDisc?.classList.remove('active');
+    if (guestSpeakingStatus) {
+      guestSpeakingStatus.textContent = isRemoteMuted ? 'Silenciado' : 'En silencio';
+      guestSpeakingStatus.className = isRemoteMuted ? 'booth-speaking-indicator is-muted' : 'booth-speaking-indicator';
+    }
     if (guestVocalAura) {
       guestVocalAura.style.transform = 'scale(1)';
-      guestVocalAura.style.opacity = '0.05';
+      guestVocalAura.style.opacity = '0.04';
     }
   }
 
@@ -779,6 +846,7 @@ function leaveCall(sendSignal = true) {
   }
   peerManager.leaveRoom();
 
+  stopCallTimer();
   isConnected = false;
   remoteStream = null;
   if (remoteAudioElement) remoteAudioElement.srcObject = null;
@@ -790,9 +858,13 @@ function leaveCall(sendSignal = true) {
   conQuien = null;
   conQuienAvatarKey = null;
   if (guestAvatarDisc) guestAvatarDisc.classList.remove('active');
+  if (guestSpeakingStatus) {
+    guestSpeakingStatus.textContent = 'En silencio';
+    guestSpeakingStatus.className = 'booth-speaking-indicator';
+  }
   if (guestVocalAura) {
     guestVocalAura.style.transform = 'scale(1)';
-    guestVocalAura.style.opacity = '0.05';
+    guestVocalAura.style.opacity = '0.04';
   }
 
   // Reset de volumen de amigo

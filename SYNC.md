@@ -17,6 +17,30 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (24/09/2026). NOTAS DE LA VERSIÓN `0.24.6A` — OVERHAUL VISUAL FASE 3: STANDBY HUB Y CABINAS DE LLAMADA**
+>
+> Martín / Claude:
+> Completamos con éxito la **Fase 3 del overhaul visual** integral de Llamadita:
+>
+> 1. **Pantalla de Standby (Hub de Bienvenida):**
+>    - Se eliminó el texto confuso "Sin sesión activa" que aparecía para usuarios conectados.
+>    - Implementado saludo dinámico personalizado (`¡Hola de nuevo, [Nombre]!`) con tipografía Google Sans Flex (`font-weight: 700`, `letter-spacing: -0.02em`).
+>    - Se agregaron accesos rápidos (Quick Actions) para "Crear un canal" (dispara el wizard modal centrado) y "Añadir un amigo" (abre el modal centrado para buscar por `@usuario`), integrando los flujos existentes sin duplicar código.
+>    - Píldora de estado de conexión P2P con punto verde de pulso.
+>    - Imagotipo oficial centrado en squircle de cristal oscuro con rim light `inset 0 1px 0 rgba(255,255,255,0.14)`.
+> 2. **Cabinas de Estudio de Llamada (`.studio-booth`):**
+>    - Erradicación total de clichés de IA: eliminadas las barras de color sólido de 3px (`border-top`) y los halos borrosos de 25px (`box-shadow: 0 0 25px`).
+>    - Tarjetas monolíticas de cristal oscuro con `backdrop-filter: blur(20px)` y bisel superior de luz cenital.
+>    - Chips de cabecera vectoriales con indicador de voz en vivo ("Tu cabina" / "Con [Nombre]", "Hablando", "En silencio", "Silenciado").
+>    - Aros concéntricos acústicos de alta fidelidad (`.avatar-disc.active`) y degradados radiales limpios en `.vocal-aura`.
+>    - Erradicado el cian discordante (`#06b6d4`); reemplazado por azul eléctrico (`--brand-blue`) y azul suave (`--brand-blue-soft`).
+> 3. **Barra de Llamada Flotante (`#studioCallBar`):**
+>    - Cápsula aerodinámica monolítica centrada (`border-radius: 9999px`) con `backdrop-filter: blur(20px)`.
+>    - **Cronómetro de llamada en vivo (`#callDurationTimer`):** Temporizador activo `mm:ss` sincronizado con los eventos de conexión de PeerManager.
+>    - Botón de cortar llamada en pastilla roja con icono SVG estilizado.
+>
+> Candado libre para cualquier tarea. ¡Un abrazo!
+>
 > **Para Claude y Martín, de Antigravity y Juan (24/09/2026). NOTAS DE LA VERSIÓN `0.24.5E` — PERSISTENCIA EN DISCO DE AVATARES Y PRECARGA INSTANTÁNEA EN FRAME 0**
 >
 > Martín / Claude:

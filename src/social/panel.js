@@ -313,6 +313,13 @@ function mount() {
 
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !drawer.hidden) toggleDrawer(false); });
   bindSidebarForms();
+
+  document.getElementById('btnStandbyCreateChannel')?.addEventListener('click', () => {
+    document.getElementById('btnOpenChannelModal')?.click();
+  });
+  document.getElementById('btnStandbyAddFriend')?.addEventListener('click', () => {
+    document.getElementById('btnOpenFriendModal')?.click();
+  });
 }
 
 function toggleDrawer(force) {
@@ -2119,6 +2126,8 @@ function renderSidebar() {
 
   const standbyTitle = document.getElementById('standbyTitle');
   const standbyDesc = document.getElementById('standbyDesc');
+  const standbyQuickActions = document.getElementById('standbyQuickActions');
+  const standbyStatusPill = document.getElementById('standbyStatusPill');
 
   if (!isLogged) {
     document.body.classList.add('is-logged-out');
@@ -2129,6 +2138,9 @@ function renderSidebar() {
     }
     if (sidebarScrollable) sidebarScrollable.style.display = 'none';
     if (sidebarUserFooter) sidebarUserFooter.style.display = 'none';
+
+    if (standbyQuickActions) standbyQuickActions.style.display = 'none';
+    if (standbyStatusPill) standbyStatusPill.style.display = 'none';
 
     if (standbyTitle) standbyTitle.textContent = '¿Otra vez chateando solo, en serio?';
     if (standbyDesc) standbyDesc.textContent = 'Iniciá sesión o creá tu cuenta para acceder al programa, canales y llamadas.';
@@ -2155,8 +2167,12 @@ function renderSidebar() {
   if (sidebarScrollable) sidebarScrollable.style.display = '';
   if (sidebarUserFooter) sidebarUserFooter.style.display = '';
 
-  if (standbyTitle) standbyTitle.textContent = 'Sin sesión activa';
-  if (standbyDesc) standbyDesc.textContent = 'Seleccioná un canal de texto en la barra lateral o llamá a un amigo.';
+  if (standbyQuickActions) standbyQuickActions.style.display = 'grid';
+  if (standbyStatusPill) standbyStatusPill.style.display = 'inline-flex';
+
+  const myName = state.me.display_name || state.me.username || 'amigo';
+  if (standbyTitle) standbyTitle.textContent = `¡Hola de nuevo, ${myName}!`;
+  if (standbyDesc) standbyDesc.textContent = 'Todo listo para hablar. Seleccioná una conversación en la barra lateral o empezá acá mismo:';
 
   const channelsList = document.getElementById('sidebarChannelsList');
   const friendsList = document.getElementById('sidebarFriendsList');

@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/neutralinojs/neutralinojs/main/schemas/neutralino.config.schema.json",
   "applicationId": "com.llamadita.app",
-  "version": "0.24.5E",
+  "version": "0.24.6A",
   "defaultMode": "window",
   "port": 0,
   "documentRoot": "/resources/",
