@@ -17,6 +17,34 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.4B · 2026-09-24 · Antigravity
+**Qué cambió.** Corrección de incongruencias visuales en la barra lateral, modales de pantalla centrados con wizard de creación de canal y menús contextuales vectoriales sin emojis:
+- **Modales centrados con backdrop blur:**
+  - Reemplazo de los popovers compactos de la barra lateral por modales centrados (`.app-modal-overlay` con `backdrop-filter: blur(10px)`) para "Crear o unirse a canal" (`#modalChannelOverlay`) y "Agregar amigo" (`#modalFriendOverlay`), resolviendo el corte y desbordamiento de botones en anchos estrechos.
+  - Cierre intuitivo mediante botón cerrar `✕`, clic en el fondo difuminado o tecla `Escape`.
+- **Wizard paso a paso para creación de canales:**
+  - **Paso 1:** Selección clara entre dos tarjetas interactivas: "Canal de Texto" (`#`) con iconografía vectorial y descripción de chat y multimedia, o "Canal de Voz" (micrófono vectorial) con descripción de llamadas en vivo y baja latencia.
+  - **Paso 2:** Configuración del canal con nombre, prefijo dinámico según el tipo seleccionado y límite visible de 30 caracteres.
+  - **Flujo de unión por código:** Acceso directo con enlace "Unirse con un código de invitación" y regreso simple al paso anterior.
+- **Erradicación total de emojis en menús contextuales:**
+  - Reemplazo de emojis de colores (👤, 💬, 📞, 🔕, 🗑️, 🚪, ⏱️, 📅) por iconos vectoriales SVG monocromáticos (`ICONO_USUARIO`, `ICONO_CHAT`, `ICONO_TELEFONO`, `ICONO_CAMPANA_ACTIVA`, `ICONO_BASURA`, `ICONO_SALIR`, `ICONO_RELOJ`, `ICONO_CALENDARIO`) en los menús de click derecho de canales y amigos.
+  - Estilización flotante premium (`.channel-context-menu`) con animación de entrada, desenfoque de fondo y microinteracciones de selección.
+- **Corrección de líneas superpuestas y radio de bordes:**
+  - Eliminación del artefacto rectangular `::before` en `.sidebar-channel-item.active` que cortaba la curvatura del borde redondeado; ahora utiliza realce suave de superficie y resplandor sutil.
+  - Rediseño de la cápsula de usuario (`.sidebar-user-footer`) unificando radios de borde (12px exterior, 8px interior) y eliminando los bordes verdes duros en botones de audio en favor de divisores sutiles y estados activos integrados.
+**Por qué.** Atender las correcciones estéticas observadas en las capturas de usuario (líneas montadas sobre curvas, botones con bordes disonantes, popovers estrechos que cortaban texto y necesidad de un flujo guiado paso a paso para crear canales sin sobrecargar la interfaz).
+**Dónde.** `index.html`, `src/brand.css`, `src/social/panel.js`, `package.json`, `CAMBIOS.md`, `SYNC.md`.
+**Cómo se verifica.**
+1. Ejecutar `npm run build` y constatar compilación limpia sin advertencias.
+2. Ejecutar `npm run verificar` y validar salida 0.
+3. Abrir la app:
+   - Al hacer clic en el botón `+` de Canales, se despliega el modal en el centro de la pantalla mostrando el Paso 1 (selección entre tarjeta Texto o Voz). Al elegir una, avanza al Paso 2 para ingresar el nombre. Probar también el enlace "Unirse con un código de invitación".
+   - Al hacer clic en el botón `+` de Amigos, se abre el modal centrado con buscador amplio y resultados con avatar y botón "Agregar".
+   - Cerrar ambos modales con `Escape`, clic afuera o botón `✕`.
+   - Hacer clic derecho en un canal o amigo y verificar que todas las opciones exhiben iconos SVG monocromáticos sin emojis.
+   - Observar los canales activos y comprobar que no hay líneas rectangulares cortando los bordes redondeados.
+   - Verificar la cápsula de usuario y los botones de micrófono y ensordecer sin bordes verdes ruidosos.
+
 ### 0.24.4A · 2026-09-24 · Antigravity
 **Qué cambió.** Overhaul visual Fase 1 — Sistema de tokens de diseño, nueva Barra Lateral premium y cápsula ergonómica de usuario:
 - **Erradicación de estética de IA y slop visual:**

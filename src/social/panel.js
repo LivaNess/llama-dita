@@ -145,7 +145,16 @@ function onGlobalMessage(fila) {
 // Icono vectorial que toma el color del boton (verde) en vez de traer el suyo.
 const ICONO_TELEFONO = `<svg class="sc-icono-tel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`;
 const ICONO_COLGAR = `<svg class="sc-icono-tel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91"/><line x1="23" y1="1" x2="1" y2="23"/></svg>`;
-const ICONO_CAMPANA_SILENCIADA = `<svg class="sc-icono-muted-bell" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M18.63 13A17.89 17.89 0 0 1 18 8"/><path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"/><path d="M18 8a6 6 0 0 0-9.33-5"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+const ICONO_CAMPANA_SILENCIADA = `<svg class="sc-icono-muted-bell" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M18.63 13A17.89 17.89 0 0 1 18 8"/><path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"/><path d="M18 8a6 6 0 0 0-9.33-5"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+const ICONO_COPIAR = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+const ICONO_CAMPANA_ACTIVA = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>`;
+const ICONO_BASURA = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
+const ICONO_SALIR = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>`;
+const ICONO_RELOJ = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`;
+const ICONO_CALENDARIO = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`;
+const ICONO_FLECHA_ATRAS = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>`;
+const ICONO_USUARIO = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
+const ICONO_CHAT = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>`;
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const randomRoom = () => 'llamadita-' + Math.random().toString(36).substring(2, 8);
@@ -2252,26 +2261,31 @@ function showChannelContextMenu(e, channel) {
   function renderMainMenu() {
     menu.innerHTML = `
       <button type="button" data-action="copy">
-        <span>📋 Copiar invitación</span>
+        ${ICONO_COPIAR}
+        <span>Copiar código de invitación</span>
       </button>
       <div class="menu-divider"></div>
       ${isMuted ? `
         <button type="button" data-action="unmute">
-          <span>🔔 Reactivar notificaciones</span>
+          ${ICONO_CAMPANA_ACTIVA}
+          <span>Reactivar notificaciones</span>
         </button>
       ` : `
         <button type="button" data-action="mute-menu">
-          <span>🔕 Silenciar notificaciones ›</span>
+          ${ICONO_CAMPANA_SILENCIADA}
+          <span>Silenciar notificaciones ›</span>
         </button>
       `}
       <div class="menu-divider"></div>
       ${isOwner ? `
         <button type="button" data-action="delete" class="danger">
-          <span>🗑️ Eliminar canal</span>
+          ${ICONO_BASURA}
+          <span>Eliminar canal</span>
         </button>
       ` : `
         <button type="button" data-action="leave" class="danger">
-          <span>🚪 Salir del canal</span>
+          ${ICONO_SALIR}
+          <span>Salir del canal</span>
         </button>
       `}
     `;
@@ -2281,12 +2295,12 @@ function showChannelContextMenu(e, channel) {
   function renderMuteMenu() {
     menu.innerHTML = `
       <div class="submenu-header">Silenciar notificaciones</div>
-      <button type="button" data-mute-duration="3600000"><span>⏱️ Por 1 hora</span></button>
-      <button type="button" data-mute-duration="86400000"><span>📅 Por 1 día</span></button>
-      <button type="button" data-mute-duration="604800000"><span>📆 Por 1 semana</span></button>
-      <button type="button" data-mute-duration="always"><span>🔕 Siempre</span></button>
+      <button type="button" data-mute-duration="3600000">${ICONO_RELOJ}<span>Por 1 hora</span></button>
+      <button type="button" data-mute-duration="86400000">${ICONO_CALENDARIO}<span>Por 1 día</span></button>
+      <button type="button" data-mute-duration="604800000">${ICONO_CALENDARIO}<span>Por 1 semana</span></button>
+      <button type="button" data-mute-duration="always">${ICONO_CAMPANA_SILENCIADA}<span>Siempre</span></button>
       <div class="menu-divider"></div>
-      <button type="button" data-action="back"><span>← Volver</span></button>
+      <button type="button" data-action="back">${ICONO_FLECHA_ATRAS}<span>Volver</span></button>
     `;
     bindSubmenuEvents();
   }
@@ -2392,27 +2406,33 @@ function showFriendContextMenu(e, friend) {
   function renderMainMenu() {
     menu.innerHTML = `
       <button type="button" data-action="profile">
-        <span>👤 Ver perfil</span>
+        ${ICONO_USUARIO}
+        <span>Ver perfil</span>
       </button>
       <button type="button" data-action="chat">
-        <span>💬 Abrir chat privado</span>
+        ${ICONO_CHAT}
+        <span>Abrir chat privado</span>
       </button>
       <button type="button" data-action="call">
-        <span>📞 Llamar</span>
+        ${ICONO_TELEFONO}
+        <span>Llamar</span>
       </button>
       <div class="menu-divider"></div>
       ${isMuted ? `
         <button type="button" data-action="unmute">
-          <span>🔔 Reactivar notificaciones</span>
+          ${ICONO_CAMPANA_ACTIVA}
+          <span>Reactivar notificaciones</span>
         </button>
       ` : `
         <button type="button" data-action="mute-menu">
-          <span>🔕 Silenciar notificaciones ›</span>
+          ${ICONO_CAMPANA_SILENCIADA}
+          <span>Silenciar notificaciones ›</span>
         </button>
       `}
       <div class="menu-divider"></div>
       <button type="button" data-action="remove-friend" class="danger">
-        <span>🗑️ Eliminar de amigos</span>
+        ${ICONO_BASURA}
+        <span>Eliminar de amigos</span>
       </button>
     `;
     bindMenuEvents();
@@ -2421,12 +2441,12 @@ function showFriendContextMenu(e, friend) {
   function renderMuteMenu() {
     menu.innerHTML = `
       <div class="submenu-header">Silenciar notificaciones</div>
-      <button type="button" data-mute-duration="3600000"><span>⏱️ Por 1 hora</span></button>
-      <button type="button" data-mute-duration="86400000"><span>📅 Por 1 día</span></button>
-      <button type="button" data-mute-duration="604800000"><span>📆 Por 1 semana</span></button>
-      <button type="button" data-mute-duration="always"><span>🔕 Siempre</span></button>
+      <button type="button" data-mute-duration="3600000">${ICONO_RELOJ}<span>Por 1 hora</span></button>
+      <button type="button" data-mute-duration="86400000">${ICONO_CALENDARIO}<span>Por 1 día</span></button>
+      <button type="button" data-mute-duration="604800000">${ICONO_CALENDARIO}<span>Por 1 semana</span></button>
+      <button type="button" data-mute-duration="always">${ICONO_CAMPANA_SILENCIADA}<span>Siempre</span></button>
       <div class="menu-divider"></div>
-      <button type="button" data-action="back"><span>← Volver</span></button>
+      <button type="button" data-action="back">${ICONO_FLECHA_ATRAS}<span>Volver</span></button>
     `;
     bindSubmenuEvents();
   }
@@ -2882,173 +2902,283 @@ function pintarRetencion() {
 // Bindings para formularios de la Barra Lateral y Chat
 // ------------------------------------------------------------------
 function bindSidebarForms() {
+  // Modal de Canales (Wizard Paso a Paso)
   const btnToggleCreate = document.getElementById('btnToggleCreateChannel');
-  const channelForms = document.getElementById('sidebarChannelForms');
-  const btnCloseChannel = document.getElementById('btnCloseChannelPopover');
+  const modalChannel = document.getElementById('modalChannelOverlay');
+  const btnCloseChannel = document.getElementById('btnCloseChannelModal');
 
-  if (btnToggleCreate && channelForms && !btnToggleCreate._bound) {
+  // Pasos del Wizard
+  const step1 = document.getElementById('channelWizardStep1');
+  const step2 = document.getElementById('channelWizardStep2');
+  const stepJoin = document.getElementById('channelWizardJoin');
+  const modalTitle = document.getElementById('modalChannelTitle');
+  const modalSubtitle = document.getElementById('modalChannelSubtitle');
+
+  let selectedKind = 'text';
+
+  function resetChannelWizard(step = 'step1') {
+    selectedKind = 'text';
+    const kindCards = document.querySelectorAll('.wizard-kind-card');
+    kindCards.forEach((c) => c.classList.toggle('selected', c.dataset.kind === 'text'));
+
+    if (step === 'step1') {
+      if (step1) step1.style.display = 'flex';
+      if (step2) step2.style.display = 'none';
+      if (stepJoin) stepJoin.style.display = 'none';
+      if (modalTitle) modalTitle.textContent = 'Crear un canal';
+      if (modalSubtitle) modalSubtitle.textContent = 'Paso 1 de 2: Elegí el tipo de canal';
+    } else if (step === 'step2') {
+      if (step1) step1.style.display = 'none';
+      if (step2) step2.style.display = 'flex';
+      if (stepJoin) stepJoin.style.display = 'none';
+      if (modalTitle) modalTitle.textContent = selectedKind === 'voice' ? 'Canal de Voz' : 'Canal de Texto';
+      if (modalSubtitle) modalSubtitle.textContent = 'Paso 2 de 2: ¿Cómo se va a llamar tu canal?';
+      const nameInput = document.getElementById('modalChannelNameInput');
+      if (nameInput) {
+        nameInput.value = '';
+        setTimeout(() => nameInput.focus(), 60);
+      }
+      const iconWrap = document.getElementById('channelNameIcon');
+      if (iconWrap) {
+        iconWrap.innerHTML = selectedKind === 'voice'
+          ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`
+          : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>`;
+      }
+    } else if (step === 'join') {
+      if (step1) step1.style.display = 'none';
+      if (step2) step2.style.display = 'none';
+      if (stepJoin) stepJoin.style.display = 'flex';
+      if (modalTitle) modalTitle.textContent = 'Unirse a un canal';
+      if (modalSubtitle) modalSubtitle.textContent = 'Ingresá el código de invitación que te compartieron.';
+      const joinInput = document.getElementById('modalJoinCodeInput');
+      if (joinInput) {
+        joinInput.value = '';
+        setTimeout(() => joinInput.focus(), 60);
+      }
+    }
+  }
+
+  function openChannelModal(step = 'step1') {
+    if (!modalChannel) return;
+    resetChannelWizard(step);
+    modalChannel.style.display = 'flex';
+    requestAnimationFrame(() => modalChannel.classList.add('open'));
+  }
+
+  function closeChannelModal() {
+    if (!modalChannel) return;
+    modalChannel.classList.remove('open');
+    setTimeout(() => {
+      modalChannel.style.display = 'none';
+    }, 200);
+  }
+
+  if (btnToggleCreate && !btnToggleCreate._bound) {
     btnToggleCreate._bound = true;
     btnToggleCreate.addEventListener('click', (e) => {
       e.stopPropagation();
-      const willOpen = channelForms.style.display === 'none';
-      channelForms.style.display = willOpen ? 'flex' : 'none';
-      if (willOpen) {
-        document.getElementById('sidebarFriendSearch')?.style.setProperty('display', 'none');
-        document.getElementById('sidebarChannelName')?.focus();
-      }
+      openChannelModal('step1');
     });
   }
 
-  if (btnCloseChannel && channelForms && !btnCloseChannel._bound) {
+  if (btnCloseChannel && !btnCloseChannel._bound) {
     btnCloseChannel._bound = true;
     btnCloseChannel.addEventListener('click', (e) => {
       e.stopPropagation();
-      channelForms.style.display = 'none';
+      closeChannelModal();
     });
   }
 
-  // Tabs de Crear Canal / Unirse con código
-  const popoverTabs = document.querySelectorAll('#channelPopoverTabs .popover-tab');
-  const createForm = document.getElementById('sidebarCreateChannelForm');
-  const joinForm = document.getElementById('sidebarJoinChannelForm');
-
-  popoverTabs.forEach((tab) => {
-    if (!tab._bound) {
-      tab._bound = true;
-      tab.addEventListener('click', () => {
-        popoverTabs.forEach((t) => t.classList.remove('active'));
-        tab.classList.add('active');
-        const isCreate = tab.dataset.tab === 'create';
-        if (createForm) createForm.style.display = isCreate ? 'flex' : 'none';
-        if (joinForm) joinForm.style.display = isCreate ? 'none' : 'flex';
-        if (isCreate) {
-          document.getElementById('sidebarChannelName')?.focus();
-        } else {
-          document.getElementById('sidebarJoinCode')?.focus();
-        }
+  // Selección de tarjetas Paso 1
+  const kindCards = document.querySelectorAll('.wizard-kind-card');
+  kindCards.forEach((card) => {
+    if (!card._bound) {
+      card._bound = true;
+      card.addEventListener('click', () => {
+        kindCards.forEach((c) => c.classList.remove('selected'));
+        card.classList.add('selected');
+        selectedKind = card.dataset.kind || 'text';
       });
     }
   });
 
+  // Botón Continuar Paso 1 -> Paso 2
+  const btnNext = document.getElementById('btnChannelStep1Next');
+  if (btnNext && !btnNext._bound) {
+    btnNext._bound = true;
+    btnNext.addEventListener('click', () => {
+      resetChannelWizard('step2');
+    });
+  }
+
+  // Enlace Paso 1 -> Unirse con código
+  const btnGoJoin = document.getElementById('btnGoToJoinChannel');
+  if (btnGoJoin && !btnGoJoin._bound) {
+    btnGoJoin._bound = true;
+    btnGoJoin.addEventListener('click', () => {
+      resetChannelWizard('join');
+    });
+  }
+
+  // Botón Atrás Paso 2 -> Paso 1
+  const btnStep2Back = document.getElementById('btnChannelStep2Back');
+  if (btnStep2Back && !btnStep2Back._bound) {
+    btnStep2Back._bound = true;
+    btnStep2Back.addEventListener('click', () => {
+      resetChannelWizard('step1');
+    });
+  }
+
+  // Botón Volver Join -> Paso 1
+  const btnJoinBack = document.getElementById('btnChannelJoinBack');
+  if (btnJoinBack && !btnJoinBack._bound) {
+    btnJoinBack._bound = true;
+    btnJoinBack.addEventListener('click', () => {
+      resetChannelWizard('step1');
+    });
+  }
+
+  // Formulario Creación de Canal (Paso 2)
+  const createForm = document.getElementById('modalCreateChannelForm');
   if (createForm && !createForm._bound) {
     createForm._bound = true;
     createForm.addEventListener('submit', (e) => {
       e.preventDefault();
       if (!state.session) { toggleDrawer(true); return; }
-      const name = document.getElementById('sidebarChannelName').value.trim();
-      const kind = document.getElementById('sidebarChannelKind').value;
+      const name = document.getElementById('modalChannelNameInput')?.value.trim();
       if (!name) return;
       act(async () => {
-        const created = await api.createChannel(state.me.id, name, kind);
+        const created = await api.createChannel(state.me.id, name, selectedKind);
         createForm.reset();
-        if (channelForms) channelForms.style.display = 'none';
+        closeChannelModal();
         if (created?.id) openChannel(created.id);
       }, 'Canal creado');
     });
   }
 
+  // Formulario Unirse a Canal (Join)
+  const joinForm = document.getElementById('modalJoinChannelForm');
   if (joinForm && !joinForm._bound) {
     joinForm._bound = true;
     joinForm.addEventListener('submit', (e) => {
       e.preventDefault();
       if (!state.session) { toggleDrawer(true); return; }
-      const code = document.getElementById('sidebarJoinCode').value.trim();
+      const code = document.getElementById('modalJoinCodeInput')?.value.trim();
       if (!code) return;
       act(async () => {
         const res = await api.joinChannelByCode(code);
         joinForm.reset();
-        if (channelForms) channelForms.style.display = 'none';
+        closeChannelModal();
         if (res?.id) openChannel(res.id);
       }, 'Entraste al canal');
     });
   }
 
+  // Modal Agregar Amigo
   const btnToggleAdd = document.getElementById('btnToggleAddFriend');
-  const friendSearch = document.getElementById('sidebarFriendSearch');
-  const btnCloseFriend = document.getElementById('btnCloseFriendPopover');
+  const modalFriend = document.getElementById('modalFriendOverlay');
+  const btnCloseFriend = document.getElementById('btnCloseFriendModal');
+  const friendResults = document.getElementById('modalFriendSearchResults');
+  const friendInput = document.getElementById('modalSearchUserInput');
 
-  if (btnToggleAdd && friendSearch && !btnToggleAdd._bound) {
+  function openFriendModal() {
+    if (!modalFriend) return;
+    if (friendInput) friendInput.value = '';
+    if (friendResults) friendResults.innerHTML = '';
+    modalFriend.style.display = 'flex';
+    requestAnimationFrame(() => {
+      modalFriend.classList.add('open');
+      friendInput?.focus();
+    });
+  }
+
+  function closeFriendModal() {
+    if (!modalFriend) return;
+    modalFriend.classList.remove('open');
+    setTimeout(() => {
+      modalFriend.style.display = 'none';
+    }, 200);
+  }
+
+  if (btnToggleAdd && !btnToggleAdd._bound) {
     btnToggleAdd._bound = true;
     btnToggleAdd.addEventListener('click', (e) => {
       e.stopPropagation();
-      const willOpen = friendSearch.style.display === 'none';
-      friendSearch.style.display = willOpen ? 'flex' : 'none';
-      if (willOpen) {
-        document.getElementById('sidebarChannelForms')?.style.setProperty('display', 'none');
-        document.getElementById('sidebarSearchUser')?.focus();
-      }
+      openFriendModal();
     });
   }
 
-  if (btnCloseFriend && friendSearch && !btnCloseFriend._bound) {
+  if (btnCloseFriend && !btnCloseFriend._bound) {
     btnCloseFriend._bound = true;
     btnCloseFriend.addEventListener('click', (e) => {
       e.stopPropagation();
-      friendSearch.style.display = 'none';
+      closeFriendModal();
     });
   }
 
-  // Cierre de popovers al hacer clic fuera o presionar Escape
-  if (!document._sidebarPopoversBound) {
-    document._sidebarPopoversBound = true;
-    document.addEventListener('click', (e) => {
-      const chForms = document.getElementById('sidebarChannelForms');
-      const frSearch = document.getElementById('sidebarFriendSearch');
-      if (chForms && chForms.style.display !== 'none') {
-        if (!chForms.contains(e.target) && !e.target.closest('#btnToggleCreateChannel')) {
-          chForms.style.display = 'none';
+  const friendSearchForm = document.getElementById('modalFriendSearchForm');
+  if (friendSearchForm && !friendSearchForm._bound) {
+    friendSearchForm._bound = true;
+    friendSearchForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!state.session) { toggleDrawer(true); return; }
+      const q = friendInput?.value.trim();
+      if (!q) return;
+      if (friendResults) friendResults.innerHTML = `<p class="sc-muted sc-tiny" style="padding: 0.5rem; text-align: center;">Buscando personas...</p>`;
+      try {
+        const res = await api.searchUsers(q, state.me.id);
+        if (!res.length) {
+          if (friendResults) friendResults.innerHTML = `<p class="sc-muted sc-tiny" style="padding: 0.5rem; text-align: center;">No se encontraron usuarios con ese nombre.</p>`;
+          return;
         }
+        if (friendResults) {
+          friendResults.innerHTML = res.map((p) => {
+            const rel = state.friendships.find((f) => f.requester_id === p.id || f.addressee_id === p.id);
+            return `
+              <div class="modal-user-item">
+                <div class="modal-user-left">
+                  ${fotoDe(p, 'sc-foto')}
+                  <div class="modal-user-info">
+                    <span class="modal-user-name">${esc(p.display_name || p.username)}</span>
+                    <span class="modal-user-handle">@${esc(p.username)}</span>
+                  </div>
+                </div>
+                <div>
+                  ${rel ? `<span class="sc-muted sc-tiny">${rel.status === 'accepted' ? 'Ya son amigos' : 'Solicitud pendiente'}</span>` : `<button type="button" class="sc-primary sc-small" data-search-add="${p.id}">Agregar</button>`}
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          friendResults.querySelectorAll('[data-search-add]').forEach((b) => {
+            b.addEventListener('click', () => act(async () => {
+              await api.sendFriendRequest(state.me.id, b.dataset.searchAdd);
+              b.outerHTML = `<span class="sc-muted sc-tiny">Solicitud enviada</span>`;
+            }, 'Solicitud de amistad enviada'));
+          });
+        }
+      } catch (err) {
+        if (friendResults) friendResults.innerHTML = `<p class="sc-error sc-tiny" style="padding: 0.5rem; text-align: center;">${esc(err.message)}</p>`;
       }
-      if (frSearch && frSearch.style.display !== 'none') {
-        if (!frSearch.contains(e.target) && !e.target.closest('#btnToggleAddFriend')) {
-          frSearch.style.display = 'none';
-        }
+    });
+  }
+
+  // Cierre al hacer clic en el backdrop o presionar Escape
+  if (!document._modalsBound) {
+    document._modalsBound = true;
+    document.addEventListener('click', (e) => {
+      if (modalChannel && modalChannel.classList.contains('open') && e.target === modalChannel) {
+        closeChannelModal();
+      }
+      if (modalFriend && modalFriend.classList.contains('open') && e.target === modalFriend) {
+        closeFriendModal();
       }
     });
 
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
-        const chForms = document.getElementById('sidebarChannelForms');
-        const frSearch = document.getElementById('sidebarFriendSearch');
-        if (chForms && chForms.style.display !== 'none') chForms.style.display = 'none';
-        if (frSearch && frSearch.style.display !== 'none') frSearch.style.display = 'none';
-      }
-    });
-  }
-
-  const searchForm = document.getElementById('sidebarSearchFriendForm');
-  const resultsBox = document.getElementById('sidebarSearchResults');
-  if (searchForm && !searchForm._bound) {
-    searchForm._bound = true;
-    searchForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (!state.session) { toggleDrawer(true); return; }
-      const q = document.getElementById('sidebarSearchUser').value.trim();
-      if (!q) return;
-      if (resultsBox) resultsBox.innerHTML = `<p class="sc-muted sc-tiny" style="padding: 0.3rem;">Buscando...</p>`;
-      try {
-        const res = await api.searchUsers(q, state.me.id);
-        if (!res.length) {
-          if (resultsBox) resultsBox.innerHTML = `<p class="sc-muted sc-tiny" style="padding: 0.3rem;">No se encontraron usuarios.</p>`;
-          return;
-        }
-        if (resultsBox) {
-          resultsBox.innerHTML = res.map((p) => {
-            const rel = state.friendships.find((f) => f.requester_id === p.id || f.addressee_id === p.id);
-            return `
-              <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.35rem 0.5rem; background: rgba(255,255,255,0.03); border-radius: 6px; margin-top: 0.3rem;">
-                <div style="font-size: 0.78rem;"><strong>${esc(p.display_name || p.username)}</strong> <span style="color: #64748b;">@${esc(p.username)}</span></div>
-                ${rel ? `<small class="sc-muted">${rel.status === 'accepted' ? 'amigo' : 'pendiente'}</small>` : `<button class="sc-primary sc-small" data-search-add="${p.id}" style="padding: 0.2rem 0.5rem; font-size: 0.72rem;">Sumar</button>`}
-              </div>
-            `;
-          }).join('');
-
-          resultsBox.querySelectorAll('[data-search-add]').forEach((b) => {
-            b.addEventListener('click', () => act(() => api.sendFriendRequest(state.me.id, b.dataset.searchAdd), 'Solicitud enviada'));
-          });
-        }
-      } catch (err) {
-        if (resultsBox) resultsBox.innerHTML = `<p class="sc-error sc-tiny" style="padding: 0.3rem;">${esc(err.message)}</p>`;
+        if (modalChannel && modalChannel.classList.contains('open')) closeChannelModal();
+        if (modalFriend && modalFriend.classList.contains('open')) closeFriendModal();
       }
     });
   }

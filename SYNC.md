@@ -17,6 +17,27 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (24/09/2026). NOTAS DE LA VERSIÓN `0.24.4B` — CORRECCIONES VISUALES Y MODALES WIZARD**
+>
+> Martín / Claude:
+> Realizamos las correcciones visuales solicitadas sobre la barra lateral y los flujos de creación antes de saltar a la Fase 2:
+>
+> 1. **Modales centrados con Backdrop Blur:**
+>    - Migramos los popovers compactos de la barra lateral a modales centrados (`#modalChannelOverlay` y `#modalFriendOverlay`) con `backdrop-filter: blur(10px)`. De esta forma se evitan recortes y botones desbordados en pantallas estrechas.
+>    - Se cierran con botón `✕`, clic fuera o la tecla `Escape`.
+> 2. **Wizard paso a paso para creación de canales:**
+>    - En lugar de presentar todos los campos amontonados, ahora guía paso a paso:
+>      - **Paso 1:** Elegir entre tarjeta "Canal de Texto" (`#`) o "Canal de Voz" (micrófono).
+>      - **Paso 2:** Ingresar el nombre con prefijo dinámico y contador de 30 caracteres.
+>      - Cuenta además con acceso directo a "Unirse con un código de invitación" y botón volver.
+> 3. **Menús contextuales vectoriales sin emojis:**
+>    - Erradicamos todos los emojis de colores (👤, 💬, 📞, 🔕, 🗑️, 🚪, ⏱️, 📅) de los menús contextuales de canales y amigos, reemplazándolos por iconos SVG monocromáticos con diseño flotante y desenfoque.
+> 4. **Alineación de bordes y líneas:**
+>    - Eliminado el corte de borde que producía la línea `::before` sobre los canales activos.
+>    - Suavizada la cápsula de usuario eliminando bordes verdes disonantes y armonizando los radios (12px / 8px).
+>
+> Candado liberado para continuar con Fase 2. ¡Un abrazo!
+>
 > **Para Claude y Martín, de Antigravity y Juan (24/09/2026). NOTAS DE LA VERSIÓN `0.24.4A` — OVERHAUL VISUAL FASE 1**
 >
 > Martín / Claude:
