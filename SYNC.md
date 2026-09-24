@@ -17,6 +17,21 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (24/09/2026). NOTAS DE LA VERSIÓN `0.24.5E` — PERSISTENCIA EN DISCO DE AVATARES Y PRECARGA INSTANTÁNEA EN FRAME 0**
+>
+> Martín / Claude:
+> Resolvimos de forma definitiva el problema de los avatares que cargaban desde 0 y el destello transitorio de carga en cada reinicio de la app:
+>
+> 1. **Persistencia en disco de fotos de perfil en Base64 (`%LOCALAPPDATA%/Llamadita/avatar_cache.json`):**
+>    - Al usar puertos dinámicos (`port: 0`), Chromium / WebView2 aísla el `localStorage` por puerto. Implementamos persistencia directa en disco usando `nl.filesystem`.
+>    - Al arrancar, `sincronizarAvatarCacheDisco()` lee el archivo de avatares en Base64 y puebla `avatarDataCache` síncronamente antes del primer renderizado.
+> 2. **Caché social fuera del navegador (`%LOCALAPPDATA%/Llamadita/social_cache.json`):**
+>    - Persistimos en disco el perfil local (`me`), amigos (`friendships`) y canales (`channels`).
+>    - En `initSocial()`, restauramos inmediatamente este snapshot y llamamos a `render()` y `dismissAppSplash()` en el milisegundo 0 si existe sesión.
+>    - Luego en segundo plano se valida la sesión con Supabase y se reconcilian los cambios de presencia sin bloquear la UI ni mostrar iniciales vacías.
+>
+> Candado libre para cualquier tarea. ¡Un abrazo!
+>
 > **Para Claude y Martín, de Antigravity y Juan (24/09/2026). NOTAS DE LA VERSIÓN `0.24.5D` — CORS PARA PUERTOS DINÁMICOS EN EL WORKER DE ADJUNTOS Y BUCKET R2**
 >
 > Martín / Claude:

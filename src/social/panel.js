@@ -7,7 +7,8 @@
 import './social.css';
 import { supabase } from '../supabase/client.js';
 import { getSession, onAuthChange, sendCode, verifyCode, signOut } from './auth.js';
-import { guardarSesion, recuperarSesion } from './sesionGuardada.js';
+import { guardarSesion, recuperarSesion, guardarSocialCache, recuperarSocialCache } from './sesionGuardada.js';
+import { sincronizarAvatarCacheDisco } from './adjuntos.js';
 import * as api from './api.js';
 import * as cache from './cacheLocal.js';
 import * as archivos from './adjuntos.js';
@@ -205,6 +206,21 @@ function statusDot(p) {
 export async function initSocial(h) {
   hooks = h;
   mount();
+
+  // 1. Restaurar caché local de frame 0 (amigos, canales, mi perfil y avatares persistidos en disco)
+  try {
+    await sincronizarAvatarCacheDisco();
+    const cachedSocial = await recuperarSocialCache();
+    if (cachedSocial && cachedSocial.me) {
+      state.me = cachedSocial.me;
+      if (Array.isArray(cachedSocial.friendships)) state.friendships = cachedSocial.friendships;
+      if (Array.isArray(cachedSocial.channels)) state.channels = cachedSocial.channels;
+    }
+  } catch (err) {
+    console.warn('[social] Error restaurando caché local inicial:', err);
+  }
+
+  // 2. Comprobar sesión de inmediato
   try {
     state.session = await getSession();
 
@@ -215,6 +231,13 @@ export async function initSocial(h) {
     console.warn('[social] Error restaurando sesión inicial:', err);
   } finally {
     state.authReady = true;
+  }
+
+  // Si tenemos sesión y datos cacheados, pintar de inmediato en el fotograma 0 y cerrar el splash
+  if (state.session && state.me) {
+    hooks.setLocalName?.(state.me.display_name || state.me.username);
+    render();
+    dismissAppSplash();
   }
 
   onAuthChange(async (session) => {
@@ -341,6 +364,7 @@ async function onLogin() {
   await Promise.all([refreshFriends(), refreshChannels()]);
   subscribeAll(uid);
   headerBtn.querySelector('span').textContent = state.me.display_name || state.me.username;
+  guardarSocialCache({ me: state.me, friendships: state.friendships, channels: state.channels }).catch(() => {});
 }
 
 // Presencia: un canal compartido. Cada cliente "anuncia" que está conectado y Supabase
@@ -386,6 +410,7 @@ function onLogout() {
   if (drawer) drawer.hidden = true;
   if (overlay) overlay.hidden = true;
   headerBtn.querySelector('span').textContent = 'Crear cuenta';
+  guardarSocialCache(null).catch(() => {});
   render();
 }
 
@@ -408,13 +433,18 @@ function onProfileChange(p) {
     if (f.addressee?.id === p.id) f.addressee = { ...f.addressee, ...p };
   }
   for (const m of state.members) if (m.profile?.id === p.id) m.profile = { ...m.profile, ...p };
+  if (state.me) guardarSocialCache({ me: state.me, friendships: state.friendships, channels: state.channels }).catch(() => {});
   render();
 }
 
-async function refreshFriends() { state.friendships = await api.listFriendships(); }
+async function refreshFriends() {
+  state.friendships = await api.listFriendships();
+  if (state.me) guardarSocialCache({ me: state.me, friendships: state.friendships, channels: state.channels }).catch(() => {});
+}
 async function refreshChannels() {
   state.channels = await api.listChannels();
   if (state.currentChannel && !esDirecto(state.currentChannel) && !state.channels.find((c) => c.id === state.currentChannel.id)) state.currentChannel = null;
+  if (state.me) guardarSocialCache({ me: state.me, friendships: state.friendships, channels: state.channels }).catch(() => {});
 }
 
 // ------------------------------------------------------------------

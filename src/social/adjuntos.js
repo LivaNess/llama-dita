@@ -13,6 +13,7 @@
 // El que quiera mandar el archivo tal cual puede: marca "sin comprimir" y se sube el original.
 
 import { supabase } from '../supabase/client.js';
+import { guardarAvatarCacheDisco, recuperarAvatarCacheDisco } from './sesionGuardada.js';
 
 export const REPARTIDOR = 'https://llamadita-adjuntos.llamadita-adjuntos.workers.dev';
 
@@ -218,10 +219,10 @@ export async function subirAvatar(file, { alAvanzar } = {}) {
 // que se redibuja la conversación: sin esto, cada render sería un pedido por imagen.
 const permisos = new Map(); // object_key -> { url, vence }
 
-// Caché síncrono y persistente en LocalStorage de fotos de perfil en Base64.
+// Caché síncrono y persistente (disco local y LocalStorage) de fotos de perfil en Base64.
 // Permite que al abrir la app todas las fotos de perfil se pinten en el fotograma 0 sin pop-in.
 const AVATAR_CACHE_KEY = 'llamadita.avatar_cache.v1';
-const MAX_AVATAR_ENTRIES = 50;
+const MAX_AVATAR_ENTRIES = 60;
 const avatarDataCache = new Map();
 
 function cargarAvatarCache() {
@@ -237,6 +238,18 @@ function cargarAvatarCache() {
   } catch (_) {}
 }
 cargarAvatarCache();
+
+export async function sincronizarAvatarCacheDisco() {
+  try {
+    const disco = await recuperarAvatarCacheDisco();
+    if (disco && typeof disco === 'object') {
+      for (const [k, v] of Object.entries(disco)) {
+        if (v && v.dataUrl) avatarDataCache.set(k, v.dataUrl);
+      }
+    }
+  } catch (_) {}
+}
+sincronizarAvatarCacheDisco().catch(() => {});
 
 export function obtenerAvatarCache(objectKey) {
   if (!objectKey) return null;
@@ -270,7 +283,7 @@ function guardarAvatarCacheStorage() {
     for (const [k, v] of slice) {
       obj[k] = { dataUrl: v, ts: Date.now() };
     }
-    localStorage.setItem(AVATAR_CACHE_KEY, JSON.stringify(obj));
+    guardarAvatarCacheDisco(obj).catch(() => {});
   } catch (_) {}
 }
 

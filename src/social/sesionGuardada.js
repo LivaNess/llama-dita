@@ -90,3 +90,81 @@ export async function recuperarSesion() {
     return null; // no hay archivo: es lo normal la primera vez
   }
 }
+
+// ------------------------------------------------------------------
+// Caché de estado social y avatares persistidos en disco fuera del navegador
+// ------------------------------------------------------------------
+const ARCHIVO_SOCIAL = 'social_cache.json';
+const ARCHIVO_AVATARES = 'avatar_cache.json';
+const KEY_SOCIAL_STORAGE = 'llamadita.social_cache.v1';
+const KEY_AVATAR_STORAGE = 'llamadita.avatar_cache.v1';
+
+export async function guardarSocialCache(data) {
+  try {
+    if (!data) localStorage.removeItem(KEY_SOCIAL_STORAGE);
+    else localStorage.setItem(KEY_SOCIAL_STORAGE, JSON.stringify(data));
+  } catch (_) {}
+  const nl = await neutralino();
+  if (!nl) return;
+  try {
+    const c = await carpeta(nl);
+    if (!data) {
+      try { await nl.filesystem.remove(`${c}/${ARCHIVO_SOCIAL}`); } catch (_) {}
+      return;
+    }
+    await nl.filesystem.createDirectory(c).catch(() => {});
+    await nl.filesystem.writeFile(`${c}/${ARCHIVO_SOCIAL}`, JSON.stringify(data));
+  } catch (_) {}
+}
+
+export async function recuperarSocialCache() {
+  let cached = null;
+  const nl = await neutralino();
+  if (nl) {
+    try {
+      const c = await carpeta(nl);
+      const raw = await nl.filesystem.readFile(`${c}/${ARCHIVO_SOCIAL}`);
+      if (raw) cached = JSON.parse(raw);
+    } catch (_) {}
+  }
+  if (!cached) {
+    try {
+      const raw = localStorage.getItem(KEY_SOCIAL_STORAGE);
+      if (raw) cached = JSON.parse(raw);
+    } catch (_) {}
+  }
+  return cached;
+}
+
+export async function guardarAvatarCacheDisco(obj) {
+  if (!obj) return;
+  try {
+    localStorage.setItem(KEY_AVATAR_STORAGE, JSON.stringify(obj));
+  } catch (_) {}
+  const nl = await neutralino();
+  if (!nl) return;
+  try {
+    const c = await carpeta(nl);
+    await nl.filesystem.createDirectory(c).catch(() => {});
+    await nl.filesystem.writeFile(`${c}/${ARCHIVO_AVATARES}`, JSON.stringify(obj));
+  } catch (_) {}
+}
+
+export async function recuperarAvatarCacheDisco() {
+  let cached = null;
+  const nl = await neutralino();
+  if (nl) {
+    try {
+      const c = await carpeta(nl);
+      const raw = await nl.filesystem.readFile(`${c}/${ARCHIVO_AVATARES}`);
+      if (raw) cached = JSON.parse(raw);
+    } catch (_) {}
+  }
+  if (!cached) {
+    try {
+      const raw = localStorage.getItem(KEY_AVATAR_STORAGE);
+      if (raw) cached = JSON.parse(raw);
+    } catch (_) {}
+  }
+  return cached;
+}

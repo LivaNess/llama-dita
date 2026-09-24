@@ -17,6 +17,21 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.5E · 2026-09-24 · Antigravity
+**Qué cambió.** Persistencia en disco de avatares en Base64 y precarga instantánea en fotograma 0 de la lista de amigos y perfil:
+- **Caché de avatares persistente en disco (`%LOCALAPPDATA%/Llamadita/avatar_cache.json`):**
+  - Se extendió el sistema de caché de avatares para guardarse no solo en memoria y `localStorage` sino también directamente en el disco duro del usuario mediante `nl.filesystem`.
+  - Al abrir la aplicación, el mapa de avatares en Base64 se sincroniza inmediatamente desde el disco, permitiendo que cada imagen de perfil se renderice de forma síncrona en el fotograma 0 (`src="data:image/webp;base64,..."`) sin esperar resoluciones asíncronas de red ni parpadear círculos con iniciales.
+- **Caché social fuera del navegador (`%LOCALAPPDATA%/Llamadita/social_cache.json`):**
+  - Se persiste en disco el último estado de la cuenta (`me`), amigos (`friendships`) y canales (`channels`).
+  - Al abrir la app, `initSocial` carga de inmediato este estado antes de esperar el viaje de red a Supabase. Si hay sesión y datos en disco, renderiza la barra lateral con tu nombre, tu foto, tus canales y tus amigos completos desde el primer milisegundo, erradicando el flash de la vista de login y el cartel "Cargando amigos...".
+  - En segundo plano, se conecta a Supabase, valida la sesión y reconcilia silenciosamente cualquier actualización o cambio de presencia.
+**Por qué.** Al reiniciar la aplicación de escritorio, las fotos de perfil cargaban desde cero (mostrando primero iniciales y luego apareciendo una por una) y la lista de amigos no se pintaba hasta que el pedido de red a Supabase finalizaba.
+**Dónde.** `src/social/sesionGuardada.js`, `src/social/adjuntos.js`, `src/social/panel.js`, `package.json`, `CAMBIOS.md`, `SYNC.md`.
+**Cómo se verifica.**
+1. Abrir la aplicación y verificar que tu avatar y los de tus amigos cargan con su imagen.
+2. Cerrar la aplicación por completo (clic derecho en la bandeja -> "Salir de Llamadita") y volverla a abrir: constatar que en el fotograma 0 tanto tu perfil como la lista de amigos y sus fotos aparecen instantáneamente sin parpadear en blanco ni mostrar iniciales transitorias.
+
 ### 0.24.5D · 2026-09-24 · Antigravity
 **Qué cambió.** Habilitación de CORS para puertos locales dinámicos en el servidor de archivos/adjuntos y bucket R2:
 - **CORS dinámico en Cloudflare Worker (`workers/adjuntos/src/index.js`):**
