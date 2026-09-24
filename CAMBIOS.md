@@ -17,6 +17,21 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.5D · 2026-09-24 · Antigravity
+**Qué cambió.** Habilitación de CORS para puertos locales dinámicos en el servidor de archivos/adjuntos y bucket R2:
+- **CORS dinámico en Cloudflare Worker (`workers/adjuntos/src/index.js`):**
+  - Se actualizó la función `origenPermitido` del repartidor de archivos para aceptar peticiones provenientes de cualquier puerto local (`localhost` y `127.0.0.1`).
+  - Al migrar en `0.24.5C` a puertos dinámicos de Neutralino (`port: 0`), las peticiones a `/ver?key=...` enviaban `Origin: http://localhost:<puerto>` distinto de 24024, lo que provocaba un rechazo `403 Origen no permitido` y hacía que las fotos de perfil y adjuntos en el chat fallaran mostrando "No se pudo cargar".
+- **Regla CORS en Cloudflare R2 (`workers/adjuntos/cors.json`):**
+  - Se configuró la política de CORS en el bucket `llamadita-adjuntos` para permitir orígenes comodín (`*`) junto a los dominios autorizados, garantizando que tanto la descarga como la lectura de imágenes desde cualquier puerto de escritorio o web se complete exitosamente.
+- **Worker desplegado en producción:**
+  - Se compiló y desplegó inmediatamente la nueva versión del Worker `llamadita-adjuntos` en Cloudflare Workers y se actualizó la regla de CORS en el bucket R2.
+**Por qué.** Tras actualizar a `0.24.5C`, las fotos de perfil no cargaban y las imágenes en los chats mostraban "No se pudo cargar" debido a que el servidor de archivos en la nube sólo autorizaba el puerto fijo 24024.
+**Dónde.** `workers/adjuntos/src/index.js`, `workers/adjuntos/cors.json`, `package.json`, `CAMBIOS.md`, `SYNC.md`.
+**Cómo se verifica.**
+1. Ejecutar `curl -i -H "Origin: http://localhost:54321" "https://llamadita-adjuntos.llamadita-adjuntos.workers.dev/salud"` y comprobar que responde `200 OK` con `access-control-allow-origin`.
+2. En la app de escritorio, cambiar de canal o recargar: verificar que las fotos de perfil y las imágenes adjuntas en los mensajes cargan nítidamente sin el mensaje "No se pudo cargar".
+
 ### 0.24.5C · 2026-09-24 · Antigravity
 **Qué cambió.** Solución definitiva de colisión de puertos de Neutralino (`NE_CL_IVCTOKN`), control de instancia única (Single Instance) y restauración suave de ventana:
 - **Puerto dinámico del servidor local (`"port": 0`):**

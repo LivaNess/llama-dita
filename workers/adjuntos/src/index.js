@@ -69,11 +69,15 @@ function cors(origen) {
   };
 }
 
-// La app de escritorio se sirve siempre desde el mismo puerto fijo; la web, del dominio propio.
+// La app de escritorio se sirve desde cualquier puerto local de Neutralino; la web, del dominio propio.
 function origenPermitido(req, env) {
   const origen = req.headers.get('origin') || '';
-  const lista = (env.ORIGENES || '').split(',').map((s) => s.trim()).filter(Boolean);
   if (!origen) return '*';
+  // Permitir la app de escritorio en cualquier puerto local (puerto dinámico de Neutralino o fijo)
+  if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origen)) {
+    return origen;
+  }
+  const lista = (env.ORIGENES || '').split(',').map((s) => s.trim()).filter(Boolean);
   return lista.includes(origen) ? origen : null;
 }
 

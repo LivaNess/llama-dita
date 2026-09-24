@@ -3,6 +3,7 @@
     {
       "allowed": {
         "origins": [
+          "*",
           "http://localhost:24024",
           "http://127.0.0.1:24024",
           "http://localhost:3000",

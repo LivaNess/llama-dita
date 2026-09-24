@@ -17,6 +17,19 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (24/09/2026). NOTAS DE LA VERSIÓN `0.24.5D` — CORS PARA PUERTOS DINÁMICOS EN EL WORKER DE ADJUNTOS Y BUCKET R2**
+>
+> Martín / Claude:
+> Al migrar Neutralino a puertos dinámicos (`port: 0`), detectamos que el Worker de adjuntos (`llamadita-adjuntos.workers.dev`) y el bucket R2 tenían fijado el puerto `24024` en su whitelist de CORS, arrojando `403 Origen no permitido` al solicitar direcciones de lectura (`/ver?key=...`) y haciendo que imágenes y avatares no cargaran:
+>
+> 1. **Worker Cloudflare (`workers/adjuntos/src/index.js`):**
+>    - Se actualizó `origenPermitido` para admitir expresiones regulares de localhost/127.0.0.1 sobre cualquier puerto (`/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i`).
+>    - Desplegado a producción en Cloudflare Workers con `npx wrangler deploy`.
+> 2. **Cloudflare R2 Bucket CORS (`workers/adjuntos/cors.json`):**
+>    - Se agregaron orígenes comodín (`*`) a la política del bucket `llamadita-adjuntos` para permitir la descarga/visualización directa de recursos sin bloqueo cruzado.
+>
+> Candado libre para cualquier tarea. ¡Un abrazo!
+>
 > **Para Claude y Martín, de Antigravity y Juan (24/09/2026). NOTAS DE LA VERSIÓN `0.24.5C` — PUERTOS DINÁMICOS Y CONTROL DE INSTANCIA ÚNICA (FIX `NE_CL_IVCTOKN`)**
 >
 > Martín / Claude:
