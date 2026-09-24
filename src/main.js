@@ -1,6 +1,6 @@
 import { audioManager } from './audio/audioManager.js';
 import { PeerManager } from './network/peerManager.js';
-import { initSocial, updateSocialCallState, getSocialState, openSocialChannel } from './social/panel.js';
+import { initSocial, updateSocialCallState, getSocialState, openSocialChannel, closeSocialChannel } from './social/panel.js';
 import { urlParaVer, obtenerAvatarCache } from './social/adjuntos.js';
 import { initUpdater } from './updater.js';
 import { initDeepLink } from './social/deeplink.js';
@@ -13,6 +13,14 @@ const btnActivateAudio = document.getElementById('btnActivateAudio');
 const callStatus = document.getElementById('callStatus');
 const btnLeaveCall = document.getElementById('btnLeaveCall');
 const studioCallBar = document.getElementById('studioCallBar');
+const btnMinimizeCall = document.getElementById('btnMinimizeCall');
+
+// Mini dock de llamada en barra lateral (Posición 2 del croquis)
+const sidebarCallMiniDock = document.getElementById('sidebarCallMiniDock');
+const sidebarCallMiniTitle = document.getElementById('sidebarCallMiniTitle');
+const sidebarCallMiniTimer = document.getElementById('sidebarCallMiniTimer');
+const btnSidebarCallHangup = document.getElementById('btnSidebarCallHangup');
+let isCallViewMinimized = false;
 
 // La cabecera dice con quién estás hablando, no en qué sala técnica estás.
 let conQuien = null;
@@ -64,15 +72,18 @@ function stopCallTimer() {
   }
   callStartTime = null;
   if (callDurationTimer) callDurationTimer.textContent = '00:00';
+  if (sidebarCallMiniTimer) sidebarCallMiniTimer.textContent = '00:00';
   if (callLiveDot) callLiveDot.classList.remove('active');
 }
 
 function updateCallDurationDisplay() {
-  if (!callDurationTimer || !callStartTime) return;
+  if (!callStartTime) return;
   const elapsedSec = Math.floor((Date.now() - callStartTime) / 1000);
   const m = Math.floor(elapsedSec / 60);
   const s = elapsedSec % 60;
-  callDurationTimer.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  const formatted = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  if (callDurationTimer) callDurationTimer.textContent = formatted;
+  if (sidebarCallMiniTimer) sidebarCallMiniTimer.textContent = formatted;
 }
 
 // Layout Views, Footer Mic & Loopback Monitor
@@ -267,26 +278,59 @@ function updateMainViews() {
     if (btnLeaveCall) btnLeaveCall.hidden = true;
     if (channelChatView) channelChatView.style.display = 'none';
     if (studioBoothsView) studioBoothsView.style.display = 'none';
+    if (sidebarCallMiniDock) sidebarCallMiniDock.style.display = 'none';
     if (standbyView) standbyView.style.display = 'flex';
+    isCallViewMinimized = false;
     return;
   }
 
-  // El botón de cortar solo tiene sentido si hay llamada activa
-  if (btnLeaveCall) btnLeaveCall.hidden = !(isConnected || peerManager.remotePeerId);
+  const hasActiveCall = isConnected || !!(peerManager && peerManager.remotePeerId);
 
-  if (currentActiveChannel) {
-    if (channelChatView) channelChatView.style.display = 'flex';
-    if (studioBoothsView) studioBoothsView.style.display = 'none';
-    if (standbyView) standbyView.style.display = 'none';
-  } else if (isConnected) {
-    if (channelChatView) channelChatView.style.display = 'none';
-    if (studioBoothsView) studioBoothsView.style.display = 'flex';
-    if (standbyView) standbyView.style.display = 'none';
-    updateBoothProfiles();
+  // El botón de cortar en la barra flotante de estudio solo tiene sentido si hay llamada activa
+  if (btnLeaveCall) btnLeaveCall.hidden = !hasActiveCall;
+
+  if (hasActiveCall) {
+    // Si el usuario navegó a un chat O minimizó la llamada para ver otra cosa:
+    if (currentActiveChannel || isCallViewMinimized) {
+      if (studioBoothsView) studioBoothsView.style.display = 'none';
+
+      if (currentActiveChannel) {
+        if (channelChatView) channelChatView.style.display = 'flex';
+        if (standbyView) standbyView.style.display = 'none';
+      } else {
+        if (channelChatView) channelChatView.style.display = 'none';
+        if (standbyView) standbyView.style.display = 'flex';
+      }
+
+      // Mostrar el mini dock en la barra lateral (Posición 2 del croquis)
+      if (sidebarCallMiniDock) {
+        sidebarCallMiniDock.style.display = 'flex';
+        if (sidebarCallMiniTitle) {
+          sidebarCallMiniTitle.textContent = conQuien ? `En llamada con ${conQuien}` : 'En llamada';
+        }
+      }
+    } else {
+      // Vista completa de llamada (estudio / cabinas)
+      if (sidebarCallMiniDock) sidebarCallMiniDock.style.display = 'none';
+      if (channelChatView) channelChatView.style.display = 'none';
+      if (standbyView) standbyView.style.display = 'none';
+      if (studioBoothsView) studioBoothsView.style.display = 'flex';
+      updateBoothProfiles();
+    }
   } else {
-    if (channelChatView) channelChatView.style.display = 'none';
-    if (studioBoothsView) studioBoothsView.style.display = 'none';
-    if (standbyView) standbyView.style.display = 'flex';
+    // No hay llamada activa
+    if (sidebarCallMiniDock) sidebarCallMiniDock.style.display = 'none';
+    isCallViewMinimized = false;
+
+    if (currentActiveChannel) {
+      if (channelChatView) channelChatView.style.display = 'flex';
+      if (studioBoothsView) studioBoothsView.style.display = 'none';
+      if (standbyView) standbyView.style.display = 'none';
+    } else {
+      if (channelChatView) channelChatView.style.display = 'none';
+      if (studioBoothsView) studioBoothsView.style.display = 'none';
+      if (standbyView) standbyView.style.display = 'flex';
+    }
   }
 }
 
@@ -848,6 +892,7 @@ function leaveCall(sendSignal = true) {
 
   stopCallTimer();
   isConnected = false;
+  isCallViewMinimized = false;
   remoteStream = null;
   if (remoteAudioElement) remoteAudioElement.srcObject = null;
   if (remoteAudioProcessor) {
@@ -882,6 +927,25 @@ function leaveCall(sendSignal = true) {
 btnLeaveCall?.addEventListener('click', () => {
   showToast('Saliste de la llamada');
   leaveCall(true);
+});
+
+btnSidebarCallHangup?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  showToast('Saliste de la llamada');
+  leaveCall(true);
+});
+
+btnMinimizeCall?.addEventListener('click', () => {
+  isCallViewMinimized = true;
+  updateMainViews();
+});
+
+sidebarCallMiniDock?.addEventListener('click', (e) => {
+  if (e.target.closest('#btnSidebarCallHangup')) return;
+  isCallViewMinimized = false;
+  currentActiveChannel = null;
+  closeSocialChannel();
+  updateMainViews();
 });
 
 // Start the app on load

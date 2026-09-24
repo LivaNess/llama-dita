@@ -315,10 +315,10 @@ function mount() {
   bindSidebarForms();
 
   document.getElementById('btnStandbyCreateChannel')?.addEventListener('click', () => {
-    document.getElementById('btnOpenChannelModal')?.click();
+    document.getElementById('btnToggleCreateChannel')?.click();
   });
   document.getElementById('btnStandbyAddFriend')?.addEventListener('click', () => {
-    document.getElementById('btnOpenFriendModal')?.click();
+    document.getElementById('btnToggleAddFriend')?.click();
   });
 }
 
@@ -2127,7 +2127,6 @@ function renderSidebar() {
   const standbyTitle = document.getElementById('standbyTitle');
   const standbyDesc = document.getElementById('standbyDesc');
   const standbyQuickActions = document.getElementById('standbyQuickActions');
-  const standbyStatusPill = document.getElementById('standbyStatusPill');
 
   if (!isLogged) {
     document.body.classList.add('is-logged-out');
@@ -2140,7 +2139,6 @@ function renderSidebar() {
     if (sidebarUserFooter) sidebarUserFooter.style.display = 'none';
 
     if (standbyQuickActions) standbyQuickActions.style.display = 'none';
-    if (standbyStatusPill) standbyStatusPill.style.display = 'none';
 
     if (standbyTitle) standbyTitle.textContent = '¿Otra vez chateando solo, en serio?';
     if (standbyDesc) standbyDesc.textContent = 'Iniciá sesión o creá tu cuenta para acceder al programa, canales y llamadas.';
@@ -2168,7 +2166,6 @@ function renderSidebar() {
   if (sidebarUserFooter) sidebarUserFooter.style.display = '';
 
   if (standbyQuickActions) standbyQuickActions.style.display = 'grid';
-  if (standbyStatusPill) standbyStatusPill.style.display = 'inline-flex';
 
   const myName = state.me.display_name || state.me.username || 'amigo';
   if (standbyTitle) standbyTitle.textContent = `¡Hola de nuevo, ${myName}!`;
@@ -2786,6 +2783,7 @@ function renderChat() {
 
   if (icon) {
     if (dm) {
+      icon.classList.add('is-avatar');
       if (otro?.avatar_key) {
         const cached = archivos.obtenerAvatarCache(otro.avatar_key);
         icon.innerHTML = `<img data-key="${esc(otro.avatar_key)}" ${cached ? `src="${cached}"` : ''} alt="${esc(nombreCanal(c))}" class="chat-channel-avatar" />`;
@@ -2794,6 +2792,7 @@ function renderChat() {
         icon.innerHTML = `<span class="chat-channel-avatar-initials">${esc(nombreCanal(c).slice(0, 2).toUpperCase())}</span>`;
       }
     } else {
+      icon.classList.remove('is-avatar');
       icon.innerHTML = c.kind === 'voice' ? ICONO_VOZ_ALTAVOZ : ICONO_HASHTAG;
     }
   }
@@ -3447,6 +3446,10 @@ export function updateSocialCallState() {
 
 export function openSocialChannel(id) {
   return openChannel(id);
+}
+
+export function closeSocialChannel() {
+  return closeChannel();
 }
 
 if (typeof navigator !== 'undefined' && navigator.mediaDevices?.addEventListener) {

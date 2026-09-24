@@ -17,6 +17,32 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.6B · 2026-09-24 · Antigravity
+**Qué cambió.** Overhaul Visual Fase 3B — Mini dock de llamada en barra lateral, depuración de pantalla de llamada y desencajonado de avatares/logos:
+- **Mini Dock de llamada animado en la barra lateral (Posición 2 del croquis):**
+  - Al minimizar la llamada activa o al navegar hacia un canal de texto o chat privado, el estado de la llamada se repliega elegantemente hacia la parte inferior de la barra lateral, ubicándose justo encima de la cápsula de usuario (`.sidebar-user-footer`).
+  - Arriba: Texto descriptivo `En llamada con (Usuario)` / `En llamada`.
+  - Abajo: Pastilla con temporizador en vivo en verde `[🟢 mm:ss]` a la izquierda y botón de corte rápido en rojo `[Cortar]` a la derecha.
+  - Al hacer clic en el mini dock (fuera del botón de cortar), se restaura la vista de pantalla completa de la llamada con animación fluida.
+- **Depuración visual de la pantalla de llamada:**
+  - Eliminados los indicadores redundantes de texto ("Hablando", "En silencio", "Silenciado") y las etiquetas superiores ("Tu cabina", "Con [Amigo]"): el aura vocal acústica y el disco concéntrico que se iluminan al hablar son el indicador natural y suficiente.
+  - En la barra de llamada flotante central (Posición 1 del croquis), se eliminó el texto redundante "En llamada con..." dejando una cápsula compacta y limpia con el cronómetro en vivo `00:00`, el botón "Cortar llamada" y un botón para minimizar la llamada.
+  - Se optimizó el espaciado y la altura de las tarjetas de llamada para un balance visual superior sin marcos rígidos.
+- **Standby Screen — Accesos rápidos y eliminación de clichés de IA:**
+  - Vinculación correcta de los botones "Crear un canal" y "Añadir un amigo" con los modales centrados (`btnToggleCreateChannel` y `btnToggleAddFriend`), abriendo el wizard paso a paso y la búsqueda respectivamente.
+  - Eliminada por completo la píldora informativa "Audio estéreo · Conexión directa P2P" identificada como cliché innecesario.
+  - Desencajonado del logotipo: se eliminó el contenedor cuadrado/squircle con borde y fondo oscuro que encerraba a la llama; ahora el imagotipo flota de forma libre, limpia y transparente con una sombra de gota sutil (`drop-shadow`).
+- **Avatares de chats circulares sin marco cuadrado:**
+  - En la cabecera del chat privado (`.chat-channel-icon.is-avatar`), se eliminó el contenedor cuadrado de 10px que asomaba por detrás de la foto circular, dejando un avatar 100% redondo, limpio y calibrado.
+**Por qué.** Había redundancia de texto en la pantalla de llamada, la barra flotante no permitía navegar la app cómodamente durante una llamada como indicaba el croquis del usuario, los botones de acción rápida en Standby no abrían sus modales correspondientes, y tanto los logos como las fotos de perfil estaban encerrados en cajas cuadradas con esquinas asomadas.
+**Dónde.** `index.html`, `src/style.css`, `src/brand.css`, `src/main.js`, `src/social/panel.js`, `package.json`, `CAMBIOS.md`, `SYNC.md`.
+**Cómo se verifica.**
+1. En pantalla de Standby, constatar que el imagotipo de Llamadita no tiene caja cuadrada de fondo y que la píldora de "Audio estéreo" ya no aparece.
+2. Hacer clic en "Crear un canal" o "Añadir un amigo" en la pantalla de Standby: verificar que se abren los respectivos modales en el centro de la pantalla.
+3. Abrir un chat privado con un amigo con avatar: verificar que la foto en la cabecera es totalmente circular y no tiene un cuadrado asomando por detrás.
+4. En una llamada activa, verificar la limpieza de la pantalla (solo avatar, nombre y slider elástico).
+5. Minimizar la llamada o hacer clic en un chat: constatar que el mini dock aparece en la barra lateral encima del perfil del usuario con el tiempo en vivo y el botón de cortar. Al cliquear el dock, se restaura la llamada.
+
 ### 0.24.6A · 2026-09-24 · Antigravity
 **Qué cambió.** Overhaul Visual Fase 3: Rediseño completo de la Pantalla de Standby (Home / Reposo) y Cabinas de Estudio de Llamada:
 - **Pantalla de Standby (Hub de Bienvenida):**

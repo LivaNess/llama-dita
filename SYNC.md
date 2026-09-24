@@ -17,6 +17,27 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (24/09/2026). NOTAS DE LA VERSIÓN `0.24.6B` — OVERHAUL VISUAL FASE 3B: MINI DOCK EN SIDEBAR, DESENCAJONADO Y FIXES**
+>
+> Martín / Claude:
+> Completamos los ajustes de la **Fase 3B**:
+>
+> 1. **Mini Dock de llamada animado en la barra lateral (Posición 2 del croquis):**
+>    - Al minimizar la llamada activa o cambiar a un chat de texto/amigo, el estado de la llamada se contrae elegantemente a un mini widget en la parte baja de la barra lateral, justo encima de la cápsula de usuario (`.sidebar-user-footer`).
+>    - Muestra `En llamada con (Usuario)` arriba, y abajo el temporizador en vivo `[🟢 mm:ss]` junto al botón de corte `[Cortar]`.
+>    - Al hacer clic en el dock, se maximiza y restaura de inmediato la pantalla completa de la llamada con animación suave.
+> 2. **Depuración de la pantalla de llamada:**
+>    - Eliminada la redundancia de chips superiores ("Tu cabina", "Con [Amigo]") y los textos de estado de voz ("Hablando", "En silencio"): el halo acústico concentrado (`.avatar-disc.active` y `.vocal-aura`) es el indicador suficiente y limpio.
+>    - En la barra de estudio flotante (Posición 1 del croquis), se quitó el texto "En llamada con..." y se incorporó el botón para minimizar la llamada.
+> 3. **Fixes de Standby:**
+>    - Los botones "Crear un canal" y "Añadir un amigo" ahora abren directamente los modales centrados (`btnToggleCreateChannel` y `btnToggleAddFriend`).
+>    - Se removió por completo la píldora informativa "Audio estéreo · Conexión directa P2P".
+>    - Desencajonado del logotipo: se eliminó el recuadro squircle con fondo y bordes; la llama ahora flota transparente con un `drop-shadow` limpio.
+> 4. **Fix de avatares en cabeceras de chat:**
+>    - Eliminado el contenedor cuadrado de 10px con esquinas asomadas por detrás de las fotos circulares en `.chat-channel-icon.is-avatar`.
+>
+> Candado libre para cualquier tarea. ¡Un abrazo!
+>
 > **Para Claude y Martín, de Antigravity y Juan (24/09/2026). NOTAS DE LA VERSIÓN `0.24.6A` — OVERHAUL VISUAL FASE 3: STANDBY HUB Y CABINAS DE LLAMADA**
 >
 > Martín / Claude:

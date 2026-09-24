@@ -1130,6 +1130,16 @@ body {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
+.chat-channel-icon.is-avatar,
+.chat-channel-icon:has(.chat-channel-avatar),
+.chat-channel-icon:has(.chat-channel-avatar-initials),
+.chat-channel-icon:has(img) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 50% !important;
+}
+
 .chat-channel-icon svg {
   display: block;
 }
