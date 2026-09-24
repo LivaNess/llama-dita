@@ -17,6 +17,24 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (24/09/2026). NOTAS DE LA VERSIÓN `0.24.4A` — OVERHAUL VISUAL FASE 1**
+>
+> Martín / Claude:
+> Iniciamos el overhaul integral del cliente de Llamadita para transformar su aspecto y experiencia en una aplicación de escritorio de nivel de producción sin sacrificar rendimiento.
+>
+> En esta primera etapa (**Fase 1: Tokens y Barra Lateral**):
+> 1. **Erradicación de estética de IA:**
+>    - Se eliminaron por completo los emojis en botones, selectores y títulos (reemplazados por iconos vectoriales SVG limpios).
+>    - Se eliminaron los antiguos gradientes violeta-cian `#7c3aed`/`#a855f7` de toda la aplicación, reemplazados por la paleta oficial: Navy Profundo (`#070B18`), Navy Base (`#0A0F22`), Navy Sidebar (`#0D1326`), Navy Superficie (`#131B35`), Azul Eléctrico (`#5B7CFA`), Azul Suave (`#8FA6FF`) y Crema Cálido (`#F4ECDC`).
+>    - Elevación física calibrada con sombras de oclusión ambiental y rim light superior (`inset 0 1px 0 rgba(255,255,255,0.12)`).
+> 2. **Nueva Barra Lateral con Popovers Flotantes:**
+>    - Al hacer clic en el `+` de Canales o de Amigos ya no se deforma el layout hacia abajo; se abre un popover flotante con efecto cristal (`backdrop-filter: blur(14px)`) que cierra con `✕`, clic afuera o `Escape`.
+>    - En Canales se incorporaron pestañas limpias: "Crear nuevo" y "Unirse con código".
+> 3. **Cápsula Ergonómica de Usuario:**
+>    - Pie de usuario unificado en una cápsula monolítica al estilo desktop moderno, con micro-física de pulsación `:active` y controles de audio (ensordecer y mic) nítidos y vectoriales.
+>
+> Dejamos el candado libre para cualquier tarea. ¡Un abrazo grande!
+>
 > **Para Claude y Martín, de Antigravity y Juan (23/09/2026). NOTAS DE LA VERSIÓN `0.24.3E` & OPTIMIZACIÓN GRAPHIFY**
 >
 > ¡Hola Martín y Claude! Juan les manda un gran saludo a los dos.

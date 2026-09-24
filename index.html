@@ -49,23 +49,36 @@
         <!-- SECCIÓN CANALES -->
         <div class="sidebar-section" id="sectionChannels">
           <div class="sidebar-section-header">
-            <span class="sidebar-section-title">CANALES_</span>
-            <button class="sidebar-icon-btn" id="btnToggleCreateChannel" title="Crear o unirse a un canal">+</button>
+            <span class="sidebar-section-title">Canales</span>
+            <button class="sidebar-icon-btn" id="btnToggleCreateChannel" title="Crear o unirse a un canal" aria-label="Crear o unirse a un canal">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
           </div>
 
-          <!-- Formulario colapsable para crear/unirse a canal -->
-          <div class="sidebar-forms" id="sidebarChannelForms" style="display: none;">
-            <form id="sidebarCreateChannelForm" class="sidebar-subform">
-              <input type="text" id="sidebarChannelName" placeholder="Nombre del canal" maxlength="30" required />
+          <!-- Popover flotante para crear/unirse a canal -->
+          <div class="sidebar-popover" id="sidebarChannelForms" style="display: none;">
+            <div class="sidebar-popover-header">
+              <span class="sidebar-popover-title">Gestión de canales</span>
+              <button type="button" class="sidebar-popover-close" id="btnCloseChannelPopover" title="Cerrar" aria-label="Cerrar">✕</button>
+            </div>
+            <div class="sidebar-popover-tabs" id="channelPopoverTabs">
+              <button type="button" class="popover-tab active" data-tab="create">Crear nuevo</button>
+              <button type="button" class="popover-tab" data-tab="join">Unirse con código</button>
+            </div>
+            <form id="sidebarCreateChannelForm" class="sidebar-popover-form">
+              <input type="text" id="sidebarChannelName" placeholder="Nombre del canal" maxlength="30" autocomplete="off" required />
               <select id="sidebarChannelKind">
                 <option value="text">Texto (#)</option>
-                <option value="voice">Voz (🔊)</option>
+                <option value="voice">Voz</option>
               </select>
-              <button type="submit" class="sc-primary sc-small">Crear</button>
+              <button type="submit" class="sc-primary sc-small">Crear canal</button>
             </form>
-            <form id="sidebarJoinChannelForm" class="sidebar-subform">
-              <input type="text" id="sidebarJoinCode" placeholder="Código invitación" required />
-              <button type="submit" class="sc-ghost sc-small">Unirse</button>
+            <form id="sidebarJoinChannelForm" class="sidebar-popover-form" style="display: none;">
+              <input type="text" id="sidebarJoinCode" placeholder="Pegá el código de invitación" autocomplete="off" required />
+              <button type="submit" class="sc-primary sc-small">Entrar al canal</button>
             </form>
           </div>
 
@@ -78,17 +91,28 @@
         <!-- SECCIÓN AMIGOS -->
         <div class="sidebar-section" id="sectionFriends">
           <div class="sidebar-section-header">
-            <span class="sidebar-section-title">AMIGOS -</span>
-            <button class="sidebar-icon-btn" id="btnToggleAddFriend" title="Buscar y agregar amigos">+</button>
+            <span class="sidebar-section-title">Amigos</span>
+            <button class="sidebar-icon-btn" id="btnToggleAddFriend" title="Buscar y agregar amigos" aria-label="Buscar y agregar amigos">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
           </div>
 
-          <!-- Buscador colapsable de amigos -->
-          <div class="sidebar-forms" id="sidebarFriendSearch" style="display: none;">
-            <form id="sidebarSearchFriendForm" class="sidebar-subform">
-              <input type="text" id="sidebarSearchUser" placeholder="Buscar @usuario..." autocomplete="off" required />
-              <button type="submit" class="sc-primary sc-small">Buscar</button>
+          <!-- Popover flotante para buscar amigos -->
+          <div class="sidebar-popover" id="sidebarFriendSearch" style="display: none;">
+            <div class="sidebar-popover-header">
+              <span class="sidebar-popover-title">Agregar amigo</span>
+              <button type="button" class="sidebar-popover-close" id="btnCloseFriendPopover" title="Cerrar" aria-label="Cerrar">✕</button>
+            </div>
+            <form id="sidebarSearchFriendForm" class="sidebar-popover-form">
+              <div class="popover-input-wrap">
+                <input type="text" id="sidebarSearchUser" placeholder="Buscar @usuario..." autocomplete="off" required />
+                <button type="submit" class="sc-primary sc-small">Buscar</button>
+              </div>
             </form>
-            <div id="sidebarSearchResults"></div>
+            <div id="sidebarSearchResults" class="sidebar-popover-results"></div>
           </div>
 
           <!-- Solicitudes de amistad recibidas -->
@@ -101,33 +125,35 @@
         </div>
       </div>
 
-      <!-- PIE DE USUARIO: [YO] + [MIC] -->
+      <!-- PIE DE USUARIO: CÁPSULA ERGONÓMICA UNIFICADA -->
       <div class="sidebar-user-footer" id="sidebarUserFooter">
-        <button class="sidebar-user-btn" id="btnSidebarUser" title="Mi perfil y cuenta">
+        <button class="sidebar-user-btn" id="btnSidebarUser" title="Mi perfil y cuenta" aria-label="Mi perfil y cuenta">
           <div class="sidebar-user-avatar" id="sidebarUserAvatar">YO</div>
           <div class="sidebar-user-details">
             <span class="sidebar-user-name" id="sidebarUserName">Crear cuenta</span>
             <span class="sidebar-user-handle" id="sidebarUserHandle">Clic para entrar</span>
           </div>
         </button>
-        <button class="sidebar-mic-btn active" id="btnDeafen" title="Ensordecer (dejar de escuchar y mutear)">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
-            <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path>
-          </svg>
-        </button>
-        <div class="sidebar-mic-wrapper">
-          <div class="muted-speech-tooltip" id="mutedSpeechTooltip" aria-live="polite" hidden>
-            <span class="tooltip-text" id="mutedSpeechTooltipText">Te escuchamos cuando toques acá</span>
-            <div class="tooltip-arrow"></div>
-          </div>
-          <button class="sidebar-mic-btn active" id="btnSidebarMic" title="Silenciar / Activar Micrófono">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-              <line x1="12" x2="12" y1="19" y2="22"></line>
+        <div class="sidebar-audio-actions">
+          <button class="sidebar-mic-btn active" id="btnDeafen" title="Ensordecer (dejar de escuchar y silenciar micrófono)" aria-label="Ensordecer">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
+              <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path>
             </svg>
           </button>
+          <div class="sidebar-mic-wrapper">
+            <div class="muted-speech-tooltip" id="mutedSpeechTooltip" aria-live="polite" hidden>
+              <span class="tooltip-text" id="mutedSpeechTooltipText">Te escuchamos cuando toques acá</span>
+              <div class="tooltip-arrow"></div>
+            </div>
+            <button class="sidebar-mic-btn active" id="btnSidebarMic" title="Silenciar / Activar Micrófono" aria-label="Silenciar o activar micrófono">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" x2="12" y1="19" y2="22"></line>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </aside>

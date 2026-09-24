@@ -17,6 +17,34 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.4A · 2026-09-24 · Antigravity
+**Qué cambió.** Overhaul visual Fase 1 — Sistema de tokens de diseño, nueva Barra Lateral premium y cápsula ergonómica de usuario:
+- **Erradicación de estética de IA y slop visual:**
+  - Eliminación total de emojis en componentes de control y navegación (sustituidos por iconos vectoriales SVG limpios y nítidos: más, altavoz, numeral, teléfono, campana silenciada).
+  - Eliminación de gradientes violeta-cian SaaS genéricos (`#7c3aed`, `#a855f7`) en toda la aplicación, reemplazados por la paleta oficial de Llamadita: Navy Profundo (`#070B18`), Navy Base (`#0A0F22`), Navy Sidebar (`#0D1326`), Navy Superficie (`#131B35`), Azul Eléctrico (`#5B7CFA`), Azul Suave (`#8FA6FF`) y Crema Cálido (`#F4ECDC`).
+  - Eliminación de sombras y resplandores difusos descontrolados, reemplazados por elevación física calibrada (sombras de oclusión ambiental y rim light superior `inset 0 1px 0 rgba(255,255,255, 0.12)`).
+- **Nueva Barra Lateral y Popovers flotantes:**
+  - Reemplazo de formularios expansivos rígidos que deformaban la lista vertical por Popovers flotantes (`.sidebar-popover`) con `backdrop-filter: blur(14px)`, elevación multicapa y cierre con botón `✕`, clic exterior o tecla `Escape`.
+  - Pestañas ergonómicas para alternar entre "Crear nuevo" y "Unirse con código" en canales.
+  - Buscador de amigos flotante con autofocus automático y resultados estilizados.
+  - Títulos de sección limpios ("Canales" y "Amigos" con tipografía variable Google Sans Flex).
+- **Cápsula de usuario y controles de audio unificados:**
+  - El pie de usuario ahora es una cápsula monolítica integrada (`#sidebarUserFooter`) con hover coordinado, estado activo y separación física clara entre identidad y controles de voz.
+  - Botones de ensordecer (`#btnDeafen`) y silenciar micrófono (`#btnSidebarMic`) rediseñados con vectoriales SVG, micro-física de pulsación `:active` y respuesta de estado limpia.
+- **Sistema de diseño modular unificado en `src/brand.css`:**
+  - Consolidación de variables CSS de elevación, transiciones con curvas Bézier naturales, tipografía responsiva y componentes reutilizables sin fugas de especificidad.
+**Por qué.** Iniciar el overhaul integral de Llamadita alejándose de la estética de proyecto básico y de patrones cliché de IA, ofreciendo una experiencia de escritorio de nivel de producción, con principios sólidos de ergonomía visual (Hick, Fitts, Gestalt) y máximo rendimiento.
+**Dónde.** `src/brand.css`, `src/style.css`, `index.html`, `src/social/social.css`, `src/social/panel.js`, `src/components/visualizer.js`, `package.json`, `CAMBIOS.md`, `SYNC.md`.
+**Cómo se verifica.**
+1. Ejecutar `npm run verificar` y constatar código de salida 0.
+2. Compilar con `npm run build` verificando que no existan errores ni advertencias de empaquetado.
+3. Abrir la app y comprobar la barra lateral:
+   - Los títulos dicen "Canales" y "Amigos" con iconos "+" limpios en SVG.
+   - Al pulsar "+" en canales o amigos, se abre el popover flotante sin empujar hacia abajo la lista.
+   - Probar alternar pestañas en creación/unión de canal y cerrar con `✕`, clic afuera o `Escape`.
+   - Verificar la cápsula de usuario al pie y la interacción de los botones de audio.
+   - Comprobar la ausencia total de gradientes morados en controles e inputs.
+
 ### 0.24.3E · 2026-09-23 · Antigravity
 **Qué cambió.** Rediseño estético y funcional completo de `ProfileCard` (ReactBits) con avatar en fondo cover, holográfico arcoíris, grano satinado, destellos y tipografía variable:
 - **Foto de perfil como fondo de la tarjeta:** La imagen del usuario se expande a pantalla completa dentro de la tarjeta (`background-size: cover`), con una viñeta oscura multicapa que garantiza legibilidad y contraste absoluto para todos los textos. Si el usuario no tiene avatar cargado, se muestra un fondo geométrico oscuro elegante con sus iniciales en marca de agua translúcida.

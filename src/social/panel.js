@@ -145,6 +145,7 @@ function onGlobalMessage(fila) {
 // Icono vectorial que toma el color del boton (verde) en vez de traer el suyo.
 const ICONO_TELEFONO = `<svg class="sc-icono-tel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`;
 const ICONO_COLGAR = `<svg class="sc-icono-tel" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91"/><line x1="23" y1="1" x2="1" y2="23"/></svg>`;
+const ICONO_CAMPANA_SILENCIADA = `<svg class="sc-icono-muted-bell" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M18.63 13A17.89 17.89 0 0 1 18 8"/><path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"/><path d="M18 8a6 6 0 0 0-9.33-5"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const randomRoom = () => 'llamadita-' + Math.random().toString(36).substring(2, 8);
@@ -2073,13 +2074,15 @@ function renderSidebar() {
     } else {
       channelsList.innerHTML = regularChannels.map((c) => {
         const isActive = state.currentChannel?.id === c.id;
-        const icon = c.kind === 'voice' ? '🔊' : '#';
+        const iconSvg = c.kind === 'voice'
+          ? `<svg class="channel-kind-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`
+          : `<svg class="channel-kind-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>`;
         const muted = isChatMuted(c.id);
         return `
           <button class="sidebar-channel-item ${isActive ? 'active' : ''}" data-sidebar-channel="${c.id}" title="${esc(c.name)} (${c.kind === 'voice' ? 'Voz' : 'Texto'})${muted ? ' · Silenciado' : ''} · Clic derecho para opciones">
-            <span class="channel-kind">${icon}</span>
+            <span class="channel-kind">${iconSvg}</span>
             <span class="channel-name">${esc(c.name)}</span>
-            ${muted ? `<span class="sc-chat-muted-icon" title="Notificaciones silenciadas">🔕</span>` : ''}
+            ${muted ? `<span class="sc-chat-muted-icon" title="Notificaciones silenciadas">${ICONO_CAMPANA_SILENCIADA}</span>` : ''}
           </button>
         `;
       }).join('');
@@ -2107,11 +2110,11 @@ function renderSidebar() {
       const received = state.friendships.filter((f) => f.status === 'pending' && f.addressee_id === state.me.id);
       if (received.length) {
         requestsList.innerHTML = received.map((f) => `
-          <div class="sidebar-request-item" style="padding: 0.45rem 0.6rem; background: rgba(168,85,247,0.12); border: 1px solid rgba(168,85,247,0.25); border-radius: 7px; margin-bottom: 0.4rem; font-size: 0.78rem;">
-            <div style="margin-bottom: 0.35rem; color: #fff;"><strong>${esc(f.requester?.display_name || f.requester?.username)}</strong> te agregó</div>
-            <div style="display: flex; gap: 0.3rem;">
-              <button class="sc-primary sc-small" data-sidebar-accept="${f.id}" style="padding: 0.2rem 0.5rem; font-size: 0.72rem;">Aceptar</button>
-              <button class="sc-ghost sc-small" data-sidebar-reject="${f.id}" style="padding: 0.2rem 0.5rem; font-size: 0.72rem;">No</button>
+          <div class="sidebar-request-item">
+            <div class="sidebar-request-text"><strong>${esc(f.requester?.display_name || f.requester?.username)}</strong> te agregó</div>
+            <div class="sidebar-request-actions">
+              <button class="sc-primary sc-small" data-sidebar-accept="${f.id}">Aceptar</button>
+              <button class="sc-ghost sc-small" data-sidebar-reject="${f.id}">No</button>
             </div>
           </div>
         `).join('');
@@ -2157,7 +2160,7 @@ function renderSidebar() {
                 <span class="friend-handle">@${esc(p.username)}</span>
               </div>
               <div class="friend-actions">
-                ${muted ? `<span class="sc-chat-muted-icon" title="Notificaciones silenciadas">🔕</span>` : ''}
+                ${muted ? `<span class="sc-chat-muted-icon" title="Notificaciones silenciadas">${ICONO_CAMPANA_SILENCIADA}</span>` : ''}
                 ${inCall ? `
                   <button class="btn-friend-call in-call" data-sidebar-hangup="${p.id}" title="Colgar llamada">${ICONO_COLGAR}</button>
                 ` : `
@@ -2881,14 +2884,52 @@ function pintarRetencion() {
 function bindSidebarForms() {
   const btnToggleCreate = document.getElementById('btnToggleCreateChannel');
   const channelForms = document.getElementById('sidebarChannelForms');
+  const btnCloseChannel = document.getElementById('btnCloseChannelPopover');
+
   if (btnToggleCreate && channelForms && !btnToggleCreate._bound) {
     btnToggleCreate._bound = true;
-    btnToggleCreate.addEventListener('click', () => {
-      channelForms.style.display = channelForms.style.display === 'none' ? 'flex' : 'none';
+    btnToggleCreate.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const willOpen = channelForms.style.display === 'none';
+      channelForms.style.display = willOpen ? 'flex' : 'none';
+      if (willOpen) {
+        document.getElementById('sidebarFriendSearch')?.style.setProperty('display', 'none');
+        document.getElementById('sidebarChannelName')?.focus();
+      }
     });
   }
 
+  if (btnCloseChannel && channelForms && !btnCloseChannel._bound) {
+    btnCloseChannel._bound = true;
+    btnCloseChannel.addEventListener('click', (e) => {
+      e.stopPropagation();
+      channelForms.style.display = 'none';
+    });
+  }
+
+  // Tabs de Crear Canal / Unirse con código
+  const popoverTabs = document.querySelectorAll('#channelPopoverTabs .popover-tab');
   const createForm = document.getElementById('sidebarCreateChannelForm');
+  const joinForm = document.getElementById('sidebarJoinChannelForm');
+
+  popoverTabs.forEach((tab) => {
+    if (!tab._bound) {
+      tab._bound = true;
+      tab.addEventListener('click', () => {
+        popoverTabs.forEach((t) => t.classList.remove('active'));
+        tab.classList.add('active');
+        const isCreate = tab.dataset.tab === 'create';
+        if (createForm) createForm.style.display = isCreate ? 'flex' : 'none';
+        if (joinForm) joinForm.style.display = isCreate ? 'none' : 'flex';
+        if (isCreate) {
+          document.getElementById('sidebarChannelName')?.focus();
+        } else {
+          document.getElementById('sidebarJoinCode')?.focus();
+        }
+      });
+    }
+  });
+
   if (createForm && !createForm._bound) {
     createForm._bound = true;
     createForm.addEventListener('submit', (e) => {
@@ -2900,13 +2941,12 @@ function bindSidebarForms() {
       act(async () => {
         const created = await api.createChannel(state.me.id, name, kind);
         createForm.reset();
-        channelForms.style.display = 'none';
+        if (channelForms) channelForms.style.display = 'none';
         if (created?.id) openChannel(created.id);
       }, 'Canal creado');
     });
   }
 
-  const joinForm = document.getElementById('sidebarJoinChannelForm');
   if (joinForm && !joinForm._bound) {
     joinForm._bound = true;
     joinForm.addEventListener('submit', (e) => {
@@ -2917,7 +2957,7 @@ function bindSidebarForms() {
       act(async () => {
         const res = await api.joinChannelByCode(code);
         joinForm.reset();
-        channelForms.style.display = 'none';
+        if (channelForms) channelForms.style.display = 'none';
         if (res?.id) openChannel(res.id);
       }, 'Entraste al canal');
     });
@@ -2925,10 +2965,54 @@ function bindSidebarForms() {
 
   const btnToggleAdd = document.getElementById('btnToggleAddFriend');
   const friendSearch = document.getElementById('sidebarFriendSearch');
+  const btnCloseFriend = document.getElementById('btnCloseFriendPopover');
+
   if (btnToggleAdd && friendSearch && !btnToggleAdd._bound) {
     btnToggleAdd._bound = true;
-    btnToggleAdd.addEventListener('click', () => {
-      friendSearch.style.display = friendSearch.style.display === 'none' ? 'flex' : 'none';
+    btnToggleAdd.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const willOpen = friendSearch.style.display === 'none';
+      friendSearch.style.display = willOpen ? 'flex' : 'none';
+      if (willOpen) {
+        document.getElementById('sidebarChannelForms')?.style.setProperty('display', 'none');
+        document.getElementById('sidebarSearchUser')?.focus();
+      }
+    });
+  }
+
+  if (btnCloseFriend && friendSearch && !btnCloseFriend._bound) {
+    btnCloseFriend._bound = true;
+    btnCloseFriend.addEventListener('click', (e) => {
+      e.stopPropagation();
+      friendSearch.style.display = 'none';
+    });
+  }
+
+  // Cierre de popovers al hacer clic fuera o presionar Escape
+  if (!document._sidebarPopoversBound) {
+    document._sidebarPopoversBound = true;
+    document.addEventListener('click', (e) => {
+      const chForms = document.getElementById('sidebarChannelForms');
+      const frSearch = document.getElementById('sidebarFriendSearch');
+      if (chForms && chForms.style.display !== 'none') {
+        if (!chForms.contains(e.target) && !e.target.closest('#btnToggleCreateChannel')) {
+          chForms.style.display = 'none';
+        }
+      }
+      if (frSearch && frSearch.style.display !== 'none') {
+        if (!frSearch.contains(e.target) && !e.target.closest('#btnToggleAddFriend')) {
+          frSearch.style.display = 'none';
+        }
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const chForms = document.getElementById('sidebarChannelForms');
+        const frSearch = document.getElementById('sidebarFriendSearch');
+        if (chForms && chForms.style.display !== 'none') chForms.style.display = 'none';
+        if (frSearch && frSearch.style.display !== 'none') frSearch.style.display = 'none';
+      }
     });
   }
 

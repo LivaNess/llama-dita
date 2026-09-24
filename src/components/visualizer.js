@@ -1,4 +1,4 @@
-﻿// Audio visualizer engine for Llamadita
+// Audio visualizer engine for Llamadita
 // Handles Canvas rendering (spectrum bars, VU meter, waveforms) at 60fps
 
 export class AudioVisualizer {
@@ -85,8 +85,8 @@ export class AudioVisualizer {
 
     // Color gradient based on theme
     const isHost = this.theme === 'host';
-    const primaryColor = isHost ? '#a855f7' : '#06b6d4';   // Purple vs Cyan
-    const highlightColor = isHost ? '#ec4899' : '#3b82f6'; // Pink vs Blue
+    const primaryColor = isHost ? '#5b7cfa' : '#06b6d4';   // Electric blue vs Cyan
+    const highlightColor = isHost ? '#8fa6ff' : '#38bdf8'; // Soft blue vs Sky
 
     const gradient = ctx.createLinearGradient(0, height, 0, 0);
     gradient.addColorStop(0, primaryColor);
