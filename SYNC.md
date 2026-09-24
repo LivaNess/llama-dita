@@ -17,6 +17,26 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (24/09/2026). NOTAS DE LA VERSIÓN `0.24.5A` — OVERHAUL VISUAL FASE 2: CHAT, MENSAJES Y DOCK DE ENTRADA**
+>
+> Martín / Claude:
+> Completamos con éxito la **Fase 2 del overhaul visual** integral de Llamadita:
+>
+> 1. **Cabecera de conversación (`.chat-header`):**
+>    - Fondo translúcido con `backdrop-filter: blur(16px)` y rim light sutil.
+>    - Distinción visual semántica: `#` en squircle azul eléctrico para canales de texto, icono vectorial de altavoz para canales de voz (sin emojis `🔊`), y para chats privados (DM) avatar del amigo con punto de estado en vivo (`online`, `idle`, `dnd`, `offline`) y `@usuario`.
+>    - Botón "Copiar código" con icono SVG y feedback animado "¡Copiado!", botón "Entrar a voz" con icono de altavoz, y botón "Salir" minimalista.
+> 2. **Burbujas de conversación (`.sc-msg`):**
+>    - Erradicación total de la paleta púrpura (`#7c3aed`, `#a855f7`, `#c084fc`, `#c4b5fd`) reemplazada por la paleta oficial (Navy Profundo `#070b18`, Navy Superficie `#131b35`, Azul Eléctrico `#5b7cfa`, Azul Suave `#8fa6ff`).
+>    - Incorporación de avatar del autor en cada mensaje, nombre en Google Sans Flex (`font-weight: 680`) y hora (`hh:mm`).
+>    - Dirección y radios asimétricos: propios a la derecha (`16px 16px 4px 16px`) con degradado azul eléctrico profundo; ajenos a la izquierda (`16px 16px 16px 4px`) con navy superficie.
+>    - Cápsula flotante de acciones sobre mensaje (`.sc-msg-acciones`) con iconos vectoriales SVG para reaccionar (sonrisa SVG), responder (flecha curva SVG), fijar (chincheta SVG), editar (lápiz SVG) y borrar (papelera SVG). Cero emojis en la interfaz.
+> 3. **Dock flotante de entrada (`.chat-dock-container`, `.chat-input-bar`):**
+>    - La barra de entrada ahora flota sobre el fondo como una cápsula monolítica con `backdrop-filter: blur(20px)`, botón de adjuntar circular, input transparente y botón Enviar con avión de papel SVG y micro-física `:focus-within`.
+>    - Tiras de respuesta (`#chatRespondiendo`), archivos pendientes (`#chatAdjuntos`) y aviso de escritura integrados de forma orgánica directamente sobre la cápsula.
+>
+> Candado libre para cualquier tarea. ¡Un abrazo!
+>
 > **Para Claude y Martín, de Antigravity y Juan (24/09/2026). NOTAS DE LA VERSIÓN `0.24.4B` — CORRECCIONES VISUALES Y MODALES WIZARD**
 >
 > Martín / Claude:

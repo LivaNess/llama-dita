@@ -17,6 +17,52 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.5A · 2026-09-24 · Antigravity
+**Qué cambió.** Overhaul visual Fase 2 — Rediseño integral de la cabecera de chat, burbujas de mensajes ergonómicas y barra de entrada en cápsula dock flotante:
+- **Cabecera de conversación (`.chat-header`):**
+  - Superficie translúcida con desenfoque de fondo (`backdrop-filter: blur(16px)`), borde inferior con rim light e iluminación sutil.
+  - Distinción visual inmediata entre tipos de conversación:
+    - Canal de texto: icono `#` vectorial en cápsula squircle azul eléctrico suave (`rgba(91, 124, 250, 0.12)`).
+    - Canal de voz: icono vectorial de altavoz/onda acústica (eliminación del emoji `🔊`).
+    - Chat privado (DM): avatar del amigo o iniciales tipográficas, display name, arroba `@usuario` y punto de estado en tiempo real (en línea, ausente, no molestar, desconectado).
+  - Botones de acción unificados y vectoriales:
+    - "Copiar código": botón ghost con icono SVG y feedback instantáneo interactivo "¡Copiado!".
+    - "Entrar a voz": botón azul eléctrico con icono de voz para canales de audio.
+    - "Llamar": botón verde esmeralda con estado activo que conmuta a "Colgar" en rojo al estar en llamada.
+    - "Salir": botón cerrar minimalista con icono SVG.
+    - Menú de opciones: desplegable flotante para búsqueda en el chat y duración de mensajes con vectoriales monocromáticos.
+- **Buscador de historial integrado en cabecera (`.chat-buscador`):**
+  - Despliegue animado desde la cabecera con icono SVG, campo de texto enfocado, contador de resultados y botón de cierre.
+- **Burbujas de conversación ergonómicas (`.sc-msg`):**
+  - **Erradicación de paleta violeta/AI-slop:** Reemplazados todos los degradados púrpuras heredados (`#7c3aed`, `#a855f7`, `#c084fc`, `#c4b5fd`) por la paleta oficial de Llamadita (Navy Profundo `#070b18`, Navy Superficie `#131b35`, Azul Eléctrico `#5b7cfa`, Azul Suave `#8fa6ff` y Crema Cálido `#f4ecdc`).
+  - **Identidad en cada mensaje:** Incorporación del avatar del emisor (`.sc-msg-avatar`) y encabezado con nombre visible en Google Sans Flex (`font-weight: 680`) y hora legible (`hh:mm`).
+  - **Diferenciación direccional:** Los mensajes propios (`.mine`) se alinean a la derecha con degradado azul eléctrico profundo y radio asimétrico (`16px 16px 4px 16px`), mientras que los ajenos se alinean a la izquierda con fondo navy superficie y radio (`16px 16px 16px 4px`).
+  - **Sello de fijado vectorial:** Banner ámbar sutil con icono de chincheta SVG (sin emoji `📌`).
+  - **Citas y respuestas (`.sc-cita`):** Tarjetas con borde izquierdo en azul eléctrico y enlace directo al mensaje referenciado.
+  - **Cápsula flotante de acciones (`.sc-msg-acciones`):** Barra en píldora con desenfoque de fondo y botones vectoriales SVG para reaccionar (sonrisa SVG), responder (flecha curva SVG), fijar/desfijar (chincheta SVG), editar (lápiz SVG) y borrar (papelera SVG). Cero emojis en controles de interfaz.
+  - **Reacciones interactivas (`.sc-reaccion`):** Píldoras con contador y realce en azul eléctrico cuando el usuario local reaccionó.
+  - **Adjuntos:** Previsualizaciones de fotos con radio moderno y botón de descarga para archivos con icono vectorial SVG.
+- **Cápsula dock flotante de entrada (`.chat-dock-container`, `.chat-input-bar`):**
+  - La barra de entrada ya no es una franja plana rígida pegada al fondo; ahora es una cápsula monolítica flotante con desenfoque cristal (`backdrop-filter: blur(20px)`), elevación física y contorno luminoso interactivo al enfocar (`:focus-within`).
+  - Botón de adjuntar (`#btnChatAdjuntar`) circular con icono de clip SVG.
+  - Campo de texto limpio sin bordes invasivos.
+  - Botón de envío (`#btnSendMessage`) ergonómico en azul eléctrico con icono de avión de papel SVG y micro-física de pulsación.
+  - Bandeja flotante de respuesta (`#chatRespondiendo`) y archivos pendientes (`#chatAdjuntos`) integrados directamente sobre la cápsula.
+  - Cartel de arrastrar y soltar (`#chatSoltar`) rediseñado con borde punteado azul eléctrico y desenfoque.
+**Por qué.** Ejecutar la Fase 2 del overhaul visual del cliente, transformando la experiencia central de chat y comunicación en una interfaz de escritorio moderna, fluida y ergonómica, respetando las leyes de diseño y eliminando por completo cualquier vestigio de estética genérica o clichés de IA.
+**Dónde.** `index.html`, `src/brand.css`, `src/social/social.css`, `src/social/panel.js`, `package.json`, `CAMBIOS.md`, `SYNC.md`.
+**Cómo se verifica.**
+1. Ejecutar `npm run build` y corroborar compilación exitosa sin advertencias.
+2. Ejecutar `npm run verificar` y validar salida 0.
+3. Abrir la aplicación y verificar la vista de chat:
+   - En canales de texto, constatar el squircle `#` azul en la cabecera, título y badge de tipo.
+   - En canales de voz, constatar el icono vectorial de altavoz en el título y el botón "Entrar a voz".
+   - En chats privados (DM), constatar el avatar del amigo, nombre, arroba y el punto de estado en vivo con etiqueta (En línea, etc.).
+   - Probar el botón "Copiar código" y verificar que conmuta a "¡Copiado!" con icono check durante 1,5 segundos.
+   - Verificar las burbujas de chat: avatar del autor a la izquierda en ajenos y a la derecha en propios, tipografía Google Sans Flex, hora, citas y reacciones.
+   - Pasar el cursor sobre un mensaje y verificar la cápsula flotante de acciones: iconos SVG nítidos para reaccionar, responder, fijar, editar y borrar (sin emojis).
+   - Verificar la barra de entrada al pie: cápsula flotante con botón clip, campo de texto, botón Enviar con avión de papel SVG y efecto `:focus-within`.
+
 ### 0.24.4B · 2026-09-24 · Antigravity
 **Qué cambió.** Corrección de incongruencias visuales en la barra lateral, modales de pantalla centrados con wizard de creación de canal y menús contextuales vectoriales sin emojis:
 - **Modales centrados con backdrop blur:**

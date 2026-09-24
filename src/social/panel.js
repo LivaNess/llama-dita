@@ -155,6 +155,15 @@ const ICONO_CALENDARIO = `<svg width="14" height="14" viewBox="0 0 24 24" fill="
 const ICONO_FLECHA_ATRAS = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>`;
 const ICONO_USUARIO = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
 const ICONO_CHAT = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>`;
+const ICONO_EMOJI_SMILE = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>`;
+const ICONO_RESPONDER = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg>`;
+const ICONO_PIN = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="17" x2="12" y2="22"></line><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.89A2 2 0 0 1 15 10.77V5a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v5.77a2 2 0 0 1-1.11 1.79l-1.78.89A2 2 0 0 0 5 15.24Z"></path></svg>`;
+const ICONO_EDITAR = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path><path d="m15 5 4 4"></path></svg>`;
+const ICONO_DESCARGAR = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>`;
+const ICONO_VOZ_ALTAVOZ = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>`;
+const ICONO_HASHTAG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>`;
+const ICONO_CERRAR = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+const ICONO_CHECK = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const randomRoom = () => 'llamadita-' + Math.random().toString(36).substring(2, 8);
@@ -679,7 +688,7 @@ function adjuntoItem(a) {
     </button>`;
   }
   return `<button type="button" class="sc-adj-archivo" data-bajar="${esc(a.object_key)}" data-nombre="${esc(a.nombre)}">
-    <span class="sc-adj-icono">⬇</span>
+    <span class="sc-adj-icono">${ICONO_DESCARGAR}</span>
     <span class="sc-adj-texto"><strong>${esc(a.nombre)}</strong><small>${peso}</small></span>
   </button>`;
 }
@@ -733,10 +742,11 @@ function reaccionesItem(m) {
 function citaItem(m) {
   if (!m.reply_to) return '';
   const al = state.messages.find((x) => String(x.id) === String(m.reply_to));
-  if (!al) return `<div class="sc-cita ausente">El mensaje al que respond\u00eda ya no est\u00e1</div>`;
+  if (!al) return `<div class="sc-cita ausente"><span class="sc-cita-icono">${ICONO_RESPONDER}</span><span>El mensaje respondido ya no está</span></div>`;
   const resumen = al.body ? al.body.slice(0, 90) : (al.adjuntos?.length ? 'un archivo' : '');
   return `<button type="button" class="sc-cita" data-ir="${esc(al.id)}" title="Ir al mensaje">
-    <strong>${esc(autorDe(al))}</strong><span>${esc(resumen)}${al.body && al.body.length > 90 ? '\u2026' : ''}</span>
+    <span class="sc-cita-icono">${ICONO_RESPONDER}</span>
+    <span class="sc-cita-body"><strong>${esc(autorDe(al))}</strong><span>${esc(resumen)}${al.body && al.body.length > 90 ? '…' : ''}</span></span>
   </button>`;
 }
 
@@ -755,24 +765,35 @@ function msgItem(m) {
   const cuerpo = editando
     ? `<form class="sc-editor" data-editor="${esc(m.id)}">
          <input type="text" value="${esc(m.body)}" maxlength="2000" />
-         <div class="sc-editor-pie"><button type="submit" class="sc-primary sc-small">Guardar</button><button type="button" class="sc-ghost sc-small" data-cancelar-edicion>Cancelar</button><span class="sc-muted sc-tiny">Enter guarda \u00b7 Esc cancela</span></div>
+         <div class="sc-editor-pie"><button type="submit" class="sc-primary sc-small">Guardar</button><button type="button" class="sc-ghost sc-small" data-cancelar-edicion>Cancelar</button><span class="sc-muted sc-tiny">Enter guarda · Esc cancela</span></div>
        </form>`
     : m.body ? `<div class="sc-msg-body">${conFormato(m.body)}</div>` : '';
 
+  const autorPerfil = state.members.find((x) => x.user_id === m.author_id)?.profile
+    || (m.author_id === state.me?.id ? state.me : m.author);
+  const avatarHtml = fotoDe(autorPerfil, 'sc-msg-avatar');
+
   return `<div class="sc-msg ${mine ? 'mine' : ''} ${m.fijado ? 'fijado' : ''}" data-msg="${esc(m.id)}">
-    ${m.fijado ? `<small class="sc-fijado-sello">\ud83d\udccc fijado</small>` : ''}
-    <small class="sc-msg-author">${esc(autorDe(m))}</small>
-    ${citaItem(m)}
-    ${cuerpo}
-    ${(m.adjuntos || []).length ? `<div class="sc-msg-adjuntos">${m.adjuntos.map(adjuntoItem).join('')}</div>` : ''}
-    ${reaccionesItem(m)}
-    <small class="sc-msg-time">${hora}${m.edited_at ? ' · editado' : ''}</small>
+    ${m.fijado ? `<div class="sc-fijado-sello">${ICONO_PIN}<span>Fijado</span></div>` : ''}
+    <div class="sc-msg-inner">
+      <div class="sc-msg-avatar-col">${avatarHtml}</div>
+      <div class="sc-msg-body-col">
+        <div class="sc-msg-header">
+          <span class="sc-msg-author">${esc(autorDe(m))}</span>
+          <span class="sc-msg-time">${hora}${m.edited_at ? ' · editado' : ''}</span>
+        </div>
+        ${citaItem(m)}
+        ${cuerpo}
+        ${(m.adjuntos || []).length ? `<div class="sc-msg-adjuntos">${m.adjuntos.map(adjuntoItem).join('')}</div>` : ''}
+        ${reaccionesItem(m)}
+      </div>
+    </div>
     ${editando ? '' : `<div class="sc-msg-acciones">
-      <button type="button" class="sc-msg-accion" data-abrir-emojis="${esc(m.id)}" title="Reaccionar">😊</button>
-      <button type="button" class="sc-msg-accion" data-responder="${esc(m.id)}" title="Responder">↩</button>
-      ${puedoFijar ? `<button type="button" class="sc-msg-accion" data-fijar="${esc(m.id)}" title="${m.fijado ? 'Soltarlo' : 'Fijarlo'}">\ud83d\udccc</button>` : ''}
-      ${mine && m.body ? `<button type="button" class="sc-msg-accion" data-editar="${esc(m.id)}" title="Editar el texto">✎</button>` : ''}
-      ${puedoBorrar ? `<button type="button" class="sc-msg-accion" data-borrar="${esc(m.id)}" title="Borrar para todos">✕</button>` : ''}
+      <button type="button" class="sc-msg-accion" data-abrir-emojis="${esc(m.id)}" title="Reaccionar">${ICONO_EMOJI_SMILE}</button>
+      <button type="button" class="sc-msg-accion" data-responder="${esc(m.id)}" title="Responder">${ICONO_RESPONDER}</button>
+      ${puedoFijar ? `<button type="button" class="sc-msg-accion" data-fijar="${esc(m.id)}" title="${m.fijado ? 'Desfijar' : 'Fijar'}">${ICONO_PIN}</button>` : ''}
+      ${mine && m.body ? `<button type="button" class="sc-msg-accion" data-editar="${esc(m.id)}" title="Editar">${ICONO_EDITAR}</button>` : ''}
+      ${puedoBorrar ? `<button type="button" class="sc-msg-accion sc-msg-accion-danger" data-borrar="${esc(m.id)}" title="Borrar para todos">${ICONO_BASURA}</button>` : ''}
     </div>`}
   </div>`;
 }
@@ -2665,20 +2686,30 @@ function renderChat() {
         icon.innerHTML = `<img data-key="${esc(otro.avatar_key)}" alt="${esc(nombreCanal(c))}" class="chat-channel-avatar" />`;
         pintarImagenes(icon);
       } else {
-        icon.textContent = '@';
+        icon.innerHTML = `<span class="chat-channel-avatar-initials">${esc(nombreCanal(c).slice(0, 2).toUpperCase())}</span>`;
       }
     } else {
-      icon.textContent = c.kind === 'voice' ? '🔊' : '#';
+      icon.innerHTML = c.kind === 'voice' ? ICONO_VOZ_ALTAVOZ : ICONO_HASHTAG;
     }
   }
 
   if (title) title.textContent = nombreCanal(c);
   const arroba = dm ? (c.otro?.username || state.members.find((m) => m.user_id !== state.me?.id)?.profile?.username) : null;
-  if (type) type.textContent = dm ? (arroba ? `@${arroba} · Chat privado` : 'Chat privado') : c.kind === 'voice' ? 'Canal de voz' : 'Canal de texto';
-  if (input) input.placeholder = dm ? `Escribile a ${nombreCanal(c)}…` : '@ escriba aquí...';
+  if (type) {
+    if (dm) {
+      const st = otro ? state.online.get(otro.id) : null;
+      const stLabel = st ? ({ online: 'En línea', idle: 'Ausente', dnd: 'No molestar' }[st] || 'En línea') : 'Desconectado';
+      const stCls = st ? (st === 'dnd' ? 'dnd' : st === 'idle' ? 'idle' : 'online') : 'offline';
+      type.innerHTML = `<span class="chat-header-status-dot ${stCls}"></span> <span>${arroba ? `@${esc(arroba)} · ` : ''}${stLabel}</span>`;
+    } else {
+      type.textContent = c.kind === 'voice' ? 'Canal de voz' : 'Canal de texto';
+    }
+  }
+  if (input) input.placeholder = dm ? `Escribile a ${nombreCanal(c)}…` : 'Escribe un mensaje...';
 
   if (voiceBtn) {
-    voiceBtn.style.display = !dm && c.kind === 'voice' ? 'inline-block' : 'none';
+    voiceBtn.style.display = !dm && c.kind === 'voice' ? 'inline-flex' : 'none';
+    voiceBtn.innerHTML = `${ICONO_VOZ_ALTAVOZ}<span>Entrar a voz</span>`;
     voiceBtn.onclick = () => {
       hooks.joinRoom?.(c.room_code);
       hooks.toast?.(`Entrando a la sala de voz de ${c.name}`);
@@ -2706,10 +2737,15 @@ function renderChat() {
 
   // Un chat privado no se comparte con un código: es de a dos y punto.
   if (copyBtn) {
-    copyBtn.style.display = dm ? 'none' : 'inline-block';
+    copyBtn.style.display = dm ? 'none' : 'inline-flex';
+    copyBtn.innerHTML = `${ICONO_COPIAR}<span>Copiar código</span>`;
     copyBtn.onclick = () => {
       navigator.clipboard.writeText(c.invite_code).then(() => {
         hooks.toast?.('Código de invitación copiado');
+        copyBtn.innerHTML = `${ICONO_CHECK}<span>¡Copiado!</span>`;
+        setTimeout(() => {
+          copyBtn.innerHTML = `${ICONO_COPIAR}<span>Copiar código</span>`;
+        }, 1500);
       });
     };
   }
@@ -2763,6 +2799,7 @@ function renderChat() {
   if (btnRetencionMenu) btnRetencionMenu.onclick = () => { cerrarMenu(); alternarRetencion(); };
 
   if (closeBtn) {
+    closeBtn.innerHTML = `${ICONO_CERRAR}<span>Salir</span>`;
     closeBtn.onclick = () => closeChannel();
   }
 
@@ -2801,9 +2838,11 @@ function pintarRespondiendo() {
   const resumen = m.body ? m.body.slice(0, 100) : (m.adjuntos?.length ? 'un archivo' : '');
   caja.hidden = false;
   caja.innerHTML = `
-    <span class="chat-respondiendo-icono">↩</span>
-    <span class="chat-respondiendo-texto">Respondi\u00e9ndole a <strong>${esc(autorDe(m))}</strong>: \u201c${esc(resumen)}${m.body && m.body.length > 100 ? '\u2026' : ''}\u201d</span>
-    <button type="button" class="chat-respondiendo-cancelar" id="chatRespondiendoCancelar" title="Cancelar respuesta">\u2715 Cancelar</button>
+    <div class="chat-respondiendo-inner">
+      <span class="chat-respondiendo-icono">${ICONO_RESPONDER}</span>
+      <span class="chat-respondiendo-texto">Respondiendo a <strong>${esc(autorDe(m))}</strong>: “${esc(resumen)}${m.body && m.body.length > 100 ? '…' : ''}”</span>
+      <button type="button" class="chat-respondiendo-cancelar" id="chatRespondiendoCancelar" title="Cancelar respuesta">${ICONO_CERRAR} <span>Cancelar</span></button>
+    </div>
   `;
   caja.querySelector('#chatRespondiendoCancelar').onclick = () => {
     state.respondiendoA = null;
