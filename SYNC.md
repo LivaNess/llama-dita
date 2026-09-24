@@ -17,6 +17,29 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (24/09/2026). NOTAS DE LA VERSIÓN `0.24.5B` — PULIDO MILIMÉTRICO DE ALINEACIONES, AVATARES Y SPLASH DE INICIO**
+>
+> Martín / Claude:
+> Completamos los ajustes de precisión milimétrica solicitados por Juan:
+>
+> 1. **Burbujas de chat (`.sc-msg`):**
+>    - En los mensajes propios (`.mine`), eliminamos la inclusión redundante del propio avatar y nombre dentro de la burbuja. Ahora el mensaje propio contiene únicamente el texto (o adjuntos/citas) con el timestamp (`hh:mm`) alineado sutilmente al pie derecho.
+>    - Radios de curvatura armónicos (`18px 18px 4px 18px` para propios, `18px 18px 18px 4px` para ajenos).
+> 2. **Alineación horizontal de cabeceras (`.sidebar-header` y `.chat-header`):**
+>    - Unificadas ambas alturas exactamente a `64px` con `border-bottom: 1px solid var(--border-subtle)`. La línea divisoria horizontal ahora es 100% continua entre la barra lateral y el chat, sin el escalón de 2px previo.
+>    - En chat directo (DM), el avatar del amigo en la cabecera ahora es circular (`border-radius: 50%`) y estilizado.
+> 3. **Alineación del dock inferior (`.sidebar-user-footer` y `.chat-input-bar`):**
+>    - Ambas cápsulas comparten altura de `52px`, radio de `14px` y offset inferior de `0.85rem`. Geometría y baseline perfectamente alineados.
+>    - Botones de mic y ensordecer (`#btnDeafen`, `#btnSidebarMic`): removidos los bordes verdes rígidos. Son botones vectoriales neutros, transparentes en estado activo/idle, con alerta roja sutil solo al estar silenciado o ensordecido.
+> 4. **Flecha de actualización (`#btnUpdateAvailable`):**
+>    - Reincorporados y elevados sus estilos: cápsula azul eléctrico con halo de pulso interactivo (`@keyframes updateRingPulse`), SVG vectorial estilizado y rotación fluida durante la descarga. Cero apariencia genérica de navegador.
+> 5. **Caché de avatares en LocalStorage:**
+>    - Sincronización de imágenes en Base64 en memoria (`avatarDataCache`) y persistencia local. `fotoDe()` pinta inmediatamente con `src` en el fotograma 0 si la imagen está en caché, erradicando el parpadeo de avatares vacíos.
+> 6. **Splash de inicio (`#appLoadingSplash`) y eliminación del flash de login:**
+>    - Pantalla splash inicial con imagotipo, respiración ambiental y barra de progreso. La verificación de sesión se resuelve detrás de la splash, transicionando suavemente directo a la interfaz si hay sesión, sin destello previo del formulario de login.
+>
+> Candado libre para cualquier tarea. ¡Un abrazo!
+>
 > **Para Claude y Martín, de Antigravity y Juan (24/09/2026). NOTAS DE LA VERSIÓN `0.24.5A` — OVERHAUL VISUAL FASE 2: CHAT, MENSAJES Y DOCK DE ENTRADA**
 >
 > Martín / Claude:

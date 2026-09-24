@@ -17,6 +17,38 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.5B · 2026-09-24 · Antigravity
+**Qué cambió.** Pulido milimétrico de alineaciones, radios y layout visual, restauración de la flecha de actualización, precarga instantánea de fotos de perfil y pantalla splash de inicio:
+- **Burbujas de conversación ergonómicas (`.sc-msg`):**
+  - **Eliminación del encabezado redundante en mensajes propios:** En los mensajes enviados por el usuario (`.sc-msg.mine`), se eliminó la inclusión repetitiva de su propio avatar y nombre dentro de la burbuja que deformaba y saturaba el globo (especialmente en respuestas breves). Ahora el contenido fluye de manera limpia con el timestamp sutilmente alineado en el pie derecho de la burbuja (`.sc-msg-meta`).
+  - **Estructura y alineación balanceada:** Mensajes de terceros alineados a la izquierda con avatar externo y autor destacado; mensajes propios a la derecha con degradado azul eléctrico suave y radios coherentes (`18px 18px 4px 18px` para propios, `18px 18px 18px 4px` para ajenos).
+- **Alineación horizontal de cabeceras (`.sidebar-header` y `.chat-header`):**
+  - Unificación de alturas a `64px` exactos en ambas cabeceras y sincronización del borde inferior (`1px solid var(--border-subtle)`), eliminando el escalón vertical de 2 píxeles que quebraba la línea horizontal divisoria entre la barra lateral y el área de chat.
+  - El avatar de chat privado en `.chat-header` ahora es perfectamente circular (`border-radius: 50%`) con contorno sutil, armonizando con los avatares de la lista de amigos y el pie.
+- **Geometría y alineación del pie inferior (`.sidebar-user-footer` y `.chat-input-bar`):**
+  - Alineación de línea base: la cápsula de usuario de la barra lateral y el dock de entrada flotante del chat ahora comparten la misma altura de `52px`, el mismo radio de borde de `14px` y el mismo offset inferior (`0.85rem`), alineándose en una cuadrícula continua a lo largo de toda la ventana.
+  - Limpieza de botones de micrófono y ensordecer (`#btnDeafen`, `#btnSidebarMic`): se removieron los bordes verdes rígidos y estridentes; ahora son botones vectoriales neutros perfectamente integrados en la cápsula, con retroalimentación sutil y alerta roja monocromática al estar silenciado o ensordecido.
+- **Restauración y rediseño del indicador de actualización (`#btnUpdateAvailable`):**
+  - Se restituyeron los estilos y se diseñó un botón premium con icono vectorial SVG de descarga, acabado en azul eléctrico (`var(--brand-blue)`), halo de pulso sutil animado (`@keyframes updateRingPulse`) y animación de giro continuo durante la descarga (`.is-updating`). Cero estilos genéricos de navegador o IA.
+- **Caché persistente y precarga instantánea de fotos de perfil:**
+  - Sistema de almacenamiento en `localStorage` (bajo `llamadita.avatar_cache.v1`) que sincroniza las fotos de perfil en Base64 en memoria al arrancar la app.
+  - `fotoDe()` y los contenedores de avatar ahora renderizan el `src` inmediatamente en el fotograma 0 si la imagen está en caché, eliminando por completo el parpadeo de círculos vacíos al abrir la app o cambiar de vista.
+  - Descarga y actualización asincrónica en segundo plano cuando se reciben nuevas imágenes o claves.
+- **Pantalla Splash de inicio (`#appLoadingSplash`) y eliminación del parpadeo de login:**
+  - Se incorporó un cargador inicial elegante con el imagotipo oficial de Llamadita, resplandor ambiental amortiguado y barra de progreso fluida en azul eléctrico.
+  - La verificación de sesión inicial se ejecuta de forma asíncrona tras la pantalla splash; si el usuario tiene sesión activa, el splash se desvanece suavemente directo a la interfaz del usuario autenticado, evitando cualquier parpadeo de la vista de login. Si no hay sesión, se transiciona limpiamente a la pantalla de acceso.
+**Por qué.** Atender observaciones de diseño y pulido de alta precisión (nivel frontend senior): eliminar saltos y desalineaciones de cuadrícula, corregir proporciones y anclajes en burbujas de chat, devolver la identidad visual al indicador de actualización y ofrecer una carga sin destellos ni saltos visuales en avatares y sesión.
+**Dónde.** `src/brand.css`, `src/style.css`, `src/social/panel.js`, `src/social/adjuntos.js`, `src/main.js`, `index.html`, `package.json`, `CAMBIOS.md`, `SYNC.md`.
+**Cómo se verifica.**
+1. Ejecutar `npm run build` y corroborar que compila correctamente.
+2. Ejecutar `npm run verificar` y constatar cumplimiento del protocolo.
+3. Abrir la app:
+   - Constatar que la pantalla de inicio muestra la splash con logo y barra de carga sin parpadear la pantalla de inicio de sesión.
+   - Observar que las fotos de perfil cargan al instante sin recuadros vacíos.
+   - Verificar la alineación milimétrica continua entre la cabecera lateral y la cabecera de chat (ambas a 64px, misma línea divisoria).
+   - Verificar que los mensajes propios en el chat no repiten el nombre ni el avatar del usuario dentro de la burbuja, mostrando el texto limpio y la hora alineada a la derecha.
+   - Constatar la alineación de altura y línea base inferior entre la cápsula de usuario y la barra de input del chat (ambas a 52px de altura y radio 14px).
+
 ### 0.24.5A · 2026-09-24 · Antigravity
 **Qué cambió.** Overhaul visual Fase 2 — Rediseño integral de la cabecera de chat, burbujas de mensajes ergonómicas y barra de entrada en cápsula dock flotante:
 - **Cabecera de conversación (`.chat-header`):**

@@ -212,11 +212,67 @@ export async function subirAvatar(file, { alAvanzar } = {}) {
 }
 
 // ------------------------------------------------------------------
-// Mirar
+// Mirar & Caché persistente de avatares
 // ------------------------------------------------------------------
 // El permiso de lectura dura una hora. Se guarda en memoria para no pedir uno nuevo cada vez
 // que se redibuja la conversación: sin esto, cada render sería un pedido por imagen.
 const permisos = new Map(); // object_key -> { url, vence }
+
+// Caché síncrono y persistente en LocalStorage de fotos de perfil en Base64.
+// Permite que al abrir la app todas las fotos de perfil se pinten en el fotograma 0 sin pop-in.
+const AVATAR_CACHE_KEY = 'llamadita.avatar_cache.v1';
+const MAX_AVATAR_ENTRIES = 50;
+const avatarDataCache = new Map();
+
+function cargarAvatarCache() {
+  try {
+    const raw = localStorage.getItem(AVATAR_CACHE_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object') {
+      for (const [k, v] of Object.entries(parsed)) {
+        if (v && v.dataUrl) avatarDataCache.set(k, v.dataUrl);
+      }
+    }
+  } catch (_) {}
+}
+cargarAvatarCache();
+
+export function obtenerAvatarCache(objectKey) {
+  if (!objectKey) return null;
+  return avatarDataCache.get(objectKey) || null;
+}
+
+export async function cachearAvatar(objectKey, url) {
+  if (!objectKey || !url || avatarDataCache.has(objectKey)) return;
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) return;
+    const blob = await resp.blob();
+    if (blob.size > 250 * 1024) return; // Limitar a imágenes de hasta 250 KB
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const dataUrl = reader.result;
+      if (typeof dataUrl === 'string') {
+        avatarDataCache.set(objectKey, dataUrl);
+        guardarAvatarCacheStorage();
+      }
+    };
+    reader.readAsDataURL(blob);
+  } catch (_) {}
+}
+
+function guardarAvatarCacheStorage() {
+  try {
+    const obj = {};
+    const entries = Array.from(avatarDataCache.entries());
+    const slice = entries.slice(-MAX_AVATAR_ENTRIES);
+    for (const [k, v] of slice) {
+      obj[k] = { dataUrl: v, ts: Date.now() };
+    }
+    localStorage.setItem(AVATAR_CACHE_KEY, JSON.stringify(obj));
+  } catch (_) {}
+}
 
 export async function urlParaVer(objectKey) {
   const guardado = permisos.get(objectKey);
@@ -243,3 +299,4 @@ export async function descargar(objectKey, nombre) {
   a.click();
   a.remove();
 }
+

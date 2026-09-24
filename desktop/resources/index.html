@@ -9,10 +9,26 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:ROND,opsz,slnt,wdth,wght@0..100,6..144,-10..0,25..151,1..1000&family=Outfit:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="/assets/index-Mw6YuOWE.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-B4gfJMsy.css">
+  <script type="module" crossorigin src="/assets/index-rDJpxAce.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-jnKEUxQ5.css">
 </head>
 <body>
+  <!-- Pantalla Splash / Cargador inicial: previene el parpadeo de la ventana de inicio de sesión -->
+  <div class="app-loading-splash" id="appLoadingSplash">
+    <div class="splash-inner">
+      <div class="splash-logo-container">
+        <div class="splash-glow"></div>
+        <img src="/brand/logo-mark-light.svg" alt="Llamadita" class="splash-logo" width="68" height="68" />
+      </div>
+      <div class="splash-meta">
+        <h1 class="splash-brand">Llamadita</h1>
+        <div class="splash-progress">
+          <div class="splash-progress-bar"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Banner de permiso de audio en navegadores restrictivos -->
   <div class="audio-permission-banner" id="audioPermissionBanner" style="display: none;">
     <span>Se requiere interacción del usuario para habilitar el audio del sistema.</span>
@@ -32,12 +48,13 @@
             <h1 class="logo-title">Llamadita</h1>
           </div>
           <button class="logo-tag" id="btnUpdates" title="Versión instalada">v1.8.1A</button>
-          <button class="btn-update-available" id="btnUpdateAvailable" hidden title="Actualización disponible · Clic para actualizar">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <button class="btn-update-available" id="btnUpdateAvailable" hidden title="Actualización disponible · Clic para actualizar" aria-label="Actualización disponible">
+            <svg class="update-arrow-svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3v12"></path>
               <polyline points="7 10 12 15 17 10"></polyline>
-              <line x1="12" y1="15" x2="12" y2="3"></line>
+              <path d="M20 21H4"></path>
             </svg>
+            <span class="update-pulse-ring"></span>
           </button>
         </div>
       </div>

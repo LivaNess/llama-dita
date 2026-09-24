@@ -17,6 +17,7 @@ import { createProfileCard } from '../components/profileCard.js';
 const RING_TIMEOUT_MS = 45000;
 
 const state = {
+  authReady: false,
   session: null,
   online: new Map(), // user_id -> estado, desde Realtime Presence (sin escribir en la base)
   presence: null,
@@ -182,7 +183,8 @@ function fotoDe(perfil, clase = 'sc-foto') {
   const nombre = perfil?.display_name || perfil?.username || '?';
   const iniciales = esc(nombre.slice(0, 2).toUpperCase());
   if (!perfil?.avatar_key) return `<span class="${clase} sin-foto">${iniciales}</span>`;
-  return `<span class="${clase}"><img data-key="${esc(perfil.avatar_key)}" alt="${esc(nombre)}" loading="lazy" /></span>`;
+  const cached = archivos.obtenerAvatarCache(perfil.avatar_key);
+  return `<span class="${clase}"><img data-key="${esc(perfil.avatar_key)}" ${cached ? `src="${cached}"` : ''} alt="${esc(nombre)}" loading="lazy" /></span>`;
 }
 
 function getStatus(p) {
@@ -203,11 +205,17 @@ function statusDot(p) {
 export async function initSocial(h) {
   hooks = h;
   mount();
-  state.session = await getSession();
+  try {
+    state.session = await getSession();
 
-  // Si el navegador interno perdió la sesión (pasa al reinstalar, porque se borra su carpeta
-  // de datos), se recupera de la copia que guardamos aparte en vez de pedir el código otra vez.
-  if (!state.session) state.session = await recuperarSesion();
+    // Si el navegador interno perdió la sesión (pasa al reinstalar, porque se borra su carpeta
+    // de datos), se recupera de la copia que guardamos aparte en vez de pedir el código otra vez.
+    if (!state.session) state.session = await recuperarSesion();
+  } catch (err) {
+    console.warn('[social] Error restaurando sesión inicial:', err);
+  } finally {
+    state.authReady = true;
+  }
 
   onAuthChange(async (session) => {
     const wasLogged = !!state.session;
@@ -219,9 +227,22 @@ export async function initSocial(h) {
   });
 
   // Y se refresca la copia con la sesión que haya ahora mismo.
-  if (state.session) guardarSesion(state.session);
-  if (state.session) await onLogin();
+  if (state.session) {
+    guardarSesion(state.session);
+    await onLogin();
+  }
   render();
+  dismissAppSplash();
+}
+
+function dismissAppSplash() {
+  const splash = document.getElementById('appLoadingSplash');
+  if (!splash || splash._dismissed) return;
+  splash._dismissed = true;
+  splash.classList.add('splash-dismissed');
+  setTimeout(() => {
+    splash.style.display = 'none';
+  }, 400);
 }
 
 function mount() {
@@ -769,11 +790,33 @@ function msgItem(m) {
        </form>`
     : m.body ? `<div class="sc-msg-body">${conFormato(m.body)}</div>` : '';
 
+  if (mine) {
+    return `<div class="sc-msg mine ${m.fijado ? 'fijado' : ''}" data-msg="${esc(m.id)}">
+      ${m.fijado ? `<div class="sc-fijado-sello">${ICONO_PIN}<span>Fijado</span></div>` : ''}
+      <div class="sc-msg-content">
+        ${citaItem(m)}
+        ${cuerpo}
+        ${(m.adjuntos || []).length ? `<div class="sc-msg-adjuntos">${m.adjuntos.map(adjuntoItem).join('')}</div>` : ''}
+        ${reaccionesItem(m)}
+        <div class="sc-msg-meta">
+          <span class="sc-msg-time">${hora}${m.edited_at ? ' · editado' : ''}</span>
+        </div>
+      </div>
+      ${editando ? '' : `<div class="sc-msg-acciones">
+        <button type="button" class="sc-msg-accion" data-abrir-emojis="${esc(m.id)}" title="Reaccionar">${ICONO_EMOJI_SMILE}</button>
+        <button type="button" class="sc-msg-accion" data-responder="${esc(m.id)}" title="Responder">${ICONO_RESPONDER}</button>
+        ${puedoFijar ? `<button type="button" class="sc-msg-accion" data-fijar="${esc(m.id)}" title="${m.fijado ? 'Desfijar' : 'Fijar'}">${ICONO_PIN}</button>` : ''}
+        ${m.body ? `<button type="button" class="sc-msg-accion" data-editar="${esc(m.id)}" title="Editar">${ICONO_EDITAR}</button>` : ''}
+        <button type="button" class="sc-msg-accion sc-msg-accion-danger" data-borrar="${esc(m.id)}" title="Borrar para todos">${ICONO_BASURA}</button>
+      </div>`}
+    </div>`;
+  }
+
   const autorPerfil = state.members.find((x) => x.user_id === m.author_id)?.profile
     || (m.author_id === state.me?.id ? state.me : m.author);
   const avatarHtml = fotoDe(autorPerfil, 'sc-msg-avatar');
 
-  return `<div class="sc-msg ${mine ? 'mine' : ''} ${m.fijado ? 'fijado' : ''}" data-msg="${esc(m.id)}">
+  return `<div class="sc-msg ${m.fijado ? 'fijado' : ''}" data-msg="${esc(m.id)}">
     ${m.fijado ? `<div class="sc-fijado-sello">${ICONO_PIN}<span>Fijado</span></div>` : ''}
     <div class="sc-msg-inner">
       <div class="sc-msg-avatar-col">${avatarHtml}</div>
@@ -792,7 +835,6 @@ function msgItem(m) {
       <button type="button" class="sc-msg-accion" data-abrir-emojis="${esc(m.id)}" title="Reaccionar">${ICONO_EMOJI_SMILE}</button>
       <button type="button" class="sc-msg-accion" data-responder="${esc(m.id)}" title="Responder">${ICONO_RESPONDER}</button>
       ${puedoFijar ? `<button type="button" class="sc-msg-accion" data-fijar="${esc(m.id)}" title="${m.fijado ? 'Desfijar' : 'Fijar'}">${ICONO_PIN}</button>` : ''}
-      ${mine && m.body ? `<button type="button" class="sc-msg-accion" data-editar="${esc(m.id)}" title="Editar">${ICONO_EDITAR}</button>` : ''}
       ${puedoBorrar ? `<button type="button" class="sc-msg-accion sc-msg-accion-danger" data-borrar="${esc(m.id)}" title="Borrar para todos">${ICONO_BASURA}</button>` : ''}
     </div>`}
   </div>`;
@@ -1203,23 +1245,34 @@ async function borrarParaLosDos(channelId) {
 // de perfil, porque las dos se piden con un permiso que vence.
 async function pintarImagenes(contenedor) {
   if (!contenedor) return;
-  for (const img of contenedor.querySelectorAll('img[data-key]:not([src])')) {
+  for (const img of contenedor.querySelectorAll('img[data-key]')) {
     const key = img.dataset.key;
-    try {
-      img.src = await archivos.urlParaVer(key);
-    } catch (e) {
-      const caja = img.closest('.sc-adj-foto');
-      if (caja) {
-        caja.classList.add('rota');
-        img.replaceWith(Object.assign(document.createElement('span'), {
-          className: 'sc-adj-error', textContent: 'No se pudo cargar'
-        }));
-      } else {
-        // Una foto de perfil que no carga no es un problema: se cae a las iniciales.
-        const burbuja = img.parentElement;
-        if (burbuja) {
-          burbuja.classList.add('sin-foto');
-          burbuja.textContent = (img.alt || '?').slice(0, 2).toUpperCase();
+    if (!img.src) {
+      const cached = archivos.obtenerAvatarCache(key);
+      if (cached) img.src = cached;
+    }
+    const enCache = !!archivos.obtenerAvatarCache(key);
+    if (!img.src || !enCache) {
+      try {
+        const url = await archivos.urlParaVer(key);
+        if (!img.src) img.src = url;
+        archivos.cachearAvatar(key, url).catch(() => {});
+      } catch (e) {
+        if (!img.src) {
+          const caja = img.closest('.sc-adj-foto');
+          if (caja) {
+            caja.classList.add('rota');
+            img.replaceWith(Object.assign(document.createElement('span'), {
+              className: 'sc-adj-error', textContent: 'No se pudo cargar'
+            }));
+          } else {
+            // Una foto de perfil que no carga no es un problema: se cae a las iniciales.
+            const burbuja = img.parentElement;
+            if (burbuja) {
+              burbuja.classList.add('sin-foto');
+              burbuja.textContent = (img.alt || '?').slice(0, 2).toUpperCase();
+            }
+          }
         }
       }
     }
@@ -2024,6 +2077,10 @@ function renderCallBanner() {
 // Renderizado de Barra Lateral (Canales, Amigos y Pie de Usuario)
 // ------------------------------------------------------------------
 function renderSidebar() {
+  if (!state.authReady) {
+    // Si aún no terminó la verificación inicial de autenticación, no tocar la vista para evitar flash de login
+    return;
+  }
   const isLogged = !!(state.session && state.me);
   const standbyLogin = document.getElementById('standbyLoginContainer');
   const sidebarLogin = document.getElementById('sidebarLoginContainer');
@@ -2083,7 +2140,8 @@ function renderSidebar() {
   const initials = name.slice(0, 2).toUpperCase();
   if (userAvatar) {
     if (state.me.avatar_key) {
-      userAvatar.innerHTML = `<img data-key="${esc(state.me.avatar_key)}" alt="${esc(name)}" />`;
+      const cached = archivos.obtenerAvatarCache(state.me.avatar_key);
+      userAvatar.innerHTML = `<img data-key="${esc(state.me.avatar_key)}" ${cached ? `src="${cached}"` : ''} alt="${esc(name)}" />`;
       userAvatar.classList.add('con-foto');
     } else {
       userAvatar.textContent = initials;
@@ -2683,7 +2741,8 @@ function renderChat() {
   if (icon) {
     if (dm) {
       if (otro?.avatar_key) {
-        icon.innerHTML = `<img data-key="${esc(otro.avatar_key)}" alt="${esc(nombreCanal(c))}" class="chat-channel-avatar" />`;
+        const cached = archivos.obtenerAvatarCache(otro.avatar_key);
+        icon.innerHTML = `<img data-key="${esc(otro.avatar_key)}" ${cached ? `src="${cached}"` : ''} alt="${esc(nombreCanal(c))}" class="chat-channel-avatar" />`;
         pintarImagenes(icon);
       } else {
         icon.innerHTML = `<span class="chat-channel-avatar-initials">${esc(nombreCanal(c).slice(0, 2).toUpperCase())}</span>`;

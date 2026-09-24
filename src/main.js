@@ -1,7 +1,7 @@
 import { audioManager } from './audio/audioManager.js';
 import { PeerManager } from './network/peerManager.js';
 import { initSocial, updateSocialCallState, getSocialState, openSocialChannel } from './social/panel.js';
-import { urlParaVer } from './social/adjuntos.js';
+import { urlParaVer, obtenerAvatarCache } from './social/adjuntos.js';
 import { initUpdater } from './updater.js';
 import { initDeepLink } from './social/deeplink.js';
 import { createElasticSlider } from './components/elasticSlider.js';
@@ -155,12 +155,18 @@ async function updateBoothProfiles() {
   if (hostUserName) hostUserName.textContent = localName;
   if (hostAvatarContent) {
     if (social?.me?.avatar_key) {
+      const cached = obtenerAvatarCache(social.me.avatar_key);
+      if (cached) {
+        hostAvatarContent.innerHTML = `<img src="${cached}" class="booth-avatar-img" alt="${localName}" />`;
+      }
       try {
         const url = await urlParaVer(social.me.avatar_key);
         hostAvatarContent.innerHTML = `<img src="${url}" class="booth-avatar-img" alt="${localName}" />`;
       } catch (e) {
-        const initials = (localName || 'YO').substring(0, 2).toUpperCase();
-        hostAvatarContent.textContent = initials;
+        if (!cached) {
+          const initials = (localName || 'YO').substring(0, 2).toUpperCase();
+          hostAvatarContent.textContent = initials;
+        }
       }
     } else {
       const initials = (localName || 'YO').substring(0, 2).toUpperCase();
@@ -186,18 +192,24 @@ async function updateBoothProfiles() {
     }
 
     if (friendAvatarKey) {
+      const cached = obtenerAvatarCache(friendAvatarKey);
+      if (cached) {
+        guestAvatarContent.innerHTML = `<img src="${cached}" class="booth-avatar-img" alt="${remoteName}" />`;
+      }
       try {
         const url = await urlParaVer(friendAvatarKey);
         guestAvatarContent.innerHTML = `<img src="${url}" class="booth-avatar-img" alt="${remoteName}" />`;
       } catch (e) {
-        if (conQuien && conQuien !== 'Participante') {
-          guestAvatarContent.textContent = conQuien.substring(0, 2).toUpperCase();
-        } else {
-          guestAvatarContent.innerHTML = `
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-            </svg>
-          `;
+        if (!cached) {
+          if (conQuien && conQuien !== 'Participante') {
+            guestAvatarContent.textContent = conQuien.substring(0, 2).toUpperCase();
+          } else {
+            guestAvatarContent.innerHTML = `
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+              </svg>
+            `;
+          }
         }
       }
     } else if (conQuien && conQuien !== 'Participante') {
@@ -860,6 +872,17 @@ window.addEventListener('DOMContentLoaded', () => {
     isWindowFocused: () => isAppInForeground(),
     showNativeDesktopNotification: (opts) => showNativeDesktopNotification(opts)
   });
+
+  // Respaldo de seguridad: si tras 4.5s el splash sigue presente, cerrarlo suavemente
+  setTimeout(() => {
+    const splash = document.getElementById('appLoadingSplash');
+    if (splash && !splash._dismissed) {
+      splash._dismissed = true;
+      splash.classList.add('splash-dismissed');
+      setTimeout(() => { splash.style.display = 'none'; }, 400);
+    }
+  }, 4500);
+
   // Buscar actualizaciones al abrir (opcional) + popover en el tag de versión del header.
   initUpdater({ toast: showToast });
   // El enlace del mail o de la notificación abre la app y el chat (esquema llamadita://).
