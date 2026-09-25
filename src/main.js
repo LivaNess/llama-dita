@@ -1,6 +1,6 @@
 import { audioManager } from './audio/audioManager.js';
 import { PeerManager } from './network/peerManager.js';
-import { initSocial, updateSocialCallState, getSocialState, openSocialChannel, closeSocialChannel } from './social/panel.js';
+import { initSocial, updateSocialCallState, getSocialState, openSocialChannel, closeSocialChannel, leaveSocialVoiceChannel } from './social/panel.js';
 import { urlParaVer, obtenerAvatarCache } from './social/adjuntos.js';
 import { initUpdater } from './updater.js';
 import { initDeepLink } from './social/deeplink.js';
@@ -21,6 +21,11 @@ const sidebarCallMiniTitle = document.getElementById('sidebarCallMiniTitle');
 const sidebarCallMiniTimer = document.getElementById('sidebarCallMiniTimer');
 const btnSidebarCallHangup = document.getElementById('btnSidebarCallHangup');
 let isCallViewMinimized = false;
+
+// Estado de canal de voz y participantes múltiples (Malla WebRTC hasta 5 personas)
+let activeVoiceChannel = null;
+const remotePeerSessions = new Map(); // peerId -> session data
+const remoteAudioContainer = document.getElementById('remoteAudioContainer');
 
 // La cabecera dice con quién estás hablando, no en qué sala técnica estás.
 let conQuien = null;
@@ -305,7 +310,7 @@ function updateMainViews() {
     return;
   }
 
-  const hasActiveCall = isConnected || !!(peerManager && peerManager.remotePeerId);
+  const hasActiveCall = !!activeVoiceChannel || isConnected || (peerManager && peerManager.connectedPeers.length > 0);
 
   // El botón de cortar en la barra flotante de estudio solo tiene sentido si hay llamada activa
   if (btnLeaveCall) btnLeaveCall.hidden = !hasActiveCall;
@@ -327,7 +332,8 @@ function updateMainViews() {
       if (sidebarCallMiniDock) {
         sidebarCallMiniDock.style.display = 'flex';
         if (sidebarCallMiniTitle) {
-          sidebarCallMiniTitle.textContent = conQuien ? `En llamada con ${conQuien}` : 'En llamada';
+          const miniTitulo = activeVoiceChannel ? `#${activeVoiceChannel.name}` : (conQuien ? `En llamada con ${conQuien}` : 'En llamada');
+          sidebarCallMiniTitle.textContent = miniTitulo;
         }
       }
     } else {
@@ -337,6 +343,7 @@ function updateMainViews() {
       if (standbyView) standbyView.style.display = 'none';
       if (studioBoothsView) studioBoothsView.style.display = 'flex';
       updateBoothProfiles();
+      syncBoothsLayout();
     }
   } else {
     // No hay llamada activa
@@ -592,13 +599,406 @@ btnDeafen?.addEventListener('click', () => {
   }
 });
 
+function syncBoothsLayout(totalCount) {
+  const boothsRow = document.querySelector('.studio-booths-row');
+  if (!boothsRow) return;
+  const count = typeof totalCount === 'number' ? totalCount : Math.max(1, Math.min(5, 1 + remotePeerSessions.size));
+  boothsRow.classList.remove('count-1', 'count-2', 'count-3', 'count-4', 'count-5');
+  boothsRow.classList.add(`count-${count}`);
+}
+
+function attachAudioToSession(session, stream) {
+  if (!stream) return;
+  if (!session.audioEl) {
+    const audioEl = document.createElement('audio');
+    audioEl.autoplay = true;
+    audioEl.playsInline = true;
+    if (remoteAudioContainer) remoteAudioContainer.appendChild(audioEl);
+    session.audioEl = audioEl;
+  }
+
+  session.audioEl.srcObject = stream;
+  session.audioEl.muted = isDeafened || session.isMuted;
+  session.audioEl.volume = session.volume;
+  session.audioEl.play().catch(() => {
+    if (audioPermissionBanner) audioPermissionBanner.style.display = 'flex';
+  });
+
+  if (session.audioProcessor) {
+    try { session.audioProcessor.destroy(); } catch (_) {}
+  }
+  const proc = audioManager.createRemoteStreamProcessor(stream);
+  session.audioProcessor = proc;
+  session.analyser = proc.analyser;
+
+  if (session.isPeer0) {
+    remoteStream = stream;
+    remoteAudioProcessor = proc;
+  }
+}
+
+function attachVideoToSession(session, videoStream) {
+  if (!session.boothEl) return;
+  const videoEl = session.boothEl.querySelector('video.guest-video');
+  const wrapperEl = session.boothEl.querySelector('.booth-video-wrapper');
+  if (videoEl && videoStream) {
+    videoEl.srcObject = videoStream;
+    videoEl.play().catch(() => {});
+  }
+  if (wrapperEl) {
+    wrapperEl.style.display = videoStream ? 'flex' : 'none';
+  }
+  session.boothEl.classList.toggle('has-video', !!videoStream);
+}
+
+function createDynamicBooth(session) {
+  const boothsRow = document.querySelector('.studio-booths-row');
+  if (!boothsRow) return;
+
+  const section = document.createElement('section');
+  section.className = 'studio-booth booth-guest dynamic-booth';
+  section.dataset.peerId = session.peerId;
+
+  const displayName = session.name || 'Participante';
+  const initials = displayName.slice(0, 2).toUpperCase();
+
+  section.innerHTML = `
+    <button class="booth-spotlight-btn" title="Ampliar a pantalla completa" aria-label="Ampliar">
+      <svg class="spotlight-icon-expand" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 3 21 3 21 9"></polyline>
+        <polyline points="9 21 3 21 3 15"></polyline>
+        <line x1="21" y1="3" x2="14" y2="10"></line>
+        <line x1="3" y1="21" x2="10" y2="14"></line>
+      </svg>
+      <svg class="spotlight-icon-restore" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+        <polyline points="4 14 10 14 10 20"></polyline>
+        <polyline points="20 10 14 10 14 4"></polyline>
+        <line x1="14" y1="10" x2="21" y2="3"></line>
+        <line x1="3" y1="21" x2="10" y2="14"></line>
+      </svg>
+    </button>
+
+    <div class="booth-video-wrapper" style="display: none;" title="Toca para ampliar">
+      <video class="booth-video-player guest-video" autoplay playsinline></video>
+      <div class="booth-video-overlay-badge">
+        <span class="video-live-dot"></span>
+        <span class="booth-video-badge-text">${displayName}</span>
+      </div>
+    </div>
+
+    <div class="booth-visual-center" title="Toca para ampliar">
+      <div class="avatar-wrapper">
+        <div class="vocal-aura"></div>
+        <div class="avatar-disc">
+          <span class="booth-avatar-content">${initials}</span>
+        </div>
+      </div>
+      <div class="booth-user-name">${displayName}</div>
+      <div class="booth-pip-badge">
+        <span class="video-live-dot"></span>
+        <span>${displayName.toUpperCase()}</span>
+      </div>
+    </div>
+
+    <div class="booth-slider-container">
+      <div class="booth-slider-header">
+        <span class="booth-slider-title">Volumen de ${displayName}</span>
+        <span class="booth-slider-val dynamic-vol-val">100%</span>
+      </div>
+      <div class="booth-elastic-mount"></div>
+    </div>
+  `;
+
+  boothsRow.appendChild(section);
+  session.boothEl = section;
+
+  // Montar deslizador elástico independiente para este participante
+  const sliderMount = section.querySelector('.booth-elastic-mount');
+  const volValEl = section.querySelector('.dynamic-vol-val');
+  if (sliderMount) {
+    session.elasticSlider = createElasticSlider({
+      container: sliderMount,
+      startingValue: 0,
+      maxValue: 100,
+      defaultValue: 100,
+      stepSize: 1,
+      isStepped: true,
+      leftIcon: ICON_SPEAKER_LOW,
+      rightIcon: ICON_SPEAKER_HIGH,
+      leftIconTitle: 'Silenciar a este participante',
+      rightIconTitle: 'Volumen al 100%',
+      onLeftIconClick: () => {
+        session.isMuted = !session.isMuted;
+        if (session.audioEl) session.audioEl.muted = session.isMuted;
+        session.elasticSlider?.setLeftIcon(session.isMuted ? ICON_SPEAKER_MUTE : ICON_SPEAKER_LOW);
+        showToast(session.isMuted ? `Audio de ${session.name} silenciado` : `Audio de ${session.name} activado`);
+      },
+      onRightIconClick: () => {
+        session.elasticSlider?.setValue(100);
+        session.volume = 1;
+        session.isMuted = false;
+        if (session.audioEl) {
+          session.audioEl.volume = 1;
+          session.audioEl.muted = false;
+        }
+        session.elasticSlider?.setLeftIcon(ICON_SPEAKER_LOW);
+        if (volValEl) volValEl.textContent = '100%';
+      },
+      onChange: (val) => {
+        const rounded = Math.round(val);
+        if (volValEl) volValEl.textContent = `${rounded}%`;
+        session.volume = rounded / 100;
+        if (session.audioEl) {
+          session.audioEl.volume = session.volume;
+          if (session.isMuted && rounded > 0) {
+            session.isMuted = false;
+            session.audioEl.muted = false;
+            session.elasticSlider?.setLeftIcon(ICON_SPEAKER_LOW);
+          }
+        }
+      },
+      ariaLabel: `Volumen de ${displayName}`
+    });
+  }
+
+  // Clic en foto/video para ampliar a spotlight
+  const visualCenter = section.querySelector('.booth-visual-center');
+  const videoWrapper = section.querySelector('.booth-video-wrapper');
+  const spotlightBtn = section.querySelector('.booth-spotlight-btn');
+
+  const onExpandClick = () => {
+    toggleDynamicSpotlight(session);
+  };
+  visualCenter?.addEventListener('click', onExpandClick);
+  videoWrapper?.addEventListener('click', onExpandClick);
+  spotlightBtn?.addEventListener('click', onExpandClick);
+
+  updateSessionBoothUi(session);
+}
+
+async function updateSessionBoothUi(session) {
+  if (!session.boothEl) return;
+  const nameEl = session.boothEl.querySelector('.booth-user-name');
+  const badgeText = session.boothEl.querySelector('.booth-video-badge-text');
+  const avatarContent = session.boothEl.querySelector('.booth-avatar-content');
+
+  const name = session.name || 'Participante';
+  if (nameEl) nameEl.textContent = name;
+  if (badgeText) badgeText.textContent = name;
+
+  if (avatarContent) {
+    if (session.avatarKey) {
+      const cached = obtenerAvatarCache(session.avatarKey);
+      if (cached) {
+        avatarContent.innerHTML = `<img src="${cached}" class="booth-avatar-img" alt="${name}" />`;
+      }
+      try {
+        const url = await urlParaVer(session.avatarKey);
+        avatarContent.innerHTML = `<img src="${url}" class="booth-avatar-img" alt="${name}" />`;
+      } catch (_) {
+        if (!cached) avatarContent.textContent = name.slice(0, 2).toUpperCase();
+      }
+    } else {
+      avatarContent.textContent = name.slice(0, 2).toUpperCase();
+    }
+  }
+}
+
+function toggleDynamicSpotlight(session) {
+  if (activeSpotlight === session.peerId) {
+    activeSpotlight = null;
+  } else {
+    activeSpotlight = session.peerId;
+  }
+  updateSpotlightUi();
+}
+
+function handlePeersUpdate(peersList) {
+  if (!peersList) return;
+  const currentPeerIds = new Set(peersList.map(p => p.peerId));
+
+  // 1. Limpiar sesiones de peers que ya no están
+  for (const [pId, session] of remotePeerSessions.entries()) {
+    if (!currentPeerIds.has(pId)) {
+      handlePeerLeave(pId);
+    }
+  }
+
+  // 2. Actualizar o registrar cada peer de la lista
+  peersList.forEach((peer, idx) => {
+    let session = remotePeerSessions.get(peer.peerId);
+    if (!session) {
+      session = {
+        peerId: peer.peerId,
+        name: peer.name || 'Participante',
+        avatarKey: peer.avatarKey || null,
+        stream: peer.stream || null,
+        videoStream: peer.videoStream || null,
+        isVideoOn: !!peer.isVideoOn,
+        audioEl: null,
+        analyser: null,
+        audioProcessor: null,
+        volume: 1,
+        isMuted: false,
+        boothEl: null,
+        elasticSlider: null,
+        isPeer0: idx === 0
+      };
+      remotePeerSessions.set(peer.peerId, session);
+
+      if (idx === 0) {
+        session.boothEl = guestBooth;
+        if (guestBooth) guestBooth.dataset.peerId = peer.peerId;
+        session.audioEl = remoteAudioElement;
+      } else {
+        createDynamicBooth(session);
+      }
+    } else {
+      session.name = peer.name || session.name;
+      if (peer.avatarKey) session.avatarKey = peer.avatarKey;
+      session.isVideoOn = !!peer.isVideoOn;
+      if (peer.stream && !session.stream) {
+        session.stream = peer.stream;
+        attachAudioToSession(session, peer.stream);
+      }
+      if (peer.videoStream && !session.videoStream) {
+        session.videoStream = peer.videoStream;
+        attachVideoToSession(session, peer.videoStream);
+      }
+    }
+
+    updateSessionBoothUi(session);
+  });
+
+  // Si no hay participantes remotos y estamos en un canal de voz:
+  if (peersList.length === 0) {
+    if (activeVoiceChannel) {
+      if (guestBooth) {
+        guestBooth.style.display = '';
+        if (guestUserName) guestUserName.textContent = 'Esperando a tus amigos…';
+        if (guestAvatarContent) {
+          guestAvatarContent.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+            </svg>
+          `;
+        }
+        if (guestBoothChipText) guestBoothChipText.textContent = `#${activeVoiceChannel.name}`;
+      }
+    }
+  } else {
+    conQuien = peersList[0].name;
+    if (peersList[0].avatarKey) conQuienAvatarKey = peersList[0].avatarKey;
+  }
+
+  const totalParticipants = Math.max(1, Math.min(5, 1 + peersList.length));
+  syncBoothsLayout(totalParticipants);
+  updateCallLayoutState();
+  updateBoothProfiles();
+}
+
+function handleRemoteStream(stream, peerId, profile) {
+  let session = peerId ? remotePeerSessions.get(peerId) : Array.from(remotePeerSessions.values())[0];
+  if (!session && peerId) {
+    session = {
+      peerId,
+      name: profile?.name || 'Participante',
+      avatarKey: profile?.avatarKey || null,
+      stream,
+      videoStream: null,
+      isVideoOn: false,
+      audioEl: null,
+      analyser: null,
+      audioProcessor: null,
+      volume: 1,
+      isMuted: false,
+      boothEl: null,
+      elasticSlider: null,
+      isPeer0: remotePeerSessions.size === 0
+    };
+    remotePeerSessions.set(peerId, session);
+    if (session.isPeer0) {
+      session.boothEl = guestBooth;
+      session.audioEl = remoteAudioElement;
+    } else {
+      createDynamicBooth(session);
+    }
+  }
+
+  if (session) {
+    session.stream = stream;
+    attachAudioToSession(session, stream);
+    updateSessionBoothUi(session);
+  }
+}
+
+function handleRemoteVideoStream(videoStream, track, peerId) {
+  const session = peerId ? remotePeerSessions.get(peerId) : Array.from(remotePeerSessions.values())[0];
+  if (session) {
+    session.videoStream = videoStream;
+    session.isVideoOn = true;
+    attachVideoToSession(session, videoStream);
+  } else if (guestVideoElement) {
+    guestVideoElement.srcObject = videoStream;
+    guestVideoElement.play().catch(() => {});
+    if (guestVideoWrapper) guestVideoWrapper.style.display = 'flex';
+    isRemoteVideoOn = true;
+  }
+  updateCallLayoutState();
+}
+
+function handleRemoteVideoStateChange(enabled, peerId) {
+  const session = peerId ? remotePeerSessions.get(peerId) : Array.from(remotePeerSessions.values())[0];
+  if (session) {
+    session.isVideoOn = !!enabled;
+    if (session.boothEl) {
+      session.boothEl.classList.toggle('has-video', !!enabled);
+      const wrapperEl = session.boothEl.querySelector('.booth-video-wrapper');
+      if (wrapperEl) wrapperEl.style.display = enabled ? 'flex' : 'none';
+      if (!enabled) {
+        const videoEl = session.boothEl.querySelector('video.guest-video');
+        if (videoEl) videoEl.srcObject = null;
+      }
+    }
+  }
+
+  if (!peerId || (session && session.isPeer0)) {
+    isRemoteVideoOn = !!enabled;
+    if (guestVideoWrapper) guestVideoWrapper.style.display = enabled ? 'flex' : 'none';
+    if (!enabled && guestVideoElement) guestVideoElement.srcObject = null;
+  }
+
+  updateCallLayoutState();
+}
+
+function handlePeerLeave(peerId) {
+  const session = remotePeerSessions.get(peerId);
+  if (!session) return;
+
+  try {
+    if (session.audioProcessor) session.audioProcessor.destroy();
+    if (session.audioEl && !session.isPeer0) {
+      session.audioEl.pause();
+      session.audioEl.srcObject = null;
+      session.audioEl.remove();
+    }
+    if (session.boothEl && session.boothEl.classList.contains('dynamic-booth')) {
+      session.boothEl.remove();
+    }
+  } catch (_) {}
+
+  remotePeerSessions.delete(peerId);
+  syncBoothsLayout();
+  updateCallLayoutState();
+}
+
 // Setup WebRTC and Event Listeners
 function setupNetworking() {
   peerManager.onConnectionStatusChange = (status, msg) => {
     if (status === 'connected') {
       isConnected = true;
       startCallTimer();
-      setCallStatus(conQuien ? `En llamada con ${conQuien}` : 'En llamada');
+      setCallStatus(activeVoiceChannel ? `Canal de voz: #${activeVoiceChannel.name}` : (conQuien ? `En llamada con ${conQuien}` : 'En llamada'));
       updateSocialCallState();
       updateBoothProfiles();
       const social = typeof getSocialState === 'function' ? getSocialState() : null;
@@ -609,14 +1009,14 @@ function setupNetworking() {
     } else if (status === 'waiting') {
       isConnected = false;
       stopCallTimer();
-      setCallStatus(conQuien ? `Llamando a ${conQuien}…` : 'Esperando participante…');
+      setCallStatus(activeVoiceChannel ? `Canal de voz: #${activeVoiceChannel.name} · Esperando…` : (conQuien ? `Llamando a ${conQuien}…` : 'Esperando participante…'));
     } else if (status === 'connecting') {
       isConnected = false;
       stopCallTimer();
-      setCallStatus('Conectando…');
+      setCallStatus(activeVoiceChannel ? `Canal de voz: #${activeVoiceChannel.name} · Conectando…` : 'Conectando…');
     } else if (status === 'disconnected') {
       stopCallTimer();
-      if (isConnected || conQuien) {
+      if (!activeVoiceChannel && (isConnected || conQuien)) {
         showToast(conQuien ? `${conQuien} cortó la llamada` : 'Llamada finalizada');
         leaveCall(false);
       }
@@ -627,55 +1027,26 @@ function setupNetworking() {
     updateMainViews();
   };
 
-  peerManager.onRemoteStream = (stream) => {
-    remoteStream = stream;
-    if (remoteAudioElement) {
-      remoteAudioElement.srcObject = stream;
-      remoteAudioElement.muted = isDeafened || isRemoteMuted;
-      remoteAudioElement.play().catch(() => {
-        if (audioPermissionBanner) {
-          audioPermissionBanner.style.display = 'flex';
-        }
-      });
-    }
+  peerManager.onPeersUpdate = handlePeersUpdate;
+  peerManager.onRemoteStream = handleRemoteStream;
+  peerManager.onRemoteVideoStream = handleRemoteVideoStream;
+  peerManager.onRemoteVideoStateChange = handleRemoteVideoStateChange;
+  peerManager.onPeerLeave = handlePeerLeave;
 
-    if (remoteAudioProcessor) {
-      remoteAudioProcessor.destroy();
-    }
-    remoteAudioProcessor = audioManager.createRemoteStreamProcessor(stream);
-  };
-
-  peerManager.onRemoteVideoStream = (stream, track) => {
-    if (guestVideoElement) {
-      guestVideoElement.srcObject = stream;
-      guestVideoElement.play().catch(e => console.warn('guestVideoElement play error:', e));
-    }
-    if (guestVideoWrapper) guestVideoWrapper.style.display = 'flex';
-    isRemoteVideoOn = true;
-    updateCallLayoutState();
-  };
-
-  peerManager.onRemoteVideoStateChange = (enabled) => {
-    isRemoteVideoOn = !!enabled;
-    if (enabled) {
-      if (guestVideoWrapper) guestVideoWrapper.style.display = 'flex';
-    } else {
-      if (guestVideoWrapper) guestVideoWrapper.style.display = 'none';
-      if (guestVideoElement) guestVideoElement.srcObject = null;
-    }
-    updateCallLayoutState();
-  };
-
-  peerManager.onRemoteData = (data) => {
+  peerManager.onRemoteData = (data, fromPeerId) => {
     if (data.type === 'profile' && data.name) {
-      conQuien = data.name;
-      if (data.avatarKey) conQuienAvatarKey = data.avatarKey;
-      if (isConnected) setCallStatus(`En llamada con ${data.name}`);
+      if (!activeVoiceChannel) {
+        conQuien = data.name;
+        if (data.avatarKey) conQuienAvatarKey = data.avatarKey;
+        if (isConnected) setCallStatus(`En llamada con ${data.name}`);
+      }
       updateBoothProfiles();
       updateSocialCallState();
     } else if (data.type === 'hangup') {
-      showToast(conQuien ? `${conQuien} cortó la llamada` : 'Tu amigo cortó la llamada');
-      leaveCall(false);
+      if (!activeVoiceChannel) {
+        showToast(conQuien ? `${conQuien} cortó la llamada` : 'Tu amigo cortó la llamada');
+        leaveCall(false);
+      }
     }
   };
 
@@ -806,6 +1177,29 @@ function renderAudioMetrics(ahora = 0) {
     if (guestVocalAura) {
       guestVocalAura.style.transform = 'scale(1)';
       guestVocalAura.style.opacity = '0.04';
+    }
+  }
+
+  // 3. Auras vocales de participantes dinámicos (Mesh hasta 5 personas)
+  for (const session of remotePeerSessions.values()) {
+    if (!session.analyser || !session.boothEl || session.isPeer0) continue;
+    const metrics = audioManager.measureAnalyser(session.analyser);
+    const auraEl = session.boothEl.querySelector('.vocal-aura');
+    const discEl = session.boothEl.querySelector('.avatar-disc');
+
+    if (metrics.isSpeaking && !session.isMuted) {
+      discEl?.classList.add('active');
+      const scale = 1 + (metrics.volume / 100) * 0.75;
+      if (auraEl) {
+        auraEl.style.transform = `scale(${scale})`;
+        auraEl.style.opacity = `${0.35 + (metrics.volume / 100) * 0.5}`;
+      }
+    } else {
+      discEl?.classList.remove('active');
+      if (auraEl) {
+        auraEl.style.transform = 'scale(1)';
+        auraEl.style.opacity = '0.08';
+      }
     }
   }
 
@@ -1274,6 +1668,26 @@ function leaveCall(sendSignal = true) {
     remoteAudioProcessor = null;
   }
 
+  // Limpiar todas las sesiones y cabinas dinámicas de la malla
+  for (const session of remotePeerSessions.values()) {
+    try {
+      if (session.audioProcessor) session.audioProcessor.destroy();
+      if (session.audioEl && !session.isPeer0) {
+        session.audioEl.pause();
+        session.audioEl.srcObject = null;
+        session.audioEl.remove();
+      }
+      if (session.boothEl && session.boothEl.classList.contains('dynamic-booth')) {
+        session.boothEl.remove();
+      }
+    } catch (_) {}
+  }
+  remotePeerSessions.clear();
+
+  // Salir de canal de voz social en presencia
+  activeVoiceChannel = null;
+  leaveSocialVoiceChannel();
+
   // Detener cámara local y apagar LED de hardware de inmediato
   if (isCameraOn || localVideoStream) {
     if (localVideoStream) {
@@ -1315,6 +1729,7 @@ function leaveCall(sendSignal = true) {
   isRemoteMuted = false;
   syncRemoteMuteIcon();
 
+  syncBoothsLayout(2);
   updateBoothProfiles();
   setCallStatus('Sin llamada');
   updateMainViews();
@@ -1363,6 +1778,28 @@ window.addEventListener('DOMContentLoaded', async () => {
   // Cuenta, amigos, canales y llamadas directas (Supabase). Aditivo a la sala P2P.
   // No espera al micrófono: la cuenta tiene que estar disponible aunque el permiso demore o falle.
   initSocial({
+    joinVoiceChannel: (channel) => {
+      activeVoiceChannel = channel;
+      currentActiveChannel = null;
+      isCallViewMinimized = false;
+      conQuien = channel.name;
+      setCallStatus(`Canal de voz: #${channel.name}`);
+      peerManager.setRoom(channel.room_code);
+      updateBoothProfiles();
+      updateMainViews();
+      updateSocialCallState();
+      showToast(`Te uniste a #${channel.name}`);
+    },
+    showVoiceStudio: (channel) => {
+      activeVoiceChannel = channel;
+      currentActiveChannel = null;
+      isCallViewMinimized = false;
+      updateMainViews();
+    },
+    leaveVoiceChannel: () => {
+      activeVoiceChannel = null;
+      leaveCall(true);
+    },
     joinRoom: (code, nombre) => {
       if (peerManager.setRoom(code)) {
         conQuien = nombre || null;
@@ -1392,6 +1829,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     },
     isCallActiveWith: (friend) => {
       if (!isConnected || !conQuien || !friend) return false;
+      if (activeVoiceChannel) return false;
       const fn = friend.display_name || friend.username;
       return conQuien === fn || conQuien === friend.username || conQuien === friend.display_name;
     },

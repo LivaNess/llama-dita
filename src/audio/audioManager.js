@@ -105,6 +105,11 @@ class AudioManager {
     return medirNivel(this.remoteAnalyser);
   }
 
+  measureAnalyser(analyser) {
+    return medirNivel(analyser);
+  }
+
+
   setVoiceThreshold(db) {
     this.voiceThresholdDb = Number(db);
     try {

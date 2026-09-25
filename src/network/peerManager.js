@@ -25,24 +25,42 @@ export class PeerManager {
 
     this.myPeerId = 'p_' + Math.random().toString(36).substring(2, 10);
     this.roomId = null;
-    this.remotePeerId = null;
     this.channel = null;
-    this.pc = null;
-    this.dataChannel = null;
+
+    // Multi-peer mesh map: peerId -> peerSession
+    this.peers = new Map();
+
     this.localStream = null;
-    this.iceCandidateQueue = [];
-    this.heartbeatTimer = null;
-    this.isInitiatingCall = false;
-    this.localName = null;
     this.localVideoStream = null;
+    this.localName = null;
+    this.localAvatarKey = null;
 
     // Callbacks
-    this.onRemoteStream = null;
-    this.onRemoteVideoStream = null;
-    this.onRemoteVideoStateChange = null;
-    this.onConnectionStatusChange = null;
-    this.onRemoteData = null;
+    this.onRemoteStream = null; // (stream, peerId, profile)
+    this.onRemoteVideoStream = null; // (videoStream, track, peerId)
+    this.onRemoteVideoStateChange = null; // (enabled, peerId)
+    this.onConnectionStatusChange = null; // (status, text)
+    this.onRemoteData = null; // (data, peerId)
+    this.onPeersUpdate = null; // (peersList)
+    this.onPeerLeave = null; // (peerId)
     this.onError = null;
+  }
+
+  // Getters para compatibilidad hacia atrás
+  get remotePeerId() {
+    return this.peers.keys().next().value || null;
+  }
+
+  get pc() {
+    return this.peers.values().next().value?.pc || null;
+  }
+
+  get dataChannel() {
+    return this.peers.values().next().value?.dataChannel || null;
+  }
+
+  get connectedPeers() {
+    return Array.from(this.peers.values());
   }
 
   static normalizeRoomId(rawInput) {
@@ -113,25 +131,19 @@ export class PeerManager {
     this.joinRoomChannel();
   }
 
-  // Cortar la llamada. No alcanza con cerrar la conexión: si nos quedamos en la misma
-  // sala, la presencia del otro nos vuelve a juntar en cuanto sincroniza. Por eso se sale
-  // del canal y se vuelve a una sala propia vacía, listos para llamar o que nos llamen.
   leaveRoom() {
-    try {
-      if (this.remotePeerId) {
+    // Enviar hangup a todos los peers activos
+    for (const peerId of this.peers.keys()) {
+      try {
         this.sendSignal({
           from: this.myPeerId,
-          to: this.remotePeerId,
+          to: peerId,
           type: 'hangup'
         });
-      }
-      if (this.dataChannel && this.dataChannel.readyState === 'open') {
-        this.dataChannel.send(JSON.stringify({ type: 'hangup' }));
-      }
-    } catch (e) {}
+      } catch (_) {}
+    }
 
     this.destroy();
-    this.isInitiatingCall = false;
     this.roomId = `llamadita-${Math.random().toString(36).substring(2, 8)}`;
 
     try {
@@ -179,35 +191,47 @@ export class PeerManager {
       }
     });
 
-    // Listen to WebRTC signals
+    // Escuchar señales WebRTC P2P
     this.channel.on('broadcast', { event: 'signal' }, async ({ payload }) => {
       if (!payload || payload.to !== this.myPeerId) return;
       await this.handleSignal(payload);
     });
 
-    // Listen to Presence
+    // Escuchar presencia en la sala
     this.channel.on('presence', { event: 'sync' }, () => {
       this.handlePresenceSync();
     });
 
     this.channel.on('presence', { event: 'leave' }, ({ key }) => {
-      if (key === this.remotePeerId) {
-        console.log('Participante desconectado:', key);
-        this.handleDisconnect();
+      if (this.peers.has(key)) {
+        console.log('Participante desconectado vía presencia:', key);
+        this.closePeerSession(key);
       }
     });
 
     this.channel.subscribe(async (status) => {
       if (status === 'SUBSCRIBED') {
         console.log(`Conectado al canal ${channelName} como ${this.myPeerId}`);
-        await this.channel.track({
-          peerId: this.myPeerId,
-          joinedAt: Date.now()
-        });
+        await this.trackPresence();
       } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
         this.onConnectionStatusChange?.('error', 'Error en canal de señalización. Reintentando...');
       }
     });
+  }
+
+  async trackPresence() {
+    if (!this.channel) return;
+    try {
+      await this.channel.track({
+        peerId: this.myPeerId,
+        name: this.localName,
+        avatarKey: this.localAvatarKey,
+        isVideoOn: !!(this.localVideoStream && this.localVideoStream.getVideoTracks()[0]?.enabled),
+        joinedAt: Date.now()
+      });
+    } catch (e) {
+      console.warn('Error al trackear presencia:', e);
+    }
   }
 
   handlePresenceSync() {
@@ -224,59 +248,98 @@ export class PeerManager {
 
     const remotePeers = activePeers.filter(p => p.peerId !== this.myPeerId);
 
+    // Si no hay participantes remotos
     if (remotePeers.length === 0) {
-      if (this.remotePeerId) {
-        this.handleDisconnect();
-      } else {
-        this.onConnectionStatusChange?.('waiting', 'Esperando conexión remota...');
+      for (const pId of Array.from(this.peers.keys())) {
+        this.closePeerSession(pId);
       }
+      this.onConnectionStatusChange?.('waiting', 'Esperando participantes...');
+      this.notifyPeersUpdate();
       return;
     }
 
+    // Límite de capacidad a 5 participantes en total (4 remotos)
     if (remotePeers.length > 4) {
       this.onConnectionStatusChange?.('error', 'Sala completa (máximo 5 participantes).');
-      return;
     }
 
-    const targetRemotePeer = remotePeers[0];
-    this.remotePeerId = targetRemotePeer.peerId;
-
-    // Determine caller deterministically: highest peerId initiates the call
-    const isCaller = this.myPeerId > this.remotePeerId;
-    if (isCaller && (!this.pc || this.pc.connectionState === 'closed' || this.pc.connectionState === 'disconnected')) {
-      if (!this.isInitiatingCall) {
-        this.isInitiatingCall = true;
-        this.onConnectionStatusChange?.('connecting', 'Participante encontrado. Iniciando llamada...');
-        setTimeout(() => {
-          this.initiateCall();
-          this.isInitiatingCall = false;
-        }, 300);
+    // 1. Cerrar peers que ya no están en presencia
+    const remotePeerIds = new Set(remotePeers.map(r => r.peerId));
+    for (const pId of Array.from(this.peers.keys())) {
+      if (!remotePeerIds.has(pId)) {
+        this.closePeerSession(pId);
       }
-    } else if (!isCaller && !this.pc) {
-      this.onConnectionStatusChange?.('connecting', 'Participante encontrado. Esperando oferta...');
     }
+
+    // 2. Conectar con peers nuevos (hasta 4 remotos)
+    const allowedRemotes = remotePeers.slice(0, 4);
+    for (const remote of allowedRemotes) {
+      let peer = this.peers.get(remote.peerId);
+      if (!peer) {
+        peer = this.createPeerSession(remote.peerId, {
+          name: remote.name,
+          avatarKey: remote.avatarKey
+        });
+
+        // Regla determinística: el peerId alfabéticamente mayor crea la oferta
+        const isCaller = this.myPeerId > remote.peerId;
+        if (isCaller) {
+          setTimeout(() => {
+            this.initiateCallTo(peer);
+          }, 200 + Math.random() * 200);
+        }
+      } else {
+        if (remote.name && (!peer.profile.name || peer.profile.name === 'Participante')) {
+          peer.profile.name = remote.name;
+        }
+        if (remote.avatarKey) peer.profile.avatarKey = remote.avatarKey;
+      }
+    }
+
+    const connectedCount = Array.from(this.peers.values()).filter(p => p.pc && p.pc.connectionState === 'connected').length;
+    if (connectedCount > 0) {
+      const statusText = connectedCount === 1 ? 'Conectado con 1 participante' : `Conectado con ${connectedCount} participantes`;
+      this.onConnectionStatusChange?.('connected', statusText);
+    } else {
+      this.onConnectionStatusChange?.('connecting', `Conectando con ${allowedRemotes.length} participantes...`);
+    }
+
+    this.notifyPeersUpdate();
   }
 
-  setupPeerConnection() {
-    if (this.pc) {
-      try { this.pc.close(); } catch (e) {}
-      this.pc = null;
+  createPeerSession(remotePeerId, initialProfile = null) {
+    if (this.peers.has(remotePeerId)) {
+      return this.peers.get(remotePeerId);
     }
 
-    this.iceCandidateQueue = [];
-    this.pc = new RTCPeerConnection({
+    const pc = new RTCPeerConnection({
       iceServers: ICE_SERVERS,
       iceCandidatePoolSize: 10
     });
 
-    // Add audio tracks
+    const peer = {
+      peerId: remotePeerId,
+      pc,
+      dataChannel: null,
+      stream: null,
+      videoStream: null,
+      isVideoOn: false,
+      profile: initialProfile || { name: 'Participante', avatarKey: null },
+      iceCandidateQueue: [],
+      heartbeatTimer: null,
+      isInitiatingCall: false
+    };
+
+    this.peers.set(remotePeerId, peer);
+
+    // Añadir tracks de audio local
     const activeStream = this.localStream || this.createSilentStream();
     if (activeStream) {
       activeStream.getAudioTracks().forEach(track => {
         try {
-          this.pc.addTrack(track, activeStream);
+          pc.addTrack(track, activeStream);
         } catch (e) {
-          console.warn('Error al añadir track de audio:', e);
+          console.warn('Error al añadir track de audio a peer:', remotePeerId, e);
         }
       });
     }
@@ -285,119 +348,109 @@ export class PeerManager {
     try {
       const initialVideoTrack = this.localVideoStream ? this.localVideoStream.getVideoTracks()[0] : null;
       if (initialVideoTrack) {
-        const sender = this.pc.addTrack(initialVideoTrack, this.localVideoStream);
+        const sender = pc.addTrack(initialVideoTrack, this.localVideoStream);
         if (sender) this.applyVideoBitrateLimits(sender);
       } else {
-        const transceiver = this.pc.addTransceiver('video', { direction: 'sendrecv' });
+        const transceiver = pc.addTransceiver('video', { direction: 'sendrecv' });
         if (transceiver?.sender) {
           this.applyVideoBitrateLimits(transceiver.sender);
         }
       }
     } catch (e) {
-      console.warn('Error al configurar transceiver de video:', e);
+      console.warn('Error al configurar transceiver de video para peer:', remotePeerId, e);
     }
 
-    // ICE Candidate generation
-    this.pc.onicecandidate = (event) => {
-      if (event.candidate && this.remotePeerId) {
+    // Manejo de candidatos ICE
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
         this.sendSignal({
           from: this.myPeerId,
-          to: this.remotePeerId,
+          to: remotePeerId,
           type: 'candidate',
           data: event.candidate.toJSON ? event.candidate.toJSON() : event.candidate
         });
       }
     };
 
-    // Receive remote tracks (audio y video)
-    this.pc.ontrack = (event) => {
+    // Recepción de pistas remotas
+    pc.ontrack = (event) => {
       const track = event.track;
-      console.log('Pista remota recibida:', track.kind, track.id);
+      console.log(`[P2P Mesh] Pista remota recibida de ${remotePeerId}:`, track.kind, track.id);
 
       if (track.kind === 'audio') {
         const stream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream([track]);
-        this.onConnectionStatusChange?.('connected', 'Conexión activa');
-        this.onRemoteStream?.(stream);
+        peer.stream = stream;
+        this.onRemoteStream?.(stream, remotePeerId, peer.profile);
+        this.notifyPeersUpdate();
       } else if (track.kind === 'video') {
         const videoStream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream([track]);
-        this.onRemoteVideoStream?.(videoStream, track);
+        peer.videoStream = videoStream;
+        peer.isVideoOn = true;
+        this.onRemoteVideoStream?.(videoStream, track, remotePeerId);
 
         track.onmute = () => {
-          this.onRemoteVideoStateChange?.(false);
+          peer.isVideoOn = false;
+          this.onRemoteVideoStateChange?.(false, remotePeerId);
+          this.notifyPeersUpdate();
         };
         track.onunmute = () => {
-          this.onRemoteVideoStateChange?.(true);
+          peer.isVideoOn = true;
+          this.onRemoteVideoStateChange?.(true, remotePeerId);
+          this.notifyPeersUpdate();
         };
         track.onended = () => {
-          this.onRemoteVideoStateChange?.(false);
+          peer.isVideoOn = false;
+          this.onRemoteVideoStateChange?.(false, remotePeerId);
+          this.notifyPeersUpdate();
         };
+        this.notifyPeersUpdate();
       }
     };
 
-    // Connection state listeners
-    this.pc.onconnectionstatechange = () => {
-      const state = this.pc.connectionState;
-      console.log('RTCPeerConnection state:', state);
+    // Canal de datos entrante
+    pc.ondatachannel = (event) => {
+      this.setupDataChannelForPeer(peer, event.channel);
+    };
+
+    pc.onconnectionstatechange = () => {
+      const state = pc.connectionState;
+      console.log(`[P2P Mesh] Estado conexión con ${remotePeerId}:`, state);
 
       if (state === 'connected') {
-        this.onConnectionStatusChange?.('connected', 'Conexión activa');
-        const senders = this.pc.getSenders ? this.pc.getSenders() : [];
+        const senders = pc.getSenders ? pc.getSenders() : [];
         const videoSender = senders.find(s => s.track && s.track.kind === 'video');
         if (videoSender) this.applyVideoBitrateLimits(videoSender);
-      } else if (state === 'connecting') {
-        this.onConnectionStatusChange?.('connecting', 'Estableciendo enlace de audio...');
-      } else if (state === 'disconnected' || state === 'closed') {
-        this.handleDisconnect();
-      } else if (state === 'failed') {
-        console.warn('Conexión P2P fallida. Reintentando reinicio ICE...');
-        this.onConnectionStatusChange?.('connecting', 'Reconectando vía relay...');
-        this.restartIceConnection();
+        this.notifyPeersUpdate();
+      } else if (state === 'disconnected' || state === 'failed') {
+        console.warn(`[P2P Mesh] Conexión degradada con ${remotePeerId}`);
       }
     };
 
-    this.pc.oniceconnectionstatechange = () => {
-      const iceState = this.pc.iceConnectionState;
-      console.log('ICE connection state:', iceState);
-
-      if (iceState === 'connected' || iceState === 'completed') {
-        this.onConnectionStatusChange?.('connected', 'Conexión activa');
-      } else if (iceState === 'checking') {
-        this.onConnectionStatusChange?.('connecting', 'Negociando candidatos de red...');
-      } else if (iceState === 'failed') {
-        this.restartIceConnection();
-      }
-    };
-
-    // Data channel handling
-    this.pc.ondatachannel = (event) => {
-      this.setupDataChannel(event.channel);
-    };
+    return peer;
   }
 
-  async initiateCall() {
-    if (!this.remotePeerId) return;
+  async initiateCallTo(peer) {
+    if (!peer || !peer.pc || peer.isInitiatingCall) return;
+    peer.isInitiatingCall = true;
 
-    this.setupPeerConnection();
-
-    // Create Data Channel as initiator
     try {
-      this.dataChannel = this.pc.createDataChannel('llamaData', { reliable: true });
-      this.setupDataChannel(this.dataChannel);
+      peer.dataChannel = peer.pc.createDataChannel('llamaData', { reliable: true });
+      this.setupDataChannelForPeer(peer, peer.dataChannel);
     } catch (e) {
-      console.warn('Error al crear DataChannel:', e);
+      console.warn('Error al crear DataChannel con peer:', peer.peerId, e);
     }
 
     try {
-      const offer = await this.pc.createOffer({
+      const offer = await peer.pc.createOffer({
         offerToReceiveAudio: true,
         offerToReceiveVideo: true,
         voiceActivityDetection: true
       });
-      await this.pc.setLocalDescription(offer);
+      await peer.pc.setLocalDescription(offer);
 
       this.sendSignal({
         from: this.myPeerId,
-        to: this.remotePeerId,
+        to: peer.peerId,
         type: 'offer',
         data: {
           type: offer.type,
@@ -405,29 +458,28 @@ export class PeerManager {
         }
       });
     } catch (err) {
-      console.error('Error al crear oferta WebRTC:', err);
+      console.error(`Error al crear oferta para ${peer.peerId}:`, err);
       this.onError?.(err);
+    } finally {
+      peer.isInitiatingCall = false;
     }
   }
 
   async handleSignal(payload) {
     const { from, type, data } = payload;
+    let peer = this.peers.get(from);
 
     if (type === 'offer') {
-      this.remotePeerId = from;
-
-      // Si ya hay una conexión viva, esta oferta es una renegociación (por ejemplo, el otro
-      // lado está reintentando los caminos de red). Se contesta sobre la misma conexión en vez
-      // de tirar todo y empezar de nuevo: así la llamada se recupera sin cortar el audio.
-      const esRenegociacion = this.pc && this.pc.signalingState !== 'closed' && !!this.pc.remoteDescription;
-      if (!esRenegociacion) this.setupPeerConnection();
+      if (!peer) {
+        peer = this.createPeerSession(from);
+      }
 
       try {
-        await this.pc.setRemoteDescription(new RTCSessionDescription(data));
-        await this.drainIceCandidates();
+        await peer.pc.setRemoteDescription(new RTCSessionDescription(data));
+        await this.drainIceCandidatesForPeer(peer);
 
-        const answer = await this.pc.createAnswer();
-        await this.pc.setLocalDescription(answer);
+        const answer = await peer.pc.createAnswer();
+        await peer.pc.setLocalDescription(answer);
 
         this.sendSignal({
           from: this.myPeerId,
@@ -439,41 +491,42 @@ export class PeerManager {
           }
         });
       } catch (err) {
-        console.error('Error al procesar oferta:', err);
+        console.error(`Error al procesar oferta de ${from}:`, err);
         this.onError?.(err);
       }
     } else if (type === 'answer') {
-      if (!this.pc) return;
+      if (!peer || !peer.pc) return;
       try {
-        await this.pc.setRemoteDescription(new RTCSessionDescription(data));
-        await this.drainIceCandidates();
+        await peer.pc.setRemoteDescription(new RTCSessionDescription(data));
+        await this.drainIceCandidatesForPeer(peer);
       } catch (err) {
-        console.error('Error al procesar respuesta:', err);
+        console.error(`Error al procesar respuesta de ${from}:`, err);
         this.onError?.(err);
       }
     } else if (type === 'candidate') {
-      if (this.pc && this.pc.remoteDescription && this.pc.remoteDescription.type) {
+      if (peer && peer.pc && peer.pc.remoteDescription && peer.pc.remoteDescription.type) {
         try {
-          await this.pc.addIceCandidate(new RTCIceCandidate(data));
+          await peer.pc.addIceCandidate(new RTCIceCandidate(data));
         } catch (err) {
           console.warn('Error al añadir candidato ICE:', err);
         }
-      } else {
-        this.iceCandidateQueue.push(data);
+      } else if (peer) {
+        peer.iceCandidateQueue.push(data);
       }
     } else if (type === 'direct-data') {
-      this.handleRemoteData(data);
+      this.handleRemoteDataForPeer(peer, data, from);
     } else if (type === 'hangup') {
-      console.log('Señal de corte recibida del otro participante');
-      this.handleDisconnect();
+      console.log(`Señal de corte recibida de ${from}`);
+      this.closePeerSession(from);
     }
   }
 
-  async drainIceCandidates() {
-    while (this.iceCandidateQueue.length > 0) {
-      const candidate = this.iceCandidateQueue.shift();
+  async drainIceCandidatesForPeer(peer) {
+    if (!peer || !peer.pc) return;
+    while (peer.iceCandidateQueue.length > 0) {
+      const candidate = peer.iceCandidateQueue.shift();
       try {
-        await this.pc.addIceCandidate(new RTCIceCandidate(candidate));
+        await peer.pc.addIceCandidate(new RTCIceCandidate(candidate));
       } catch (e) {
         console.warn('Error drenando candidato ICE:', e);
       }
@@ -486,27 +539,21 @@ export class PeerManager {
       type: 'broadcast',
       event: 'signal',
       payload: signalPayload
-    }).catch(err => {
-      console.warn('Error al enviar señalización broadcast:', err);
     });
   }
 
-  setupDataChannel(channel) {
-    this.dataChannel = channel;
+  setupDataChannelForPeer(peer, channel) {
+    if (!channel) return;
+    peer.dataChannel = channel;
 
     channel.onopen = () => {
-      console.log('Canal de datos abierto');
-      this.onConnectionStatusChange?.('connected', 'Conexión activa');
+      console.log(`Canal de datos P2P abierto con ${peer.peerId}`);
+      this.sendProfileToPeer(peer);
 
-      // Recién acá el otro lado está escuchando de verdad. Si mandamos el nombre antes
-      // (al pasar a "conectado"), puede llegar a la nada y la cabina remota queda en
-      // "Participante".
-      this.sendProfile();
-
-      if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
-      this.heartbeatTimer = setInterval(() => {
-        if (this.dataChannel && this.dataChannel.readyState === 'open') {
-          this.dataChannel.send(JSON.stringify({ type: 'ping' }));
+      if (peer.heartbeatTimer) clearInterval(peer.heartbeatTimer);
+      peer.heartbeatTimer = setInterval(() => {
+        if (channel.readyState === 'open') {
+          channel.send(JSON.stringify({ type: 'ping' }));
         }
       }, 3000);
     };
@@ -521,35 +568,32 @@ export class PeerManager {
           return;
         }
         if (data.type === 'pong') return;
-        this.handleRemoteData(data);
+        this.handleRemoteDataForPeer(peer, data, peer.peerId);
       } catch (err) {
         console.warn('Error al parsear mensaje en DataChannel:', err);
       }
     };
 
     channel.onclose = () => {
-      console.log('Canal de datos cerrado');
-      this.handleDisconnect();
+      console.log(`Canal de datos cerrado con ${peer.peerId}`);
+      this.closePeerSession(peer.peerId);
     };
 
     channel.onerror = (err) => {
-      console.warn('Error en DataChannel:', err);
+      console.warn(`Error en DataChannel con ${peer.peerId}:`, err);
     };
   }
 
-  // Nombre visible en la cabina del otro lado. Queda guardado para poder reenviarlo:
-  // si el dato llega antes de que el otro esté listo, se pierde y nadie lo pide de nuevo.
   setLocalProfile(name, avatarKey = null) {
     this.localName = name || null;
     if (avatarKey !== undefined) this.localAvatarKey = avatarKey;
-    this.sendProfile();
+    this.trackPresence();
+    this.sendProfileToAll();
   }
 
-  // Ida y vuelta: el primero en mandar pide respuesta, el que recibe contesta con el
-  // suyo. Así los dos terminan con el nombre del otro sin importar quién llegó primero.
-  sendProfile(wantsReply = true) {
-    if (!this.localName) return;
-    this.sendData({
+  sendProfileToPeer(peer, wantsReply = true) {
+    if (!this.localName || !peer) return;
+    this.sendDataToPeer(peer, {
       type: 'profile',
       name: this.localName,
       avatarKey: this.localAvatarKey || null,
@@ -557,55 +601,80 @@ export class PeerManager {
     });
   }
 
-  handleRemoteData(data) {
-    if (!data) return;
-    if (data.type === 'profile' && data.wantsReply) {
-      this.sendProfile(false);
+  sendProfileToAll(wantsReply = true) {
+    if (!this.localName) return;
+    for (const peer of this.peers.values()) {
+      this.sendProfileToPeer(peer, wantsReply);
     }
-    if (data.type === 'video-state') {
-      this.onRemoteVideoStateChange?.(!!data.enabled);
-    }
-    this.onRemoteData?.(data);
   }
 
-  sendData(data) {
-    if (this.dataChannel && this.dataChannel.readyState === 'open') {
+  handleRemoteDataForPeer(peer, data, fromPeerId) {
+    if (!data) return;
+    if (peer) {
+      if (data.type === 'profile') {
+        if (data.name) peer.profile.name = data.name;
+        if (data.avatarKey) peer.profile.avatarKey = data.avatarKey;
+        if (data.wantsReply) this.sendProfileToPeer(peer, false);
+        this.notifyPeersUpdate();
+      }
+      if (data.type === 'video-state') {
+        peer.isVideoOn = !!data.enabled;
+        this.onRemoteVideoStateChange?.(!!data.enabled, fromPeerId);
+        this.notifyPeersUpdate();
+      }
+    }
+    this.onRemoteData?.(data, fromPeerId);
+  }
+
+  sendData(data, targetPeerId = null) {
+    if (targetPeerId) {
+      const peer = this.peers.get(targetPeerId);
+      if (peer) this.sendDataToPeer(peer, data);
+      return;
+    }
+    for (const peer of this.peers.values()) {
+      this.sendDataToPeer(peer, data);
+    }
+  }
+
+  sendDataToPeer(peer, data) {
+    if (peer.dataChannel && peer.dataChannel.readyState === 'open') {
       try {
-        this.dataChannel.send(JSON.stringify(data));
+        peer.dataChannel.send(JSON.stringify(data));
         return;
       } catch (e) {}
     }
 
-    // Fallback through Supabase broadcast if P2P data channel is not yet established
-    if (this.channel && this.remotePeerId) {
+    if (this.channel) {
       this.sendSignal({
         from: this.myPeerId,
-        to: this.remotePeerId,
+        to: peer.peerId,
         type: 'direct-data',
-        data: data
+        data
       });
     }
   }
 
   updateLocalStream(newStream) {
     this.localStream = newStream;
-    if (!this.pc) return;
-
     const newAudioTrack = newStream ? newStream.getAudioTracks()[0] : null;
     if (!newAudioTrack) return;
 
-    const senders = this.pc.getSenders();
-    const audioSender = senders.find(s => s.track && s.track.kind === 'audio');
+    for (const peer of this.peers.values()) {
+      if (!peer.pc) continue;
+      const senders = peer.pc.getSenders ? peer.pc.getSenders() : [];
+      const audioSender = senders.find(s => s.track && s.track.kind === 'audio');
 
-    if (audioSender) {
-      audioSender.replaceTrack(newAudioTrack).catch(err => {
-        console.warn('Error reemplazando pista de audio:', err);
-      });
-    } else {
-      try {
-        this.pc.addTrack(newAudioTrack, newStream);
-      } catch (err) {
-        console.warn('Error añadiendo pista de audio:', err);
+      if (audioSender) {
+        audioSender.replaceTrack(newAudioTrack).catch(err => {
+          console.warn('Error reemplazando pista de audio en peer:', peer.peerId, err);
+        });
+      } else {
+        try {
+          peer.pc.addTrack(newAudioTrack, newStream);
+        } catch (err) {
+          console.warn('Error añadiendo pista de audio en peer:', peer.peerId, err);
+        }
       }
     }
   }
@@ -618,128 +687,100 @@ export class PeerManager {
       if (!params.encodings || params.encodings.length === 0) {
         params.encodings = [{}];
       }
-      // Bitrate moderado para 1080p a 30 fps: 2.5 Mbps (2500 kbps)
       params.encodings[0].maxBitrate = 2500000;
       params.encodings[0].maxFramerate = 30;
       await videoSender.setParameters(params);
-      console.log('[WebRTC Video] Bitrate moderado fijado a 2500 kbps (1080p30)');
-    } catch (e) {
-      // Ignorar si los parámetros no están listos todavía
-    }
+    } catch (_) {}
   }
 
   setLocalVideoStream(newVideoStream) {
     this.localVideoStream = newVideoStream;
-    if (!this.pc) return;
-
     const newVideoTrack = newVideoStream ? newVideoStream.getVideoTracks()[0] : null;
 
-    const senders = this.pc.getSenders();
-    let videoSender = senders.find(s => s.track && s.track.kind === 'video');
+    for (const peer of this.peers.values()) {
+      if (!peer.pc) continue;
+      const senders = peer.pc.getSenders ? peer.pc.getSenders() : [];
+      let videoSender = senders.find(s => s.track && s.track.kind === 'video');
 
-    if (!videoSender) {
-      const transceivers = this.pc.getTransceivers ? this.pc.getTransceivers() : [];
-      const videoTransceiver = transceivers.find(t => (t.receiver?.track?.kind === 'video') || (t.sender?.track?.kind === 'video') || (t.mid && !t.sender?.track));
-      if (videoTransceiver) {
-        videoSender = videoTransceiver.sender;
+      if (!videoSender) {
+        const transceivers = peer.pc.getTransceivers ? peer.pc.getTransceivers() : [];
+        const videoTransceiver = transceivers.find(t => (t.receiver?.track?.kind === 'video') || (t.sender?.track?.kind === 'video') || (t.mid && !t.sender?.track));
+        if (videoTransceiver) {
+          videoSender = videoTransceiver.sender;
+        }
+      }
+
+      if (videoSender) {
+        videoSender.replaceTrack(newVideoTrack).then(() => {
+          if (newVideoTrack) {
+            this.applyVideoBitrateLimits(videoSender);
+          }
+        }).catch(err => {
+          console.warn('Error reemplazando pista de video en peer:', peer.peerId, err);
+        });
+      } else if (newVideoTrack) {
+        try {
+          const addedSender = peer.pc.addTrack(newVideoTrack, newVideoStream);
+          if (addedSender) {
+            this.applyVideoBitrateLimits(addedSender);
+          }
+        } catch (err) {
+          console.warn('Error añadiendo pista de video a peer:', peer.peerId, err);
+        }
       }
     }
 
-    if (videoSender) {
-      videoSender.replaceTrack(newVideoTrack).then(() => {
-        if (newVideoTrack) {
-          this.applyVideoBitrateLimits(videoSender);
-        }
-      }).catch(err => {
-        console.warn('Error reemplazando pista de video en sender:', err);
-      });
-    } else if (newVideoTrack) {
-      try {
-        const addedSender = this.pc.addTrack(newVideoTrack, newVideoStream);
-        if (addedSender) {
-          this.applyVideoBitrateLimits(addedSender);
-        }
-        this.renegotiate();
-      } catch (err) {
-        console.warn('Error añadiendo pista de video:', err);
-      }
-    }
-
-    // Avisar por canal de datos
     this.sendData({
       type: 'video-state',
       enabled: !!newVideoTrack
     });
+    this.trackPresence();
   }
 
-  async renegotiate() {
-    if (!this.pc || !this.remotePeerId || this.pc.signalingState !== 'stable') return;
-    try {
-      const offer = await this.pc.createOffer({
-        offerToReceiveAudio: true,
-        offerToReceiveVideo: true
-      });
-      await this.pc.setLocalDescription(offer);
-      this.sendSignal({
-        from: this.myPeerId,
-        to: this.remotePeerId,
-        type: 'offer',
-        data: {
-          type: offer.type,
-          sdp: offer.sdp
-        }
-      });
-    } catch (err) {
-      console.warn('Error en renegociación WebRTC:', err);
-    }
+  notifyPeersUpdate() {
+    const peersList = Array.from(this.peers.values()).map(p => ({
+      peerId: p.peerId,
+      name: p.profile.name || 'Participante',
+      avatarKey: p.profile.avatarKey || null,
+      stream: p.stream,
+      videoStream: p.videoStream,
+      isVideoOn: p.isVideoOn,
+      isConnected: p.pc && p.pc.connectionState === 'connected'
+    }));
+
+    this.onPeersUpdate?.(peersList);
   }
 
-  // Reintento cuando la conexión se cae o se degrada.
-  //
-  // Antes esto llamaba a restartIce() y acto seguido a initiateCall(), que crea una conexión
-  // nueva de cero y tira a la basura el reinicio recién pedido. O sea: decía "reiniciar la
-  // red" y en realidad rehacía la llamada entera, cortando el audio.
-  //
-  // Ahora se renegocian los caminos de red sobre la misma conexión, que es lo que hace que una
-  // llamada sobreviva a un cambio de wifi a datos móviles sin que nadie note nada.
-  async restartIceConnection() {
-    if (!this.pc || !this.remotePeerId) return;
-    // Renegocia uno solo de los dos, el mismo criterio con el que se decide quién llama.
-    if (this.myPeerId < this.remotePeerId) return;
+  closePeerSession(remotePeerId) {
+    const peer = this.peers.get(remotePeerId);
+    if (!peer) return;
 
-    try {
-      const offer = await this.pc.createOffer({ iceRestart: true });
-      await this.pc.setLocalDescription(offer);
-      this.sendSignal({
-        from: this.myPeerId,
-        to: this.remotePeerId,
-        type: 'offer',
-        data: { type: offer.type, sdp: offer.sdp }
-      });
-    } catch (err) {
-      console.warn('Error al reiniciar la conexión:', err);
+    if (peer.heartbeatTimer) clearInterval(peer.heartbeatTimer);
+    if (peer.dataChannel) {
+      try { peer.dataChannel.close(); } catch (_) {}
     }
-  }
+    if (peer.pc) {
+      try { peer.pc.close(); } catch (_) {}
+    }
 
-  handleDisconnect() {
-    if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
-    this.remotePeerId = null;
+    this.peers.delete(remotePeerId);
+    this.onPeerLeave?.(remotePeerId);
+    this.notifyPeersUpdate();
 
-    if (this.dataChannel) {
-      try { this.dataChannel.close(); } catch (e) {}
-      this.dataChannel = null;
+    const remainingCount = this.peers.size;
+    if (remainingCount === 0) {
+      this.onConnectionStatusChange?.('waiting', 'Esperando participantes...');
+    } else {
+      const statusText = remainingCount === 1 ? 'Conectado con 1 participante' : `Conectado con ${remainingCount} participantes`;
+      this.onConnectionStatusChange?.('connected', statusText);
     }
-    if (this.pc) {
-      try { this.pc.close(); } catch (e) {}
-      this.pc = null;
-    }
-    this.iceCandidateQueue = [];
-    this.onRemoteVideoStateChange?.(false);
-    this.onConnectionStatusChange?.('disconnected', 'Participante desconectado');
   }
 
   destroy() {
-    if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
+    for (const peerId of Array.from(this.peers.keys())) {
+      this.closePeerSession(peerId);
+    }
+    this.peers.clear();
 
     if (this.channel) {
       try {
@@ -748,18 +789,5 @@ export class PeerManager {
       } catch (e) {}
       this.channel = null;
     }
-
-    if (this.dataChannel) {
-      try { this.dataChannel.close(); } catch (e) {}
-      this.dataChannel = null;
-    }
-
-    if (this.pc) {
-      try { this.pc.close(); } catch (e) {}
-      this.pc = null;
-    }
-
-    this.remotePeerId = null;
-    this.iceCandidateQueue = [];
   }
 }

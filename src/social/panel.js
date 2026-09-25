@@ -38,6 +38,8 @@ const state = {
   incomingCall: null,
   outgoingCall: null,
   unsub: [],
+  activeVoiceChannel: null,
+  voiceUsersByChannel: new Map(), // channel_id -> Array<{ user_id, name, avatar_key, status }>
   heartbeat: null,
   ringTimer: null,
   tab: 'amigos'
@@ -380,18 +382,76 @@ function myStatus() {
   return state.me?.status && state.me.status !== 'offline' ? state.me.status : 'online';
 }
 
+function myPresenceMeta(uid) {
+  return {
+    status: myStatus(),
+    user_id: uid || state.me?.id,
+    name: state.me?.display_name || state.me?.username || 'Usuario',
+    avatar_key: state.me?.avatar_key || null,
+    voice_channel_id: state.activeVoiceChannel?.id || null,
+    voice_channel_name: state.activeVoiceChannel?.name || null
+  };
+}
+
+export async function syncPresenceState() {
+  if (state.presence && state.me) {
+    try {
+      await state.presence.track(myPresenceMeta(state.me.id));
+    } catch (_) {}
+  }
+}
+
+export function joinVoiceChannel(chan) {
+  if (!chan) return;
+  state.activeVoiceChannel = chan;
+  syncPresenceState();
+  hooks.joinVoiceChannel?.(chan);
+  safeRender();
+}
+
+export function leaveVoiceChannel() {
+  state.activeVoiceChannel = null;
+  syncPresenceState();
+  hooks.leaveVoiceChannel?.();
+  safeRender();
+}
+
 function startPresence(uid) {
   const ch = supabase.channel('presencia', { config: { presence: { key: uid } } });
   ch.on('presence', { event: 'sync' }, () => {
     const s = ch.presenceState();
     state.online = new Map(Object.entries(s).map(([id, metas]) => [id, metas[metas.length - 1]?.status || 'online']));
+
+    // Presencia de miembros en canales de voz en tiempo real
+    const voiceMap = new Map();
+    for (const [id, metas] of Object.entries(s)) {
+      const meta = metas[metas.length - 1];
+      if (meta?.voice_channel_id) {
+        if (!voiceMap.has(meta.voice_channel_id)) {
+          voiceMap.set(meta.voice_channel_id, []);
+        }
+        voiceMap.get(meta.voice_channel_id).push({
+          user_id: meta.user_id || id,
+          name: meta.name || 'Usuario',
+          avatar_key: meta.avatar_key || null,
+          status: meta.status || 'online'
+        });
+      }
+    }
+    state.voiceUsersByChannel = voiceMap;
+
     safeRender();
   });
   ch.subscribe(async (status) => {
-    if (status === 'SUBSCRIBED') await ch.track({ status: myStatus() });
+    if (status === 'SUBSCRIBED') await ch.track(myPresenceMeta(uid));
   });
   state.presence = ch;
-  state.unsub.push(() => { supabase.removeChannel(ch); state.presence = null; state.online = new Map(); });
+  state.unsub.push(() => {
+    supabase.removeChannel(ch);
+    state.presence = null;
+    state.online = new Map();
+    state.voiceUsersByChannel = new Map();
+  });
 }
 
 // No re-dibujar el panel mientras alguien está escribiendo en él (perdería lo tipeado).
@@ -712,7 +772,7 @@ function channelDetail() {
       <strong>${c.kind === 'voice' ? '🔊' : '#'} ${esc(c.name)}</strong>
       <button class="sc-ghost sc-small" id="scCopyInvite" title="Copiar código de invitación">Código: ${esc(c.invite_code)}</button>
     </div>
-    ${c.kind === 'voice' ? `<button class="sc-primary" id="scJoinVoice">Entrar a la sala de voz</button><p class="sc-muted sc-tiny">Sala P2P: ${esc(c.room_code)} · por ahora de a dos personas por sala.</p>` : `
+    ${c.kind === 'voice' ? `<button class="sc-primary" id="scJoinVoice">Entrar a la sala de voz</button><p class="sc-muted sc-tiny">Sala P2P: ${esc(c.room_code)} · Hasta 5 personas en simultáneo.</p>` : `
       <div class="sc-messages" id="scMessages">${state.messages.map(msgItem).join('') || `<p class="sc-empty">Acá todavía no pasó nada.</p>`}</div>
       <form class="sc-row" id="scMsgForm"><input type="text" id="scMsg" placeholder="Escribí un mensaje" maxlength="2000" autocomplete="off" required /><button class="sc-primary sc-small" type="submit">Enviar</button></form>`}
     <h4>Miembros (${state.members.length})</h4>
@@ -2039,7 +2099,13 @@ function bindMain() {
   drawer.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => openChannel(b.dataset.open)));
   q('#scBackChannels')?.addEventListener('click', closeChannel);
   q('#scCopyInvite')?.addEventListener('click', () => navigator.clipboard.writeText(state.currentChannel.invite_code).then(() => hooks.toast?.('Código de invitación copiado')));
-  q('#scJoinVoice')?.addEventListener('click', () => { hooks.joinRoom?.(state.currentChannel.room_code); toggleDrawer(false); hooks.toast?.(`Entrando a ${state.currentChannel.name}`); });
+  q('#scJoinVoice')?.addEventListener('click', () => {
+    if (state.currentChannel) {
+      joinVoiceChannel(state.currentChannel);
+      toggleDrawer(false);
+      hooks.toast?.(`Entrando a ${state.currentChannel.name}`);
+    }
+  });
   q('#scMsgForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const input = q('#scMsg'); const text = input.value; input.value = '';
@@ -2204,17 +2270,54 @@ function renderSidebar() {
       channelsList.innerHTML = `<p class="sc-muted sc-tiny" style="padding: 0.5rem 0.6rem;">Sin canales. Creá uno con +.</p>`;
     } else {
       channelsList.innerHTML = regularChannels.map((c) => {
-        const isActive = state.currentChannel?.id === c.id;
-        const iconSvg = c.kind === 'voice'
+        const isVoice = c.kind === 'voice';
+        const isActive = isVoice
+          ? (state.activeVoiceChannel?.id === c.id)
+          : (state.currentChannel?.id === c.id);
+        const iconSvg = isVoice
           ? `<svg class="channel-kind-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>`
           : `<svg class="channel-kind-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>`;
         const muted = isChatMuted(c.id);
+        const voiceUsers = isVoice ? (state.voiceUsersByChannel?.get(c.id) || []) : [];
+        const countBadge = (isVoice && voiceUsers.length > 0)
+          ? `<span class="channel-voice-count" title="${voiceUsers.length} en canal">${voiceUsers.length}</span>`
+          : '';
+
+        let membersHtml = '';
+        if (isVoice && voiceUsers.length > 0) {
+          membersHtml = `
+            <div class="sidebar-voice-connected-list">
+              ${voiceUsers.map((u) => {
+                const isSelf = u.user_id === state.me?.id;
+                const cached = u.avatar_key ? archivos.obtenerAvatarCache(u.avatar_key) : null;
+                const initial = (u.name || 'U').slice(0, 1).toUpperCase();
+                return `
+                  <div class="sidebar-voice-member-item ${isSelf ? 'is-self' : ''}" title="${esc(u.name)}${isSelf ? ' (tú)' : ''}">
+                    <span class="sidebar-voice-member-dot"></span>
+                    <span class="sidebar-voice-member-avatar">
+                      ${cached
+                        ? `<img src="${cached}" alt="${esc(u.name)}" class="sidebar-voice-member-img" />`
+                        : `<span class="sidebar-voice-member-initials">${esc(initial)}</span>`
+                      }
+                    </span>
+                    <span class="sidebar-voice-member-name">${esc(u.name)}${isSelf ? ' <small>(tú)</small>' : ''}</span>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          `;
+        }
+
         return `
-          <button class="sidebar-channel-item ${isActive ? 'active' : ''}" data-sidebar-channel="${c.id}" title="${esc(c.name)} (${c.kind === 'voice' ? 'Voz' : 'Texto'})${muted ? ' · Silenciado' : ''} · Clic derecho para opciones">
-            <span class="channel-kind">${iconSvg}</span>
-            <span class="channel-name">${esc(c.name)}</span>
-            ${muted ? `<span class="sc-chat-muted-icon" title="Notificaciones silenciadas">${ICONO_CAMPANA_SILENCIADA}</span>` : ''}
-          </button>
+          <div class="sidebar-channel-entry">
+            <button class="sidebar-channel-item ${isActive ? 'active' : ''} ${isVoice ? 'is-voice-channel' : ''} ${isActive && isVoice ? 'active-voice' : ''}" data-sidebar-channel="${c.id}" title="${esc(c.name)} (${isVoice ? 'Voz' : 'Texto'})${muted ? ' · Silenciado' : ''} · Clic derecho para opciones">
+              <span class="channel-kind">${iconSvg}</span>
+              <span class="channel-name">${esc(c.name)}</span>
+              ${countBadge}
+              ${muted ? `<span class="sc-chat-muted-icon" title="Notificaciones silenciadas">${ICONO_CAMPANA_SILENCIADA}</span>` : ''}
+            </button>
+            ${membersHtml}
+          </div>
         `;
       }).join('');
 
@@ -2222,10 +2325,20 @@ function renderSidebar() {
         const id = btn.dataset.sidebarChannel;
         const chan = regularChannels.find((x) => x.id === id);
         btn.addEventListener('click', () => {
-          if (state.currentChannel?.id === id) {
-            closeChannel();
+          if (chan?.kind === 'voice') {
+            if (state.activeVoiceChannel?.id === id) {
+              // Ya estamos en este canal: traer la vista del estudio al frente
+              hooks.showVoiceStudio?.(chan);
+            } else {
+              // Conectarse directamente al canal de voz
+              joinVoiceChannel(chan);
+            }
           } else {
-            openChannel(id);
+            if (state.currentChannel?.id === id) {
+              closeChannel();
+            } else {
+              openChannel(id);
+            }
           }
         });
         if (chan) {
@@ -2813,11 +2926,18 @@ function renderChat() {
 
   if (voiceBtn) {
     voiceBtn.style.display = !dm && c.kind === 'voice' ? 'inline-flex' : 'none';
-    voiceBtn.innerHTML = `${ICONO_VOZ_ALTAVOZ}<span>Entrar a voz</span>`;
-    voiceBtn.onclick = () => {
-      hooks.joinRoom?.(c.room_code);
-      hooks.toast?.(`Entrando a la sala de voz de ${c.name}`);
-    };
+    if (state.activeVoiceChannel?.id === c.id) {
+      voiceBtn.innerHTML = `${ICONO_VOZ_ALTAVOZ}<span>Ver sala de voz</span>`;
+      voiceBtn.onclick = () => {
+        hooks.showVoiceStudio?.(c);
+      };
+    } else {
+      voiceBtn.innerHTML = `${ICONO_VOZ_ALTAVOZ}<span>Entrar a voz</span>`;
+      voiceBtn.onclick = () => {
+        joinVoiceChannel(c);
+        hooks.toast?.(`Entrando a la sala de voz de ${c.name}`);
+      };
+    }
   }
 
   // En un chat privado: botón de llamada que conmuta a "Colgar" si ya se está en llamada con él.
@@ -3451,6 +3571,19 @@ export function openSocialChannel(id) {
 export function closeSocialChannel() {
   return closeChannel();
 }
+
+export function getActiveVoiceChannel() {
+  return state.activeVoiceChannel;
+}
+
+export function leaveSocialVoiceChannel() {
+  leaveVoiceChannel();
+}
+
+export function joinSocialVoiceChannel(chan) {
+  joinVoiceChannel(chan);
+}
+
 
 if (typeof navigator !== 'undefined' && navigator.mediaDevices?.addEventListener) {
   navigator.mediaDevices.addEventListener('devicechange', () => {

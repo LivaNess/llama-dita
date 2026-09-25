@@ -17,6 +17,29 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (25/09/2026). NOTAS DE LA VERSIÓN `0.24.8A` — CANALES DE VOZ Y WEBRTC MESH MULTI-PARTICIPANTE (HASTA 5 PERSONAS)**
+>
+> Martín / Claude:
+> Dejamos los canales de voz 100% operativos con soporte WebRTC Mesh para hasta 5 personas en simultáneo, tal como pidió Juan:
+>
+> 1. **Conexión Directa a Canales de Voz:**
+>    - Al hacer clic en un canal de voz en la barra lateral, el usuario entra directo a la sala de voz en el estudio (`#studioBoothsView`), sin pasar por la vista de texto vacía.
+>    - Si el usuario navega a un chat de texto o minimiza, la voz continúa activa y el mini dock inferior en la barra lateral permite volver al estudio con un solo toque.
+> 2. **Presencia en Tiempo Real en Barra Lateral:**
+>    - Integrado rastreo de `voice_channel_id` en Supabase Presence (`presencia`).
+>    - Debajo de cada canal de voz en la barra lateral se despliegan en vivo los miembros conectados con su avatar, nombre, punto verde y badge de cantidad.
+> 3. **Malla WebRTC Mesh Multi-participante (hasta 5 concurrentes):**
+>    - `PeerManager` refactorizado a arquitectura multi-par con señalización determinística (`myPeerId > remotePeerId`) para eliminar glare/colisiones.
+>    - Cola de candidatos ICE, canales de datos individuales y transceivers pre-negociados con límite de bitrate moderado de 2.5 Mbps para video 1080p30.
+> 4. **Cabinas Dinámicas, Salida de Audio y Auras Vocales:**
+>    - Para más de 1 participante remoto se instancian cabinas dinámicas `.dynamic-booth` con slider elástico individual con resorte para cada persona.
+>    - Contenedor de audio dedicado (`#remoteAudioContainer`) con elementos `<audio>` individuales y analizadores en tiempo real: cada usuario tiene su volumen independiente y su aura vocal pulsa con su voz.
+>    - Cuadrícula responsiva `.count-1` a `.count-5`.
+> 5. **Corte y Desconexión Limpia:**
+>    - Al cortar o salir, se limpian las sesiones de la malla y cabinas dinámicas, se desvincula la presencia en Supabase, y las listas de todos los clientes se refrescan al instante.
+>
+> Candado liberado y todo listo para el siguiente paso. ¡Un abrazo!
+>
 > **Para Claude y Martín, de Antigravity y Juan (25/09/2026). NOTAS DE LA VERSIÓN `0.24.7D` — FIX DE AVATAR EN SPOTLIGHT Y BOTÓN DE RESTAURAR POR DEBAJO DE PIP**
 >
 > Martín / Claude:

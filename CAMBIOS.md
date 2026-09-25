@@ -17,6 +17,33 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.8A · 2026-09-25 · Antigravity
+**Qué cambió.** Canales de voz 100% funcionales y arquitectura WebRTC Mesh multi-participante (hasta 5 personas en simultáneo):
+- **Canales de Voz Directos en Barra Lateral:**
+  - Al hacer clic en un canal de voz (`c.kind === 'voice'`) en la barra lateral, el usuario se conecta directamente a la sala de voz en tiempo real y entra a la vista de estudio (`#studioBoothsView`), sin quedar atrapado en la pantalla de chat de texto vacía.
+  - Si el usuario navega a un canal de texto o minimiza la llamada mientras está en un canal de voz, la conexión de voz permanece activa en segundo plano con el mini dock flotante en la barra lateral; al pulsar en el canal de voz o en el mini dock, vuelve instantáneamente al estudio de voz.
+- **Presencia en Tiempo Real de Canales de Voz:**
+  - Se añadió rastreo de presencia para `voice_channel_id` en el canal global de Supabase.
+  - La barra lateral muestra en vivo quiénes están conectados a cada canal de voz en una lista indentada debajo del canal, con avatar, nombre, insignia de cantidad y punto indicador en verde.
+- **Malla WebRTC Mesh Multi-participante (hasta 5 personas):**
+  - Se refactorizó por completo `PeerManager` para soportar arquitectura en malla (WebRTC Mesh) de hasta 5 participantes en simultáneo (1 local + hasta 4 remotos).
+  - Regla determinística de iniciador (`myPeerId > remotePeerId`) para eliminar colisiones de ofertas (glare).
+  - Manejo individualizado de `RTCPeerConnection`, `DataChannel`, candidatos ICE en cola y transceivers de video/audio por cada par conectado.
+- **Cabinas Dinámicas y Audio Multi-participante en Estudio:**
+  - Para más de 1 participante remoto, la fila de cabinas (`.studio-booths-row`) genera dinámicamente cabinas para cada usuario con su respectivo aura vocal interactiva, avatar, reproductor de video, y deslizador elástico de volumen individual con resorte.
+  - Contenedor de salida de audio (`#remoteAudioContainer`) con elementos `<audio>` individuales y procesadores de análisis en tiempo real para que cada participante tenga su propio control de volumen y su aura reaccione independientemente al hablar.
+  - Cuadrícula responsiva (`.count-1` a `.count-5`) para adaptar la visualización armoniosamente de 1 a 5 participantes en pantalla.
+- **Desconexión Limpia y Botón de Cortar:**
+  - Al cortar la llamada o salir del canal de voz (`btnLeaveCall` o mini dock), se limpian todas las conexiones y cabinas dinámicas, se desvincula la presencia en Supabase, y la barra lateral de todos los usuarios se actualiza en tiempo real.
+**Por qué.** El usuario solicitó arreglar los canales de voz que no funcionaban y permitir que se conecten al menos 5 personas en simultáneo con la arquitectura WebRTC Mesh.
+**Dónde.** `src/network/peerManager.js`, `src/social/panel.js`, `src/main.js`, `src/audio/audioManager.js`, `src/style.css`, `index.html`, `package.json`, `CAMBIOS.md`, `SYNC.md`.
+**Cómo se verifica.**
+1. En la barra lateral, hacer clic en un canal de voz: verificar que se conecta inmediatamente y abre la vista de cabinas de audio con el título del canal.
+2. Comprobar que en la barra lateral aparece la lista de miembros conectados debajo del canal con sus nombres y avatares.
+3. Conectar múltiples participantes (hasta 5 en total): comprobar que se crean las cabinas para cada uno, cada participante tiene su slider de volumen elástico individual, y las auras vocales responden independientemente cuando cada persona habla.
+4. Navegar a un canal de texto mientras se está en el canal de voz: verificar que la llamada continúa en segundo plano con el mini dock activo en la barra lateral.
+5. Hacer clic en "Cortar llamada": verificar que el usuario sale del canal de voz, se eliminan las cabinas dinámicas y la presencia se actualiza en tiempo real.
+
 ### 0.24.7D · 2026-09-25 · Antigravity
 **Qué cambió.** Ocultación completa de avatar central en modo spotlight con cámara y botón de restauración por debajo de la ventana PiP:
 - **Cámara Total en Modo Spotlight (media_1790319369010.png):**
