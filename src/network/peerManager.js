@@ -34,9 +34,12 @@ export class PeerManager {
     this.heartbeatTimer = null;
     this.isInitiatingCall = false;
     this.localName = null;
+    this.localVideoStream = null;
 
     // Callbacks
     this.onRemoteStream = null;
+    this.onRemoteVideoStream = null;
+    this.onRemoteVideoStateChange = null;
     this.onConnectionStatusChange = null;
     this.onRemoteData = null;
     this.onError = null;
@@ -230,8 +233,8 @@ export class PeerManager {
       return;
     }
 
-    if (remotePeers.length > 1) {
-      this.onConnectionStatusChange?.('error', 'Sala completa (máximo 2 participantes).');
+    if (remotePeers.length > 4) {
+      this.onConnectionStatusChange?.('error', 'Sala completa (máximo 5 participantes).');
       return;
     }
 
@@ -278,6 +281,18 @@ export class PeerManager {
       });
     }
 
+    // Video: pre-negociar transceiver para permitir conmutar cámara instantáneamente
+    try {
+      const initialVideoTrack = this.localVideoStream ? this.localVideoStream.getVideoTracks()[0] : null;
+      if (initialVideoTrack) {
+        this.pc.addTrack(initialVideoTrack, this.localVideoStream);
+      } else {
+        this.pc.addTransceiver('video', { direction: 'sendrecv' });
+      }
+    } catch (e) {
+      console.warn('Error al configurar transceiver de video:', e);
+    }
+
     // ICE Candidate generation
     this.pc.onicecandidate = (event) => {
       if (event.candidate && this.remotePeerId) {
@@ -290,12 +305,29 @@ export class PeerManager {
       }
     };
 
-    // Receive remote stream
+    // Receive remote tracks (audio y video)
     this.pc.ontrack = (event) => {
-      console.log('Pista de audio remota recibida:', event.track);
-      const stream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream([event.track]);
-      this.onConnectionStatusChange?.('connected', 'Conexión activa');
-      this.onRemoteStream?.(stream);
+      const track = event.track;
+      console.log('Pista remota recibida:', track.kind, track.id);
+
+      if (track.kind === 'audio') {
+        const stream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream([track]);
+        this.onConnectionStatusChange?.('connected', 'Conexión activa');
+        this.onRemoteStream?.(stream);
+      } else if (track.kind === 'video') {
+        const videoStream = (event.streams && event.streams[0]) ? event.streams[0] : new MediaStream([track]);
+        this.onRemoteVideoStream?.(videoStream, track);
+
+        track.onmute = () => {
+          this.onRemoteVideoStateChange?.(false);
+        };
+        track.onunmute = () => {
+          this.onRemoteVideoStateChange?.(true);
+        };
+        track.onended = () => {
+          this.onRemoteVideoStateChange?.(false);
+        };
+      }
     };
 
     // Connection state listeners
@@ -351,6 +383,7 @@ export class PeerManager {
     try {
       const offer = await this.pc.createOffer({
         offerToReceiveAudio: true,
+        offerToReceiveVideo: true,
         voiceActivityDetection: true
       });
       await this.pc.setLocalDescription(offer);
@@ -522,6 +555,9 @@ export class PeerManager {
     if (data.type === 'profile' && data.wantsReply) {
       this.sendProfile(false);
     }
+    if (data.type === 'video-state') {
+      this.onRemoteVideoStateChange?.(!!data.enabled);
+    }
     this.onRemoteData?.(data);
   }
 
@@ -567,6 +603,65 @@ export class PeerManager {
     }
   }
 
+  setLocalVideoStream(newVideoStream) {
+    this.localVideoStream = newVideoStream;
+    if (!this.pc) return;
+
+    const newVideoTrack = newVideoStream ? newVideoStream.getVideoTracks()[0] : null;
+
+    const senders = this.pc.getSenders();
+    let videoSender = senders.find(s => s.track && s.track.kind === 'video');
+
+    if (!videoSender) {
+      const transceivers = this.pc.getTransceivers ? this.pc.getTransceivers() : [];
+      const videoTransceiver = transceivers.find(t => (t.receiver?.track?.kind === 'video') || (t.sender?.track?.kind === 'video') || (t.mid && !t.sender?.track));
+      if (videoTransceiver) {
+        videoSender = videoTransceiver.sender;
+      }
+    }
+
+    if (videoSender) {
+      videoSender.replaceTrack(newVideoTrack).catch(err => {
+        console.warn('Error reemplazando pista de video en sender:', err);
+      });
+    } else if (newVideoTrack) {
+      try {
+        this.pc.addTrack(newVideoTrack, newVideoStream);
+        this.renegotiate();
+      } catch (err) {
+        console.warn('Error añadiendo pista de video:', err);
+      }
+    }
+
+    // Avisar por canal de datos
+    this.sendData({
+      type: 'video-state',
+      enabled: !!newVideoTrack
+    });
+  }
+
+  async renegotiate() {
+    if (!this.pc || !this.remotePeerId || this.pc.signalingState !== 'stable') return;
+    try {
+      const offer = await this.pc.createOffer({
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: true
+      });
+      await this.pc.setLocalDescription(offer);
+      this.sendSignal({
+        from: this.myPeerId,
+        to: this.remotePeerId,
+        type: 'offer',
+        data: {
+          type: offer.type,
+          sdp: offer.sdp
+        }
+      });
+    } catch (err) {
+      console.warn('Error en renegociación WebRTC:', err);
+    }
+  }
+
   // Reintento cuando la conexión se cae o se degrada.
   //
   // Antes esto llamaba a restartIce() y acto seguido a initiateCall(), que crea una conexión
@@ -607,6 +702,7 @@ export class PeerManager {
       this.pc = null;
     }
     this.iceCandidateQueue = [];
+    this.onRemoteVideoStateChange?.(false);
     this.onConnectionStatusChange?.('disconnected', 'Participante desconectado');
   }
 

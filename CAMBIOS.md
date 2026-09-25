@@ -17,6 +17,30 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.7A · 2026-09-25 · Antigravity
+**Qué cambió.** Soporte de Video P2P Mesh-Ready y conmutación de cámara en tiempo real durante llamadas:
+- **Transmisión de Video WebRTC P2P:**
+  - Capacidad bidireccional de video entre participantes de la llamada utilizando la infraestructura P2P directa existente.
+  - Arquitectura preparada para malla (mesh-ready): se amplió el límite de participantes de presencia a 5 personas concurrentes sin errores de capacidad.
+  - Pre-negociación inteligente de video transceiver (`addTransceiver('video', { direction: 'sendrecv' })`): permite alternar y reemplazar la pista de video (`replaceTrack`) con cero latencia y sin congelamiento ni carreras de renegociación SDP.
+- **Botón de Cámara en la Barra de Llamada:**
+  - En la barra de llamada flotante central (`#studioCallBar`), se incorporó el botón `#btnToggleVideo` con icono vectorial y estados activo/inactivo (`.active`).
+  - Al hacer clic, solicita acceso al dispositivo de video (`getUserMedia` 720p/1280x720) y conmuta la cámara al instante.
+- **Visualización y Reproductores en Cabina:**
+  - Si la cámara está activa, la tarjeta de cabina oculta suavemente el avatar estático y muestra el reproductor de video (`.booth-video-wrapper`).
+  - Cabina local (Host): Video con efecto espejo natural (`transform: scaleX(-1)`) para máxima comodidad del usuario al verse a sí mismo.
+  - Cabina remota (Guest): Reproduce el stream de video de la persona con la que se habla sin distorsión.
+  - Insignia flotante con efecto cristal (`.booth-video-overlay-badge`) que muestra el punto verde en vivo y el nombre de cada persona.
+- **Privacidad y Limpieza de Hardware:**
+  - Al apagar la cámara o al finalizar la llamada (`leaveCall`), todas las pistas del stream se detienen físicamente (`track.stop()`), apagando de inmediato la luz LED de hardware de la webcam y liberando los recursos de la máquina.
+**Por qué.** El usuario solicitó poder prender la cámara para verse con su amigo en las llamadas WebRTC existentes mediante P2P, manteniendo una arquitectura mesheable para hasta 5 personas en el futuro, con código limpio y sin clichés de IA.
+**Dónde.** `src/network/peerManager.js`, `index.html`, `src/style.css`, `src/main.js`, `package.json`, `CAMBIOS.md`, `SYNC.md`.
+**Cómo se verifica.**
+1. Iniciar o unirse a una llamada entre dos clientes.
+2. Hacer clic en el nuevo botón de cámara en la barra de llamada flotante: comprobar que el navegador solicita permiso de cámara, la cámara se enciende y el recuadro de video local aparece en la cabina con efecto espejo y badge con el nombre.
+3. Comprobar que en el cliente remoto el video se recibe fluidamente en la cabina del amigo.
+4. Apagar la cámara o cortar la llamada: comprobar que el LED de la cámara se apaga de inmediato y la interfaz vuelve a los avatares correspondientes.
+
 ### 0.24.6B · 2026-09-24 · Antigravity
 **Qué cambió.** Overhaul Visual Fase 3B — Mini dock de llamada en barra lateral, depuración de pantalla de llamada y desencajonado de avatares/logos:
 - **Mini Dock de llamada animado en la barra lateral (Posición 2 del croquis):**

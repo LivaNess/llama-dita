@@ -17,6 +17,25 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (25/09/2026). NOTAS DE LA VERSIÓN `0.24.7A` — SOPORTE DE VIDEO P2P MESH-READY Y TOGGLE DE CÁMARA**
+>
+> Martín / Claude:
+> Implementamos con éxito el soporte de cámara de video WebRTC P2P en llamadas:
+>
+> 1. **WebRTC Video Core (`src/network/peerManager.js`):**
+>    - Conexión P2P de video directa con pre-negociación de transceiver (`addTransceiver('video', { direction: 'sendrecv' })`), permitiendo alternar el stream de la cámara vía `replaceTrack` con latencia imperceptible y sin renegociaciones SDP que bloqueen el audio.
+>    - Arquitectura mesh-ready preparada para ampliar a llamadas grupales de hasta 5 participantes concurrentes.
+>    - Manejo de señalización de estado de video (`video-state`) y eventos `onmute`/`onunmute`/`onended` en las pistas de video remotas.
+> 2. **Controles Ergonómicos en Barra de Llamada (`index.html`, `src/style.css`, `src/main.js`):**
+>    - Incorporado el botón `#btnToggleVideo` en `#studioCallBar` con feedback visual limpio (`.active`).
+>    - Conmutación dinámica: al activar, solicita cámara vía `getUserMedia` (720p optimizado); al desactivar o cortar la llamada (`leaveCall`), detiene todas las pistas físicas (`track.stop()`) asegurando el apagado inmediato del LED de la webcam por privacidad.
+> 3. **Reproductores de Video en Cabina:**
+>    - Cabina local (Host): Video espejado (`transform: scaleX(-1)`) con badge de identidad.
+>    - Cabina remota (Guest): Video directo con badge con el nombre del participante.
+>    - Transición suave que oculta el avatar estático y muestra el video mientras la cámara esté prendida.
+>
+> Candado liberado y tests de protocolo superados. ¡Un abrazo!
+>
 > **Para Claude y Martín, de Antigravity y Juan (24/09/2026). NOTAS DE LA VERSIÓN `0.24.6B` — OVERHAUL VISUAL FASE 3B: MINI DOCK EN SIDEBAR, DESENCAJONADO Y FIXES**
 >
 > Martín / Claude:

@@ -51,6 +51,17 @@ const guestSpeakingStatus = document.getElementById('guestSpeakingStatus');
 const guestBoothChipText = document.getElementById('guestBoothChipText');
 const toastContainer = document.getElementById('toastContainer');
 
+// Controles y reproductores de video en llamada
+const hostVideoWrapper = document.getElementById('hostVideoWrapper');
+const hostVideoElement = document.getElementById('hostVideoElement');
+const hostVideoBadgeText = document.getElementById('hostVideoBadgeText');
+const guestVideoWrapper = document.getElementById('guestVideoWrapper');
+const guestVideoElement = document.getElementById('guestVideoElement');
+const guestVideoBadgeText = document.getElementById('guestVideoBadgeText');
+const btnToggleVideo = document.getElementById('btnToggleVideo');
+let isCameraOn = false;
+let localVideoStream = null;
+
 // Cronómetro de llamada activa en tiempo real
 const callDurationTimer = document.getElementById('callDurationTimer');
 const callLiveDot = document.getElementById('callLiveDot');
@@ -200,6 +211,7 @@ async function updateBoothProfiles() {
   // 1. Host (Local)
   const localName = social?.me?.display_name || social?.me?.username || 'Tú';
   if (hostUserName) hostUserName.textContent = localName;
+  if (hostVideoBadgeText) hostVideoBadgeText.textContent = localName;
   if (hostBoothChipText) hostBoothChipText.textContent = 'Tu cabina';
   if (hostAvatarContent) {
     if (social?.me?.avatar_key) {
@@ -225,6 +237,7 @@ async function updateBoothProfiles() {
   // 2. Guest (Remote)
   const remoteName = conQuien || 'Participante';
   if (guestUserName) guestUserName.textContent = remoteName;
+  if (guestVideoBadgeText) guestVideoBadgeText.textContent = remoteName;
   if (guestBoothChipText) guestBoothChipText.textContent = conQuien ? `Con ${conQuien}` : 'Participante';
   if (guestAvatarContent) {
     let friendAvatarKey = conQuienAvatarKey || null;
@@ -624,6 +637,26 @@ function setupNetworking() {
     remoteAudioProcessor = audioManager.createRemoteStreamProcessor(stream);
   };
 
+  peerManager.onRemoteVideoStream = (stream, track) => {
+    if (guestVideoElement) {
+      guestVideoElement.srcObject = stream;
+      guestVideoElement.play().catch(e => console.warn('guestVideoElement play error:', e));
+    }
+    if (guestVideoWrapper) guestVideoWrapper.style.display = 'flex';
+    if (guestBooth) guestBooth.classList.add('has-video');
+  };
+
+  peerManager.onRemoteVideoStateChange = (enabled) => {
+    if (enabled) {
+      if (guestVideoWrapper) guestVideoWrapper.style.display = 'flex';
+      if (guestBooth) guestBooth.classList.add('has-video');
+    } else {
+      if (guestVideoWrapper) guestVideoWrapper.style.display = 'none';
+      if (guestBooth) guestBooth.classList.remove('has-video');
+      if (guestVideoElement) guestVideoElement.srcObject = null;
+    }
+  };
+
   peerManager.onRemoteData = (data) => {
     if (data.type === 'profile' && data.name) {
       conQuien = data.name;
@@ -878,6 +911,98 @@ function toggleMic() {
 
 btnSidebarMic?.addEventListener('click', toggleMic);
 
+// Control de cámara de video en llamada
+function updateCameraUi(active) {
+  if (!btnToggleVideo) return;
+  const iconOn = btnToggleVideo.querySelector('.camera-icon-on');
+  const iconOff = btnToggleVideo.querySelector('.camera-icon-off');
+
+  if (active) {
+    btnToggleVideo.classList.add('active');
+    btnToggleVideo.title = 'Apagar cámara';
+    btnToggleVideo.setAttribute('aria-label', 'Apagar cámara');
+    if (iconOn) iconOn.style.display = 'none';
+    if (iconOff) iconOff.style.display = 'block';
+  } else {
+    btnToggleVideo.classList.remove('active');
+    btnToggleVideo.title = 'Encender cámara';
+    btnToggleVideo.setAttribute('aria-label', 'Encender cámara');
+    if (iconOn) iconOn.style.display = 'block';
+    if (iconOff) iconOff.style.display = 'none';
+  }
+}
+
+async function startCamera() {
+  if (isCameraOn) return true;
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+        facingMode: 'user'
+      }
+    });
+
+    localVideoStream = stream;
+    isCameraOn = true;
+
+    if (hostVideoElement) {
+      hostVideoElement.srcObject = stream;
+      try {
+        await hostVideoElement.play();
+      } catch (e) {
+        console.warn('hostVideoElement play error:', e);
+      }
+    }
+    if (hostVideoWrapper) hostVideoWrapper.style.display = 'flex';
+    if (hostBooth) hostBooth.classList.add('has-video');
+
+    updateCameraUi(true);
+    await peerManager.setLocalVideoStream(stream);
+    showToast('Cámara encendida');
+    return true;
+  } catch (err) {
+    console.error('Error accediendo a la cámara:', err);
+    showToast('No se pudo acceder a la cámara');
+    updateCameraUi(false);
+    return false;
+  }
+}
+
+async function stopCamera() {
+  if (!isCameraOn && !localVideoStream) return;
+
+  if (localVideoStream) {
+    localVideoStream.getTracks().forEach(track => {
+      try {
+        track.stop();
+      } catch (e) {}
+    });
+    localVideoStream = null;
+  }
+  isCameraOn = false;
+
+  if (hostVideoElement) {
+    hostVideoElement.srcObject = null;
+  }
+  if (hostVideoWrapper) hostVideoWrapper.style.display = 'none';
+  if (hostBooth) hostBooth.classList.remove('has-video');
+
+  updateCameraUi(false);
+  await peerManager.setLocalVideoStream(null);
+  showToast('Cámara apagada');
+}
+
+async function toggleCamera() {
+  if (isCameraOn) {
+    await stopCamera();
+  } else {
+    await startCamera();
+  }
+}
+
+btnToggleVideo?.addEventListener('click', toggleCamera);
+
 // SVG para ícono de audio activo (altavoz con ondas)
 const ICON_AUDIO_ON = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>`;
 // SVG para ícono de audio silenciado (altavoz con X)
@@ -899,6 +1024,27 @@ function leaveCall(sendSignal = true) {
     remoteAudioProcessor.destroy();
     remoteAudioProcessor = null;
   }
+
+  // Detener cámara local y apagar LED de hardware de inmediato
+  if (isCameraOn || localVideoStream) {
+    if (localVideoStream) {
+      localVideoStream.getTracks().forEach(track => {
+        try { track.stop(); } catch (e) {}
+      });
+      localVideoStream = null;
+    }
+    isCameraOn = false;
+    if (hostVideoElement) hostVideoElement.srcObject = null;
+    if (hostVideoWrapper) hostVideoWrapper.style.display = 'none';
+    if (hostBooth) hostBooth.classList.remove('has-video');
+    updateCameraUi(false);
+    try { peerManager.setLocalVideoStream(null); } catch (e) {}
+  }
+
+  // Reset de video remoto
+  if (guestVideoElement) guestVideoElement.srcObject = null;
+  if (guestVideoWrapper) guestVideoWrapper.style.display = 'none';
+  if (guestBooth) guestBooth.classList.remove('has-video');
 
   conQuien = null;
   conQuienAvatarKey = null;

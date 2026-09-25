@@ -494,6 +494,78 @@ body {
   letter-spacing: -0.02em;
 }
 
+/* Reproductor de video en cabina */
+.booth-video-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  aspect-ratio: 16 / 9;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #080c18;
+  border: 1.5px solid rgba(143, 166, 255, 0.18);
+  box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.booth-video-wrapper:hover {
+  border-color: rgba(143, 166, 255, 0.35);
+}
+
+.booth-video-player {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  background: #000;
+}
+
+.booth-video-player.host-video {
+  transform: scaleX(-1); /* Efecto espejo natural para cámara de usuario */
+}
+
+.booth-video-player.guest-video {
+  transform: none;
+}
+
+.booth-video-overlay-badge {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  background: rgba(13, 19, 38, 0.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 0.25rem 0.7rem;
+  border-radius: 9999px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+  z-index: 3;
+  letter-spacing: -0.01em;
+}
+
+.video-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.9);
+}
+
+.studio-booth.has-video .booth-visual-center {
+  display: none;
+}
+
 /* Extra Controls (Gain/Sensitivity Range) */
 .custom-range {
   width: 100%;
@@ -820,6 +892,38 @@ select option {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.btn-call-action {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--text-secondary);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.btn-call-action:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  transform: scale(1.05);
+}
+
+.btn-call-action:active {
+  transform: scale(0.95);
+}
+
+.btn-call-action.active {
+  background: rgba(91, 124, 250, 0.22);
+  border-color: rgba(91, 124, 250, 0.55);
+  color: #8fa6ff;
+  box-shadow: 0 0 14px rgba(91, 124, 250, 0.35);
 }
 
 .studio-call-bar .btn-hangup {

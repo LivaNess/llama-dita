@@ -294,7 +294,16 @@
           <div class="studio-booths-row">
             <!-- PARTICIPANTE LOCAL (TÚ) -->
             <section class="studio-booth booth-host" id="hostBooth">
-              <div class="booth-visual-center">
+              <!-- Reproductor de video local (cuando la cámara está activa) -->
+              <div class="booth-video-wrapper" id="hostVideoWrapper" style="display: none;">
+                <video id="hostVideoElement" class="booth-video-player host-video" autoplay playsinline muted></video>
+                <div class="booth-video-overlay-badge">
+                  <span class="video-live-dot"></span>
+                  <span id="hostVideoBadgeText">Tú</span>
+                </div>
+              </div>
+
+              <div class="booth-visual-center" id="hostVisualCenter">
                 <div class="avatar-wrapper">
                   <div class="vocal-aura" id="hostVocalAura"></div>
                   <div class="avatar-disc" id="hostAvatarDisc">
@@ -316,7 +325,16 @@
 
             <!-- PARTICIPANTE REMOTO (AMIGO) -->
             <section class="studio-booth booth-guest" id="guestBooth">
-              <div class="booth-visual-center">
+              <!-- Reproductor de video remoto (cuando el amigo prende su cámara) -->
+              <div class="booth-video-wrapper" id="guestVideoWrapper" style="display: none;">
+                <video id="guestVideoElement" class="booth-video-player guest-video" autoplay playsinline></video>
+                <div class="booth-video-overlay-badge">
+                  <span class="video-live-dot"></span>
+                  <span id="guestVideoBadgeText">Participante</span>
+                </div>
+              </div>
+
+              <div class="booth-visual-center" id="guestVisualCenter">
                 <div class="avatar-wrapper">
                   <div class="vocal-aura" id="guestVocalAura"></div>
                   <div class="avatar-disc" id="guestAvatarDisc">
@@ -359,6 +377,16 @@
               <div class="call-status-pill" id="callStatus" style="display: none;">Sin llamada</div>
             </div>
             <div class="call-bar-actions">
+              <button class="btn-call-action btn-toggle-video" id="btnToggleVideo" title="Encender cámara" aria-label="Encender cámara">
+                <svg class="camera-icon-on" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M23 7l-7 5 7 5V7z"></path>
+                  <rect x="1" y="5" width="15" height="14" rx="3" ry="3"></rect>
+                </svg>
+                <svg class="camera-icon-off" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                  <path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2m4 0h6a2 2 0 0 1 2 2v3m0 4l7 5V7l-7 5"></path>
+                  <line x1="2" y1="2" x2="22" y2="22"></line>
+                </svg>
+              </button>
               <button class="btn-hangup" id="btnLeaveCall" title="Cortar la llamada" hidden>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91"></path>
