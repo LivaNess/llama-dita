@@ -59,7 +59,11 @@ const guestVideoWrapper = document.getElementById('guestVideoWrapper');
 const guestVideoElement = document.getElementById('guestVideoElement');
 const guestVideoBadgeText = document.getElementById('guestVideoBadgeText');
 const btnToggleVideo = document.getElementById('btnToggleVideo');
+const btnHostSpotlight = document.getElementById('btnHostSpotlight');
+const btnGuestSpotlight = document.getElementById('btnGuestSpotlight');
 let isCameraOn = false;
+let isRemoteVideoOn = false;
+let activeSpotlight = null; // 'host' | 'guest' | null
 let localVideoStream = null;
 
 // Cronómetro de llamada activa en tiempo real
@@ -211,7 +215,7 @@ async function updateBoothProfiles() {
   // 1. Host (Local)
   const localName = social?.me?.display_name || social?.me?.username || 'Tú';
   if (hostUserName) hostUserName.textContent = localName;
-  if (hostVideoBadgeText) hostVideoBadgeText.textContent = localName;
+  if (hostVideoBadgeText) hostVideoBadgeText.textContent = (localName || 'Tú').toUpperCase();
   if (hostBoothChipText) hostBoothChipText.textContent = 'Tu cabina';
   if (hostAvatarContent) {
     if (social?.me?.avatar_key) {
@@ -237,7 +241,7 @@ async function updateBoothProfiles() {
   // 2. Guest (Remote)
   const remoteName = conQuien || 'Participante';
   if (guestUserName) guestUserName.textContent = remoteName;
-  if (guestVideoBadgeText) guestVideoBadgeText.textContent = remoteName;
+  if (guestVideoBadgeText) guestVideoBadgeText.textContent = (remoteName || 'Participante').toUpperCase();
   if (guestBoothChipText) guestBoothChipText.textContent = conQuien ? `Con ${conQuien}` : 'Participante';
   if (guestAvatarContent) {
     let friendAvatarKey = conQuienAvatarKey || null;
@@ -643,18 +647,19 @@ function setupNetworking() {
       guestVideoElement.play().catch(e => console.warn('guestVideoElement play error:', e));
     }
     if (guestVideoWrapper) guestVideoWrapper.style.display = 'flex';
-    if (guestBooth) guestBooth.classList.add('has-video');
+    isRemoteVideoOn = true;
+    updateCallLayoutState();
   };
 
   peerManager.onRemoteVideoStateChange = (enabled) => {
+    isRemoteVideoOn = !!enabled;
     if (enabled) {
       if (guestVideoWrapper) guestVideoWrapper.style.display = 'flex';
-      if (guestBooth) guestBooth.classList.add('has-video');
     } else {
       if (guestVideoWrapper) guestVideoWrapper.style.display = 'none';
-      if (guestBooth) guestBooth.classList.remove('has-video');
       if (guestVideoElement) guestVideoElement.srcObject = null;
     }
+    updateCallLayoutState();
   };
 
   peerManager.onRemoteData = (data) => {
@@ -932,13 +937,130 @@ function updateCameraUi(active) {
   }
 }
 
+// Actualizar dimensiones de las tarjetas cuando hay video activo
+function updateCallLayoutState() {
+  const hasVideoCall = isCameraOn || isRemoteVideoOn;
+  if (studioBoothsView) {
+    studioBoothsView.classList.toggle('has-active-video', hasVideoCall);
+  }
+  if (hostBooth) {
+    hostBooth.classList.toggle('has-video', isCameraOn);
+  }
+  if (guestBooth) {
+    guestBooth.classList.toggle('has-video', isRemoteVideoOn);
+  }
+}
+
+// Control de Spotlight / Pantalla completa de participante
+function toggleSpotlight(who) {
+  if (activeSpotlight === who) {
+    activeSpotlight = null;
+  } else {
+    activeSpotlight = who;
+  }
+  updateSpotlightUi();
+}
+
+function updateSpotlightUi() {
+  const boothsRow = document.querySelector('.studio-booths-row');
+  if (!boothsRow) return;
+
+  boothsRow.classList.remove('has-spotlight', 'spotlight-host', 'spotlight-guest');
+  hostBooth?.classList.remove('is-spotlighted', 'is-pip');
+  guestBooth?.classList.remove('is-spotlighted', 'is-pip');
+
+  const hostIconExpand = btnHostSpotlight?.querySelector('.spotlight-icon-expand');
+  const hostIconRestore = btnHostSpotlight?.querySelector('.spotlight-icon-restore');
+  const guestIconExpand = btnGuestSpotlight?.querySelector('.spotlight-icon-expand');
+  const guestIconRestore = btnGuestSpotlight?.querySelector('.spotlight-icon-restore');
+
+  if (activeSpotlight === 'host') {
+    boothsRow.classList.add('has-spotlight', 'spotlight-host');
+    hostBooth?.classList.add('is-spotlighted');
+    guestBooth?.classList.add('is-pip');
+
+    if (hostIconExpand) hostIconExpand.style.display = 'none';
+    if (hostIconRestore) hostIconRestore.style.display = 'block';
+    if (btnHostSpotlight) btnHostSpotlight.title = 'Restaurar vista dividida';
+    if (guestIconExpand) guestIconExpand.style.display = 'block';
+    if (guestIconRestore) guestIconRestore.style.display = 'none';
+    if (btnGuestSpotlight) btnGuestSpotlight.title = 'Ampliar a pantalla completa';
+  } else if (activeSpotlight === 'guest') {
+    boothsRow.classList.add('has-spotlight', 'spotlight-guest');
+    guestBooth?.classList.add('is-spotlighted');
+    hostBooth?.classList.add('is-pip');
+
+    if (guestIconExpand) guestIconExpand.style.display = 'none';
+    if (guestIconRestore) guestIconRestore.style.display = 'block';
+    if (btnGuestSpotlight) btnGuestSpotlight.title = 'Restaurar vista dividida';
+    if (hostIconExpand) hostIconExpand.style.display = 'block';
+    if (hostIconRestore) hostIconRestore.style.display = 'none';
+    if (btnHostSpotlight) btnHostSpotlight.title = 'Ampliar a pantalla completa';
+  } else {
+    if (hostIconExpand) hostIconExpand.style.display = 'block';
+    if (hostIconRestore) hostIconRestore.style.display = 'none';
+    if (btnHostSpotlight) btnHostSpotlight.title = 'Ampliar a pantalla completa';
+    if (guestIconExpand) guestIconExpand.style.display = 'block';
+    if (guestIconRestore) guestIconRestore.style.display = 'none';
+    if (btnGuestSpotlight) btnGuestSpotlight.title = 'Ampliar a pantalla completa';
+  }
+}
+
+// Clic en la foto o video para ampliar a pantalla completa
+hostAvatarDisc?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  toggleSpotlight('host');
+});
+hostVisualCenter?.addEventListener('click', (e) => {
+  if (e.target.closest('.booth-slider-container')) return;
+  toggleSpotlight('host');
+});
+hostVideoWrapper?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  toggleSpotlight('host');
+});
+btnHostSpotlight?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  toggleSpotlight('host');
+});
+
+guestAvatarDisc?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  toggleSpotlight('guest');
+});
+guestVisualCenter?.addEventListener('click', (e) => {
+  if (e.target.closest('.booth-slider-container')) return;
+  toggleSpotlight('guest');
+});
+guestVideoWrapper?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  toggleSpotlight('guest');
+});
+btnGuestSpotlight?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  toggleSpotlight('guest');
+});
+
+// Clic en tarjeta PiP para cambiar el foco a esa persona
+hostBooth?.addEventListener('click', () => {
+  if (hostBooth.classList.contains('is-pip')) {
+    toggleSpotlight('host');
+  }
+});
+guestBooth?.addEventListener('click', () => {
+  if (guestBooth.classList.contains('is-pip')) {
+    toggleSpotlight('guest');
+  }
+});
+
 async function startCamera() {
   if (isCameraOn) return true;
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
       video: {
-        width: { ideal: 1280 },
-        height: { ideal: 720 },
+        width: { ideal: 1920, max: 1920 },
+        height: { ideal: 1080, max: 1080 },
+        frameRate: { ideal: 30, max: 30 },
         facingMode: 'user'
       }
     });
@@ -955,16 +1077,17 @@ async function startCamera() {
       }
     }
     if (hostVideoWrapper) hostVideoWrapper.style.display = 'flex';
-    if (hostBooth) hostBooth.classList.add('has-video');
 
     updateCameraUi(true);
+    updateCallLayoutState();
     await peerManager.setLocalVideoStream(stream);
-    showToast('Cámara encendida');
+    showToast('Cámara encendida (1080p 30fps)');
     return true;
   } catch (err) {
     console.error('Error accediendo a la cámara:', err);
     showToast('No se pudo acceder a la cámara');
     updateCameraUi(false);
+    updateCallLayoutState();
     return false;
   }
 }
@@ -986,9 +1109,9 @@ async function stopCamera() {
     hostVideoElement.srcObject = null;
   }
   if (hostVideoWrapper) hostVideoWrapper.style.display = 'none';
-  if (hostBooth) hostBooth.classList.remove('has-video');
 
   updateCameraUi(false);
+  updateCallLayoutState();
   await peerManager.setLocalVideoStream(null);
   showToast('Cámara apagada');
 }
@@ -1036,15 +1159,17 @@ function leaveCall(sendSignal = true) {
     isCameraOn = false;
     if (hostVideoElement) hostVideoElement.srcObject = null;
     if (hostVideoWrapper) hostVideoWrapper.style.display = 'none';
-    if (hostBooth) hostBooth.classList.remove('has-video');
     updateCameraUi(false);
     try { peerManager.setLocalVideoStream(null); } catch (e) {}
   }
 
-  // Reset de video remoto
+  // Reset de video remoto, spotlight y layout
   if (guestVideoElement) guestVideoElement.srcObject = null;
   if (guestVideoWrapper) guestVideoWrapper.style.display = 'none';
-  if (guestBooth) guestBooth.classList.remove('has-video');
+  isRemoteVideoOn = false;
+  activeSpotlight = null;
+  updateSpotlightUi();
+  updateCallLayoutState();
 
   conQuien = null;
   conQuienAvatarKey = null;

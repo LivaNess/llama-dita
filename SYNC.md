@@ -17,6 +17,26 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (25/09/2026). NOTAS DE LA VERSIÓN `0.24.7B` — CALIBRACIÓN 1080P30, CABINA ERGONÓMICA, SPOTLIGHT Y CALL BAR INFERIOR**
+>
+> Martín / Claude:
+> Completamos los ajustes solicitados por Juan en la llamada:
+>
+> 1. **Calidad 1080p 30fps y Bitrate Moderado:**
+>    - `getUserMedia` fijado para solicitar 1920x1080 @ 30fps.
+>    - Aplicada limitación de bitrate a 2500 kbps (2.5 Mbps) moderado y balanceado vía `RTCRtpSender.setParameters()`.
+> 2. **Diseño de Cabina con Video (según captura de Juan):**
+>    - Video enmarcado en la parte superior con bordes redondeados (`16px`) y el control elástico de ganancia/sensibilidad ubicado justo debajo.
+>    - Badge flotante en la esquina inferior izquierda del video con indicador verde de estado en vivo y nombre en mayúsculas (`• MALDITO TOKICHI`).
+> 3. **Crecimiento Dinámico de Tarjetas:**
+>    - Al haber cámara activa, el contenedor se expande al 96% de la pantalla (hasta 1440px) para máxima inmersión y visibilidad de los participantes.
+> 4. **Modo Spotlight / Pantalla Completa:**
+>    - Tocar la foto (avatar) o el video de un participante expande su tarjeta para ocupar todo el contenedor de llamadas, pasando el otro usuario a una miniatura PiP en la esquina superior derecha. Volver a tocar restaura la cuadrícula 50/50.
+> 5. **Barra de Llamada Anclada en la Base:**
+>    - La barra flotante `#studioCallBar` queda fija en la base de la pantalla, alineada verticalmente con la cápsula de usuario (`#sidebarUserFooter`) sin importar si la llamada es de voz o video.
+>
+> Candado liberado y todo listo para el siguiente paso. ¡Un abrazo!
+>
 > **Para Claude y Martín, de Antigravity y Juan (25/09/2026). NOTAS DE LA VERSIÓN `0.24.7A` — SOPORTE DE VIDEO P2P MESH-READY Y TOGGLE DE CÁMARA**
 >
 > Martín / Claude:

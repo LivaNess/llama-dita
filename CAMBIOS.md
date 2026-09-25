@@ -17,6 +17,29 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.7B · 2026-09-25 · Antigravity
+**Qué cambió.** Calibración de Transmisión de Video 1080p30, Layout de Cabina Perfeccionado, Modo Spotlight y Barra de Llamada Anclada Abajo:
+- **Calibración 1080p 30fps y Bitrate Moderado WebRTC:**
+  - `getUserMedia` ajustado para solicitar captura nítida Full HD 1080p (1920x1080) a 30 fotogramas por segundo (`ideal: 1920x1080`, `frameRate: 30`).
+  - Bitrate WebRTC configurado a un nivel moderado y estable de 2.5 Mbps (2500 kbps) mediante `RTCRtpSender.setParameters()`, previniendo saturación de red o pixelado en conexiones residenciales.
+- **Diseño Ergonómico de Cabina con Video (según captura de referencia):**
+  - Al encender la cámara, el reproductor de video ocupa la parte superior de la tarjeta con esquinas redondeadas (`16px`), quedando el control elástico de ganancia/sensibilidad justo debajo.
+  - Insignia flotante semitransparente en la esquina inferior izquierda del video con indicador verde de estado en vivo y nombre en mayúsculas (`• MALDITO TOKICHI`).
+- **Expansión Automática de Tarjetas con Cámara Activa:**
+  - Cuando cualquier participante enciende su cámara, el contenedor de llamada (`.studio-container`) se expande de 1060px a 1440px (96% del ancho de pantalla), otorgando protagonismo visual a la persona y eliminando márgenes innecesarios.
+- **Modo Spotlight / Pantalla Completa:**
+  - Al hacer clic en la foto/avatar o en el video de cualquiera de los participantes (o en el botón flotante de pantalla completa), esa persona se expande para ocupar todo el contenedor de la llamada.
+  - La otra tarjeta se repliega en una ventana flotante Picture-in-Picture (PiP) en la esquina superior derecha, permitiendo seguir viéndose o cambiar el foco con un simple toque.
+- **Barra de Llamada Anclada en la Base (Alineada con el Menú de Perfil):**
+  - La barra flotante de llamada (`#studioCallBar`) permanece anclada en la parte inferior de la ventana, manteniendo exactamente la misma altura horizontal que el pie de perfil de usuario (`#sidebarUserFooter`), tanto en llamadas de voz como de video, sin saltos ni desajustes verticales.
+**Por qué.** El usuario solicitó limitar la calidad a 1080p 30fps con bitrate moderado, adaptar el diseño de la cabina de video a la captura adjunta, hacer que las tarjetas crezcan al activar la cámara, permitir ampliar a pantalla completa tocando la foto de una persona y fijar la barra de corte a la misma altura que el menú de perfil inferior.
+**Dónde.** `src/network/peerManager.js`, `index.html`, `src/style.css`, `src/main.js`, `package.json`, `CAMBIOS.md`, `SYNC.md`.
+**Cómo se verifica.**
+1. Iniciar una llamada y encender la cámara: verificar que las tarjetas crecen ocupando el 96% de la pantalla (hasta 1440px) y que la transmisión se captura a 1080p30 con bitrate de 2.5 Mbps.
+2. Comprobar que la tarjeta de video tiene esquinas redondeadas, la insignia con el nombre en mayúsculas en la esquina inferior izquierda y el slider elástico debajo.
+3. Tocar la foto o el video de un participante: verificar que pasa a modo Spotlight ocupando todo el contenedor de llamadas, mientras el otro participante queda en una miniatura PiP en la esquina superior derecha. Volver a tocar para restaurar la vista dividida 50/50.
+4. Constatar que la barra de llamada flotante inferior se ubica siempre en la base, horizontalmente alineada a la misma altura que el menú de perfil (`#sidebarUserFooter`), sin importar si es llamada de voz o de video.
+
 ### 0.24.7A · 2026-09-25 · Antigravity
 **Qué cambió.** Soporte de Video P2P Mesh-Ready y conmutación de cámara en tiempo real durante llamadas:
 - **Transmisión de Video WebRTC P2P:**

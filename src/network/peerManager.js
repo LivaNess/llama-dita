@@ -285,9 +285,13 @@ export class PeerManager {
     try {
       const initialVideoTrack = this.localVideoStream ? this.localVideoStream.getVideoTracks()[0] : null;
       if (initialVideoTrack) {
-        this.pc.addTrack(initialVideoTrack, this.localVideoStream);
+        const sender = this.pc.addTrack(initialVideoTrack, this.localVideoStream);
+        if (sender) this.applyVideoBitrateLimits(sender);
       } else {
-        this.pc.addTransceiver('video', { direction: 'sendrecv' });
+        const transceiver = this.pc.addTransceiver('video', { direction: 'sendrecv' });
+        if (transceiver?.sender) {
+          this.applyVideoBitrateLimits(transceiver.sender);
+        }
       }
     } catch (e) {
       console.warn('Error al configurar transceiver de video:', e);
@@ -337,6 +341,9 @@ export class PeerManager {
 
       if (state === 'connected') {
         this.onConnectionStatusChange?.('connected', 'Conexión activa');
+        const senders = this.pc.getSenders ? this.pc.getSenders() : [];
+        const videoSender = senders.find(s => s.track && s.track.kind === 'video');
+        if (videoSender) this.applyVideoBitrateLimits(videoSender);
       } else if (state === 'connecting') {
         this.onConnectionStatusChange?.('connecting', 'Estableciendo enlace de audio...');
       } else if (state === 'disconnected' || state === 'closed') {
@@ -603,6 +610,24 @@ export class PeerManager {
     }
   }
 
+  async applyVideoBitrateLimits(videoSender) {
+    if (!videoSender || !videoSender.getParameters) return;
+    try {
+      const params = videoSender.getParameters();
+      if (!params) return;
+      if (!params.encodings || params.encodings.length === 0) {
+        params.encodings = [{}];
+      }
+      // Bitrate moderado para 1080p a 30 fps: 2.5 Mbps (2500 kbps)
+      params.encodings[0].maxBitrate = 2500000;
+      params.encodings[0].maxFramerate = 30;
+      await videoSender.setParameters(params);
+      console.log('[WebRTC Video] Bitrate moderado fijado a 2500 kbps (1080p30)');
+    } catch (e) {
+      // Ignorar si los parámetros no están listos todavía
+    }
+  }
+
   setLocalVideoStream(newVideoStream) {
     this.localVideoStream = newVideoStream;
     if (!this.pc) return;
@@ -621,12 +646,19 @@ export class PeerManager {
     }
 
     if (videoSender) {
-      videoSender.replaceTrack(newVideoTrack).catch(err => {
+      videoSender.replaceTrack(newVideoTrack).then(() => {
+        if (newVideoTrack) {
+          this.applyVideoBitrateLimits(videoSender);
+        }
+      }).catch(err => {
         console.warn('Error reemplazando pista de video en sender:', err);
       });
     } else if (newVideoTrack) {
       try {
-        this.pc.addTrack(newVideoTrack, newVideoStream);
+        const addedSender = this.pc.addTrack(newVideoTrack, newVideoStream);
+        if (addedSender) {
+          this.applyVideoBitrateLimits(addedSender);
+        }
         this.renegotiate();
       } catch (err) {
         console.warn('Error añadiendo pista de video:', err);

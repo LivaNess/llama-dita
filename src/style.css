@@ -286,19 +286,34 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem 2.5rem;
+  padding: 1.5rem 2rem 5.5rem 2rem;
   max-width: 1060px;
   width: 100%;
+  height: 100%;
   margin: 0 auto;
-  gap: 1.5rem;
+  gap: 1.25rem;
   box-sizing: border-box;
+  position: relative;
+  transition: max-width 0.3s cubic-bezier(0.16, 1, 0.3, 1), padding 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Cuando alguien prende cámara, las tarjetas crecen ocupando más tamaño en pantalla */
+.studio-container.has-active-video {
+  max-width: min(1440px, 96vw);
+  width: 96%;
+}
+
+.studio-container.has-active-video .studio-booths-row {
+  max-height: calc(100vh - 130px);
 }
 
 .studio-booths-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
+  gap: 1.25rem;
   width: 100%;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @media (max-width: 960px) {
@@ -306,7 +321,7 @@ body {
     grid-template-columns: 1fr;
   }
   .studio-container {
-    padding: 1rem;
+    padding: 1rem 1rem 5.5rem 1rem;
   }
 }
 
@@ -322,7 +337,7 @@ body {
   -webkit-backdrop-filter: blur(20px);
   position: relative;
   overflow: hidden;
-  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease, padding 0.25s ease;
   box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08);
   min-height: 380px;
   justify-content: center;
@@ -330,8 +345,16 @@ body {
 }
 
 .studio-booth:hover {
-  border-color: rgba(143, 166, 255, 0.22);
+  border-color: rgba(143, 166, 255, 0.25);
   box-shadow: 0 20px 48px -10px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* Aspecto idéntico a captura cuando hay video activo (media_1790316766255.png) */
+.studio-booth.has-video {
+  padding: 0.85rem 0.85rem 1.05rem 0.85rem;
+  gap: 0.65rem;
+  justify-content: flex-start;
+  min-height: 0;
 }
 
 /* Header de cabina con chip y estado de voz */
@@ -498,7 +521,6 @@ body {
 .booth-video-wrapper {
   position: relative;
   width: 100%;
-  max-width: 440px;
   aspect-ratio: 16 / 9;
   border-radius: 16px;
   overflow: hidden;
@@ -509,11 +531,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .booth-video-wrapper:hover {
-  border-color: rgba(143, 166, 255, 0.35);
+  border-color: rgba(143, 166, 255, 0.38);
 }
 
 .booth-video-player {
@@ -534,24 +557,25 @@ body {
 
 .booth-video-overlay-badge {
   position: absolute;
-  bottom: 12px;
-  left: 12px;
-  background: rgba(13, 19, 38, 0.78);
+  bottom: 10px;
+  left: 10px;
+  background: rgba(10, 15, 30, 0.84);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  padding: 0.25rem 0.7rem;
+  padding: 0.26rem 0.75rem;
   border-radius: 9999px;
-  font-size: 0.74rem;
-  font-weight: 600;
+  font-size: 0.76rem;
+  font-weight: 750;
   color: #ffffff;
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
   border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
   pointer-events: none;
   z-index: 3;
-  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .video-live-dot {
@@ -559,11 +583,149 @@ body {
   height: 6px;
   border-radius: 50%;
   background: #10b981;
-  box-shadow: 0 0 8px rgba(16, 185, 129, 0.9);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.95);
 }
 
 .studio-booth.has-video .booth-visual-center {
   display: none;
+}
+
+/* Botón flotante para alternar spotlight / pantalla completa */
+.booth-spotlight-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(10, 15, 30, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 6;
+  backdrop-filter: blur(8px);
+  opacity: 0.6;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.studio-booth:hover .booth-spotlight-btn {
+  opacity: 1;
+}
+
+.booth-spotlight-btn:hover {
+  background: rgba(91, 124, 250, 0.3);
+  border-color: rgba(91, 124, 250, 0.6);
+  color: #ffffff;
+  transform: scale(1.1);
+}
+
+.booth-visual-center {
+  cursor: pointer;
+  user-select: none;
+}
+
+/* MODO SPOTLIGHT / PANTALLA COMPLETA AL TOCAR LA FOTO/VIDEO */
+.studio-booths-row.has-spotlight {
+  display: block;
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.studio-booths-row.has-spotlight .studio-booth.is-spotlighted {
+  width: 100%;
+  height: 100%;
+  min-height: 480px;
+  max-height: calc(100vh - 140px);
+  padding: 1.2rem;
+  justify-content: space-between;
+  box-shadow: 0 28px 64px -12px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.studio-booths-row.has-spotlight .studio-booth.is-spotlighted .booth-video-wrapper {
+  height: calc(100% - 68px);
+  max-width: 100%;
+  aspect-ratio: auto;
+}
+
+.studio-booths-row.has-spotlight .studio-booth.is-spotlighted .booth-visual-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.studio-booths-row.has-spotlight .studio-booth.is-spotlighted .avatar-wrapper {
+  width: 190px;
+  height: 190px;
+}
+
+.studio-booths-row.has-spotlight .studio-booth.is-spotlighted .avatar-disc {
+  width: 160px;
+  height: 160px;
+  font-size: 3.5rem;
+}
+
+.studio-booths-row.has-spotlight .studio-booth.is-spotlighted .booth-user-name {
+  font-size: 1.5rem;
+  margin-top: 1.2rem;
+}
+
+/* Tarjeta secundaria en Picture-in-Picture flotante */
+.studio-booths-row.has-spotlight .studio-booth.is-pip {
+  position: absolute;
+  top: 1rem;
+  right: 1.25rem;
+  width: 220px;
+  min-height: 0;
+  padding: 0.55rem;
+  gap: 0.35rem;
+  border-radius: 16px;
+  background: rgba(10, 15, 30, 0.90);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 0 1.5px rgba(143, 166, 255, 0.3);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  z-index: 25;
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.studio-booths-row.has-spotlight .studio-booth.is-pip:hover {
+  transform: scale(1.04);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.9), 0 0 0 2px rgba(91, 124, 250, 0.6);
+}
+
+.studio-booths-row.has-spotlight .studio-booth.is-pip .booth-slider-container {
+  display: none;
+}
+
+.studio-booths-row.has-spotlight .studio-booth.is-pip .booth-spotlight-btn {
+  display: none;
+}
+
+.studio-booths-row.has-spotlight .studio-booth.is-pip .avatar-wrapper {
+  width: 68px;
+  height: 68px;
+}
+
+.studio-booths-row.has-spotlight .studio-booth.is-pip .avatar-disc {
+  width: 58px;
+  height: 58px;
+  font-size: 1.3rem;
+}
+
+.studio-booths-row.has-spotlight .studio-booth.is-pip .booth-user-name {
+  font-size: 0.82rem;
+  margin-top: 0.25rem;
+}
+
+.studio-booths-row.has-spotlight .studio-booth.is-pip .booth-video-wrapper {
+  border-radius: 10px;
+  aspect-ratio: 16 / 9;
+  min-height: 0;
 }
 
 /* Extra Controls (Gain/Sensitivity Range) */
@@ -804,21 +966,27 @@ select option {
   color: #fca5a5;
 }
 
-/* Barra de llamada: Flotante monolítica centrada debajo de las cabinas */
+/* Barra de llamada: Flotante anclada abajo en altura con el menú de perfil */
 .studio-call-bar {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 1.1rem;
-  padding: 0.55rem 0.95rem;
-  background: rgba(13, 19, 38, 0.88);
-  border: 1px solid rgba(143, 166, 255, 0.16);
+  gap: 0.65rem;
+  padding: 0.42rem 0.75rem;
+  background: rgba(10, 15, 30, 0.90);
+  border: 1px solid rgba(143, 166, 255, 0.18);
   border-radius: 9999px;
-  box-shadow: 0 16px 40px -6px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  box-shadow: 0 16px 40px -6px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   width: max-content;
   box-sizing: border-box;
+  z-index: 50;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btn-minimize-call {
