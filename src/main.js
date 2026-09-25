@@ -602,9 +602,22 @@ btnDeafen?.addEventListener('click', () => {
 function syncBoothsLayout(totalCount) {
   const boothsRow = document.querySelector('.studio-booths-row');
   if (!boothsRow) return;
-  const count = typeof totalCount === 'number' ? totalCount : Math.max(1, Math.min(5, 1 + remotePeerSessions.size));
+  let count;
+  if (typeof totalCount === 'number') {
+    count = totalCount;
+  } else if (activeVoiceChannel) {
+    count = Math.max(1, Math.min(5, 1 + remotePeerSessions.size));
+  } else {
+    count = Math.max(2, Math.min(5, 1 + remotePeerSessions.size));
+  }
   boothsRow.classList.remove('count-1', 'count-2', 'count-3', 'count-4', 'count-5');
   boothsRow.classList.add(`count-${count}`);
+
+  if (activeVoiceChannel && remotePeerSessions.size === 0) {
+    if (guestBooth) guestBooth.style.display = 'none';
+  } else if (guestBooth) {
+    guestBooth.style.display = '';
+  }
 }
 
 function attachAudioToSession(session, stream) {
@@ -857,6 +870,17 @@ function handlePeersUpdate(peersList) {
       session.name = peer.name || session.name;
       if (peer.avatarKey) session.avatarKey = peer.avatarKey;
       session.isVideoOn = !!peer.isVideoOn;
+      // Si el peer quedó como primero y no tenía el guestBooth asignado, promoverlo
+      if (idx === 0 && session.boothEl !== guestBooth) {
+        if (session.boothEl && session.boothEl.classList.contains('dynamic-booth')) {
+          session.boothEl.remove();
+        }
+        session.isPeer0 = true;
+        session.boothEl = guestBooth;
+        if (guestBooth) guestBooth.dataset.peerId = peer.peerId;
+        session.audioEl = remoteAudioElement;
+      }
+
       if (peer.stream && !session.stream) {
         session.stream = peer.stream;
         attachAudioToSession(session, peer.stream);
@@ -873,25 +897,19 @@ function handlePeersUpdate(peersList) {
   // Si no hay participantes remotos y estamos en un canal de voz:
   if (peersList.length === 0) {
     if (activeVoiceChannel) {
-      if (guestBooth) {
-        guestBooth.style.display = '';
-        if (guestUserName) guestUserName.textContent = 'Esperando a tus amigos…';
-        if (guestAvatarContent) {
-          guestAvatarContent.innerHTML = `
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-            </svg>
-          `;
-        }
-        if (guestBoothChipText) guestBoothChipText.textContent = `#${activeVoiceChannel.name}`;
-      }
+      if (guestBooth) guestBooth.style.display = 'none';
+      conQuien = null;
+      conQuienAvatarKey = null;
     }
   } else {
+    if (guestBooth) guestBooth.style.display = '';
     conQuien = peersList[0].name;
     if (peersList[0].avatarKey) conQuienAvatarKey = peersList[0].avatarKey;
   }
 
-  const totalParticipants = Math.max(1, Math.min(5, 1 + peersList.length));
+  const totalParticipants = activeVoiceChannel
+    ? Math.max(1, Math.min(5, 1 + peersList.length))
+    : Math.max(2, Math.min(5, 1 + peersList.length));
   syncBoothsLayout(totalParticipants);
   updateCallLayoutState();
   updateBoothProfiles();
@@ -988,8 +1006,16 @@ function handlePeerLeave(peerId) {
   } catch (_) {}
 
   remotePeerSessions.delete(peerId);
-  syncBoothsLayout();
+  if (activeVoiceChannel && remotePeerSessions.size === 0) {
+    if (guestBooth) guestBooth.style.display = 'none';
+    conQuien = null;
+    conQuienAvatarKey = null;
+    syncBoothsLayout(1);
+  } else {
+    syncBoothsLayout();
+  }
   updateCallLayoutState();
+  updateBoothProfiles();
 }
 
 // Setup WebRTC and Event Listeners
@@ -1007,22 +1033,36 @@ function setupNetworking() {
         social?.me?.avatar_key || null
       );
     } else if (status === 'waiting') {
-      isConnected = false;
-      stopCallTimer();
-      setCallStatus(activeVoiceChannel ? `Canal de voz: #${activeVoiceChannel.name} · Esperando…` : (conQuien ? `Llamando a ${conQuien}…` : 'Esperando participante…'));
+      if (!activeVoiceChannel) {
+        isConnected = false;
+        stopCallTimer();
+        setCallStatus(conQuien ? `Llamando a ${conQuien}…` : 'Esperando participante…');
+      } else {
+        isConnected = true;
+        setCallStatus(`Canal de voz: #${activeVoiceChannel.name}`);
+      }
     } else if (status === 'connecting') {
-      isConnected = false;
-      stopCallTimer();
-      setCallStatus(activeVoiceChannel ? `Canal de voz: #${activeVoiceChannel.name} · Conectando…` : 'Conectando…');
+      if (!activeVoiceChannel) {
+        isConnected = false;
+        stopCallTimer();
+        setCallStatus('Conectando…');
+      } else {
+        isConnected = true;
+        setCallStatus(`Canal de voz: #${activeVoiceChannel.name}`);
+      }
     } else if (status === 'disconnected') {
-      stopCallTimer();
-      if (!activeVoiceChannel && (isConnected || conQuien)) {
-        showToast(conQuien ? `${conQuien} cortó la llamada` : 'Llamada finalizada');
-        leaveCall(false);
+      if (!activeVoiceChannel) {
+        stopCallTimer();
+        if (isConnected || conQuien) {
+          showToast(conQuien ? `${conQuien} cortó la llamada` : 'Llamada finalizada');
+          leaveCall(false);
+        }
       }
     } else if (status === 'error') {
-      stopCallTimer();
-      showToast(msg || 'Error de conexión', 4000);
+      if (!activeVoiceChannel) {
+        stopCallTimer();
+        showToast(msg || 'Error de conexión', 4000);
+      }
     }
     updateMainViews();
   };
@@ -1651,24 +1691,9 @@ const ICON_AUDIO_ON = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></pol
 // SVG para ícono de audio silenciado (altavoz con X)
 const ICON_AUDIO_MUTED = `<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line>`;
 
-// Salir de la llamada: corta, vuelve a una sala propia vacía y deja la app en standby.
-function leaveCall(sendSignal = true) {
-  if (sendSignal) {
-    try { peerManager.sendData({ type: 'hangup' }); } catch (e) {}
-  }
-  peerManager.leaveRoom();
+let isLeavingCall = false;
 
-  stopCallTimer();
-  isConnected = false;
-  isCallViewMinimized = false;
-  remoteStream = null;
-  if (remoteAudioElement) remoteAudioElement.srcObject = null;
-  if (remoteAudioProcessor) {
-    remoteAudioProcessor.destroy();
-    remoteAudioProcessor = null;
-  }
-
-  // Limpiar todas las sesiones y cabinas dinámicas de la malla
+function cleanupRemoteSessions() {
   for (const session of remotePeerSessions.values()) {
     try {
       if (session.audioProcessor) session.audioProcessor.destroy();
@@ -1683,57 +1708,85 @@ function leaveCall(sendSignal = true) {
     } catch (_) {}
   }
   remotePeerSessions.clear();
+}
 
-  // Salir de canal de voz social en presencia
-  activeVoiceChannel = null;
-  leaveSocialVoiceChannel();
-
-  // Detener cámara local y apagar LED de hardware de inmediato
-  if (isCameraOn || localVideoStream) {
-    if (localVideoStream) {
-      localVideoStream.getTracks().forEach(track => {
-        try { track.stop(); } catch (e) {}
-      });
-      localVideoStream = null;
+// Salir de la llamada: corta, vuelve a una sala propia vacía y deja la app en standby.
+function leaveCall(sendSignal = true) {
+  if (isLeavingCall) return;
+  isLeavingCall = true;
+  try {
+    if (sendSignal) {
+      try { peerManager.sendData({ type: 'hangup' }); } catch (e) {}
     }
-    isCameraOn = false;
-    if (hostVideoElement) hostVideoElement.srcObject = null;
-    if (hostVideoWrapper) hostVideoWrapper.style.display = 'none';
-    updateCameraUi(false);
-    try { peerManager.setLocalVideoStream(null); } catch (e) {}
+    peerManager.leaveRoom();
+
+    stopCallTimer();
+    isConnected = false;
+    isCallViewMinimized = false;
+    remoteStream = null;
+    if (remoteAudioElement) remoteAudioElement.srcObject = null;
+    if (remoteAudioProcessor) {
+      remoteAudioProcessor.destroy();
+      remoteAudioProcessor = null;
+    }
+
+    // Limpiar todas las sesiones y cabinas dinámicas de la malla
+    cleanupRemoteSessions();
+
+    // Salir de canal de voz social en presencia sin bucle recursivo
+    activeVoiceChannel = null;
+    leaveSocialVoiceChannel(false);
+
+    // Detener cámara local y apagar LED de hardware de inmediato
+    if (isCameraOn || localVideoStream) {
+      if (localVideoStream) {
+        localVideoStream.getTracks().forEach(track => {
+          try { track.stop(); } catch (e) {}
+        });
+        localVideoStream = null;
+      }
+      isCameraOn = false;
+      if (hostVideoElement) hostVideoElement.srcObject = null;
+      if (hostVideoWrapper) hostVideoWrapper.style.display = 'none';
+      updateCameraUi(false);
+      try { peerManager.setLocalVideoStream(null); } catch (e) {}
+    }
+
+    // Reset de video remoto, spotlight y layout
+    if (guestVideoElement) guestVideoElement.srcObject = null;
+    if (guestVideoWrapper) guestVideoWrapper.style.display = 'none';
+    isRemoteVideoOn = false;
+    activeSpotlight = null;
+    updateSpotlightUi();
+    updateCallLayoutState();
+
+    conQuien = null;
+    conQuienAvatarKey = null;
+    if (guestAvatarDisc) guestAvatarDisc.classList.remove('active');
+    if (guestSpeakingStatus) {
+      guestSpeakingStatus.textContent = 'En silencio';
+      guestSpeakingStatus.className = 'booth-speaking-indicator';
+    }
+    if (guestVocalAura) {
+      guestVocalAura.style.transform = 'scale(1)';
+      guestVocalAura.style.opacity = '0.04';
+    }
+
+    // Reset de volumen de amigo
+    if (remoteVolumeVal) remoteVolumeVal.textContent = '100%';
+    guestElasticSlider?.setValue(100);
+    isRemoteMuted = false;
+    syncRemoteMuteIcon();
+
+    if (guestBooth) guestBooth.style.display = '';
+    syncBoothsLayout(2);
+    updateBoothProfiles();
+    setCallStatus('Sin llamada');
+    updateMainViews();
+    updateSocialCallState();
+  } finally {
+    isLeavingCall = false;
   }
-
-  // Reset de video remoto, spotlight y layout
-  if (guestVideoElement) guestVideoElement.srcObject = null;
-  if (guestVideoWrapper) guestVideoWrapper.style.display = 'none';
-  isRemoteVideoOn = false;
-  activeSpotlight = null;
-  updateSpotlightUi();
-  updateCallLayoutState();
-
-  conQuien = null;
-  conQuienAvatarKey = null;
-  if (guestAvatarDisc) guestAvatarDisc.classList.remove('active');
-  if (guestSpeakingStatus) {
-    guestSpeakingStatus.textContent = 'En silencio';
-    guestSpeakingStatus.className = 'booth-speaking-indicator';
-  }
-  if (guestVocalAura) {
-    guestVocalAura.style.transform = 'scale(1)';
-    guestVocalAura.style.opacity = '0.04';
-  }
-
-  // Reset de volumen de amigo
-  if (remoteVolumeVal) remoteVolumeVal.textContent = '100%';
-  guestElasticSlider?.setValue(100);
-  isRemoteMuted = false;
-  syncRemoteMuteIcon();
-
-  syncBoothsLayout(2);
-  updateBoothProfiles();
-  setCallStatus('Sin llamada');
-  updateMainViews();
-  updateSocialCallState();
 }
 
 btnLeaveCall?.addEventListener('click', () => {
@@ -1761,7 +1814,7 @@ sidebarCallMiniDock?.addEventListener('click', (e) => {
 });
 
 // Start the app on load
-window.addEventListener('DOMContentLoaded', async () => {
+async function bootApp() {
   // En escritorio (Neutralino), verificar si ya hay una instancia previa corriendo para no duplicar procesos ni colisionar
   if (typeof window !== 'undefined' && typeof window.NL_PORT !== 'undefined') {
     try {
@@ -1779,12 +1832,19 @@ window.addEventListener('DOMContentLoaded', async () => {
   // No espera al micrófono: la cuenta tiene que estar disponible aunque el permiso demore o falle.
   initSocial({
     joinVoiceChannel: (channel) => {
+      if (activeVoiceChannel && activeVoiceChannel.id !== channel.id) {
+        cleanupRemoteSessions();
+      }
       activeVoiceChannel = channel;
       currentActiveChannel = null;
       isCallViewMinimized = false;
       conQuien = channel.name;
+      isConnected = true;
+      startCallTimer();
       setCallStatus(`Canal de voz: #${channel.name}`);
       peerManager.setRoom(channel.room_code);
+      if (guestBooth) guestBooth.style.display = 'none';
+      syncBoothsLayout(1);
       updateBoothProfiles();
       updateMainViews();
       updateSocialCallState();
@@ -1870,9 +1930,44 @@ window.addEventListener('DOMContentLoaded', async () => {
   initUpdater({ toast: showToast });
   // El enlace del mail o de la notificación abre la app y el chat (esquema llamadita://).
   initDeepLink({ toast: showToast, onOpenChat: (channelId) => openSocialChannel(channelId) });
-  // Bandeja del sistema (System Tray) e intercepción de la "X" para ocultar en segundo plano
   initDesktopTrayAndWindow();
-});
+}
+
+if (typeof window !== 'undefined') {
+  window.__llamadita = {
+    joinVoiceChannel: (chan) => {
+      isUserLoggedIn = true;
+      if (activeVoiceChannel && activeVoiceChannel.id !== chan.id) {
+        cleanupRemoteSessions();
+      }
+      activeVoiceChannel = chan;
+      currentActiveChannel = null;
+      isCallViewMinimized = false;
+      conQuien = chan.name;
+      isConnected = true;
+      startCallTimer();
+      setCallStatus(`Canal de voz: #${chan.name}`);
+      peerManager.setRoom(chan.room_code);
+      if (guestBooth) guestBooth.style.display = 'none';
+      syncBoothsLayout(1);
+      updateBoothProfiles();
+      updateMainViews();
+      updateSocialCallState();
+    },
+    leaveCall: (sendSignal = true) => leaveCall(sendSignal),
+    handlePeersUpdate: (peers) => handlePeersUpdate(peers),
+    handlePeerLeave: (peerId) => handlePeerLeave(peerId),
+    getPeerManager: () => peerManager,
+    getActiveVoiceChannel: () => activeVoiceChannel,
+    getRemotePeerSessions: () => remotePeerSessions
+  };
+}
+
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', bootApp);
+} else {
+  bootApp();
+}
 
 // Instancia única en escritorio: si el usuario vuelve a abrir Llamadita teniendo ya
 // la app minimizada en segundo plano (System Tray), restaura la existente y sale de inmediato.

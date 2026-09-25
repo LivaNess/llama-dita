@@ -327,7 +327,7 @@ body {
 
 /* Layout adaptativo de cabinas según cantidad de participantes (1 a 5) */
 .studio-booths-row.count-1 {
-  grid-template-columns: minmax(320px, 560px);
+  grid-template-columns: minmax(320px, 680px);
   justify-content: center;
 }
 

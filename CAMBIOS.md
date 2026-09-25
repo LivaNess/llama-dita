@@ -17,6 +17,29 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.8B · 2026-09-25 · Antigravity
+**Qué cambió.** Lógica de canales de voz al estilo Discord, entrada en solitario limpia, eliminación de bucle de reconexión y salida inmediata sin tormenta de toasts:
+- **Lógica Discord en Canales de Voz:**
+  - Al ingresar a un canal de voz, el usuario entra solo si no hay otros participantes.
+  - La tarjeta de amigo o participante fantasma (`#guestBooth`) se oculta por completo (`display: none`), mostrando únicamente la tarjeta propia (`#hostBooth`) centrada en pantalla con la clase `.studio-booths-row.count-1` (hasta 680px de ancho). Se eliminó la cabina de espera ficticia ("Esperando a tus amigos…").
+  - Cuando otro participante se conecta a la sala, su cabina aparece naturalmente (`.count-2`, `.count-3`, etc.).
+  - Si un participante se desconecta, el usuario local no es expulsado del canal ni se detiene la sesión de voz; si vuelve a quedar solo, la vista regresa limpiamente a `.count-1` con solo su tarjeta visible.
+- **Salida Limpia ("No me deja salir" / Solución a Bucle de Desconexión):**
+  - Se implementó protección contra re-entrancia (`isLeavingCall`) en `leaveCall()`.
+  - Se desacopló la salida social de presencia para evitar que `leaveCall` dispare `hooks.leaveVoiceChannel` de forma recursiva.
+  - En `peerManager.leaveRoom()`, ya no se autogenera una sala aleatoria ni se auto-conecta un nuevo canal de Supabase al salir; se destruye la suscripción limpiamente y se borra el parámetro de URL.
+  - Se eliminó el spam de toasts de error (`Error en canal de señalización. Reintentando...`) causado por eventos transitorios de `CHANNEL_ERROR` y `TIMED_OUT` de canales destruidos.
+  - Al pulsar "Cortar llamada" (`#btnLeaveCall` o `#btnSidebarCallHangup`), la app sale de inmediato, apaga cámara si estaba encendida, restaura presencia y vuelve a la vista de standby sin trabas.
+- **Opción de Menú Contextual:**
+  - Al hacer clic derecho en el canal de voz activo en la barra lateral, se añadió la opción directa "Desconectarse de la voz".
+**Por qué.** El usuario reportó que al entrar al canal de voz no podía salir, aparecían múltiples toasts apilados de "Error en canal de señalización. Reintentando...", y solicitó que se use la lógica de Discord donde uno entra solo al canal sin participantes fantasmas.
+**Dónde.** `src/network/peerManager.js`, `src/social/panel.js`, `src/main.js`, `src/style.css`, `package.json`, `CAMBIOS.md`, `SYNC.md`.
+**Cómo se verifica.**
+1. Entrar a un canal de voz haciendo clic en la barra lateral: comprobar que se entra en solitario, se muestra únicamente la cabina propia `#hostBooth` centrada en `.count-1` y `#guestBooth` no está visible en el DOM.
+2. Comprobar que no se emiten toasts de error en cascada.
+3. Pulsar en el botón flotante "Cortar llamada" o en el botón del mini dock de la barra lateral: constatar que la llamada finaliza al instante, se muestra un único toast de confirmación y la pantalla regresa a standby.
+4. Conectar un segundo participante a la misma sala de voz: comprobar que su cabina aparece en `.count-2`. Si ese participante se retira, verificar que el usuario local permanece en la sala solo en `.count-1`.
+
 ### 0.24.8A · 2026-09-25 · Antigravity
 **Qué cambió.** Canales de voz 100% funcionales y arquitectura WebRTC Mesh multi-participante (hasta 5 personas en simultáneo):
 - **Canales de Voz Directos en Barra Lateral:**

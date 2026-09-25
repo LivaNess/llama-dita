@@ -405,14 +405,16 @@ export function joinVoiceChannel(chan) {
   if (!chan) return;
   state.activeVoiceChannel = chan;
   syncPresenceState();
-  hooks.joinVoiceChannel?.(chan);
   safeRender();
+  hooks.joinVoiceChannel?.(chan);
 }
 
-export function leaveVoiceChannel() {
+export function leaveVoiceChannel(notifyHook = true) {
   state.activeVoiceChannel = null;
   syncPresenceState();
-  hooks.leaveVoiceChannel?.();
+  if (notifyHook) {
+    hooks.leaveVoiceChannel?.();
+  }
   safeRender();
 }
 
@@ -612,6 +614,8 @@ function render() {
     if (overlay) overlay.hidden = true;
     return;
   }
+
+  if (!drawer) return;
   if (!state.me) { drawer.innerHTML = `<div class="sc-empty">Cargando tu cuenta…</div>`; return; }
   drawer.innerHTML = `
     ${profileHeader()}
@@ -2511,6 +2515,13 @@ function showChannelContextMenu(e, channel) {
           <span>Silenciar notificaciones ›</span>
         </button>
       `}
+      ${state.activeVoiceChannel?.id === channel.id ? `
+        <div class="menu-divider"></div>
+        <button type="button" data-action="disconnect-voice" class="danger">
+          ${ICONO_COLGAR}
+          <span>Desconectarse de la voz</span>
+        </button>
+      ` : ''}
       <div class="menu-divider"></div>
       ${isOwner ? `
         <button type="button" data-action="delete" class="danger">
@@ -2557,6 +2568,12 @@ function showChannelContextMenu(e, channel) {
 
     menu.querySelector('[data-action="mute-menu"]')?.addEventListener('click', () => {
       renderMuteMenu();
+    });
+
+    menu.querySelector('[data-action="disconnect-voice"]')?.addEventListener('click', () => {
+      menu.remove();
+      hooks.toast?.('Saliste de la llamada de voz');
+      leaveVoiceChannel(true);
     });
 
     menu.querySelector('[data-action="delete"]')?.addEventListener('click', () => {
@@ -3576,12 +3593,16 @@ export function getActiveVoiceChannel() {
   return state.activeVoiceChannel;
 }
 
-export function leaveSocialVoiceChannel() {
-  leaveVoiceChannel();
+export function leaveSocialVoiceChannel(notifyHook = false) {
+  leaveVoiceChannel(notifyHook);
 }
 
 export function joinSocialVoiceChannel(chan) {
   joinVoiceChannel(chan);
+}
+
+export function getHooks() {
+  return hooks;
 }
 
 

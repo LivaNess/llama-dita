@@ -144,21 +144,26 @@ export class PeerManager {
     }
 
     this.destroy();
-    this.roomId = `llamadita-${Math.random().toString(36).substring(2, 8)}`;
+    this.roomId = null;
 
     try {
       const newUrl = new URL(window.location.href);
-      newUrl.searchParams.set('room', this.roomId);
+      newUrl.searchParams.delete('room');
       window.history.replaceState({}, '', newUrl);
     } catch (e) {}
 
-    this.joinRoomChannel();
-    return this.roomId;
+    this.onConnectionStatusChange?.('waiting', 'Desconectado');
+    return null;
   }
 
   setRoom(targetRoomId) {
     const normalized = PeerManager.normalizeRoomId(targetRoomId);
     if (!normalized) return false;
+
+    // Si ya estamos en esta misma sala y el canal está activo, no reiniciar todo
+    if (this.roomId === normalized && this.channel) {
+      return true;
+    }
 
     this.destroy();
     this.roomId = normalized;
@@ -177,44 +182,51 @@ export class PeerManager {
     if (!this.roomId) return;
 
     if (this.channel) {
+      const oldCh = this.channel;
+      this.channel = null;
       try {
-        this.channel.unsubscribe();
-        this.supabase.removeChannel(this.channel);
+        oldCh.unsubscribe().catch(() => {});
+        this.supabase.removeChannel(oldCh).catch(() => {});
       } catch (e) {}
     }
 
     const channelName = `room_${this.roomId}`;
-    this.channel = this.supabase.channel(channelName, {
+    const ch = this.supabase.channel(channelName, {
       config: {
         broadcast: { ack: false, self: false },
         presence: { key: this.myPeerId }
       }
     });
+    this.channel = ch;
 
     // Escuchar señales WebRTC P2P
-    this.channel.on('broadcast', { event: 'signal' }, async ({ payload }) => {
+    ch.on('broadcast', { event: 'signal' }, async ({ payload }) => {
+      if (this.channel !== ch) return;
       if (!payload || payload.to !== this.myPeerId) return;
       await this.handleSignal(payload);
     });
 
     // Escuchar presencia en la sala
-    this.channel.on('presence', { event: 'sync' }, () => {
+    ch.on('presence', { event: 'sync' }, () => {
+      if (this.channel !== ch) return;
       this.handlePresenceSync();
     });
 
-    this.channel.on('presence', { event: 'leave' }, ({ key }) => {
+    ch.on('presence', { event: 'leave' }, ({ key }) => {
+      if (this.channel !== ch) return;
       if (this.peers.has(key)) {
         console.log('Participante desconectado vía presencia:', key);
         this.closePeerSession(key);
       }
     });
 
-    this.channel.subscribe(async (status) => {
+    ch.subscribe(async (status) => {
+      if (this.channel !== ch) return;
       if (status === 'SUBSCRIBED') {
         console.log(`Conectado al canal ${channelName} como ${this.myPeerId}`);
         await this.trackPresence();
       } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-        this.onConnectionStatusChange?.('error', 'Error en canal de señalización. Reintentando...');
+        console.warn(`[PeerManager] Estado de canal: ${status}`);
       }
     });
   }

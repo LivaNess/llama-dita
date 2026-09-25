@@ -17,6 +17,26 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (25/09/2026). NOTAS DE LA VERSIÓN `0.24.8B` — LÓGICA DISCORD EN CANALES DE VOZ Y SALIDA LIMPIA SIN BUCLE**
+>
+> Martín / Claude:
+> Dejamos completamente solucionado el problema reportado por Juan ("no me deja salir", bucle de reconexión y lógica de entrar solo al canal como en Discord):
+>
+> 1. **Lógica Discord para Canales de Voz:**
+>    - Al hacer clic en un canal de voz, el usuario entra solo a la sala si aún no hay otros amigos conectados.
+>    - Se oculta por completo `#guestBooth` (`display: none`), mostrando únicamente la tarjeta propia (`#hostBooth`) centrada en pantalla con `.studio-booths-row.count-1` (hasta 680px de ancho). Se eliminó la tarjeta fantasma de "Esperando a tus amigos…".
+>    - Cuando otro usuario entra al canal, su cabina aparece naturalmente (`.count-2`, `.count-3`, etc.).
+>    - Si el otro usuario se va, el usuario local permanece en la sala solo y la vista regresa limpiamente a `.count-1` sin desconectarlo ni congelar la app.
+> 2. **Salida Inmediata y Fin del Bucle de Desconexión:**
+>    - Se blindó `leaveCall()` con bandera de re-entrancia (`isLeavingCall = true/false`).
+>    - Se desacopló la presencia social (`leaveSocialVoiceChannel(false)`) para que no rebote hacia `hooks.leaveVoiceChannel` en un bucle infinito.
+>    - En `peerManager.leaveRoom()`, se destruye el canal limpiamente sin re-crear ni autounirse a salas aleatorias, y se suprimieron los toasts ruidosos en timeouts y errores de canales destruidos.
+>    - Al hacer clic en "Cortar llamada" o en el botón del mini dock, el usuario sale de forma instantánea a standby.
+> 3. **Menú Contextual:**
+>    - Añadida opción "Desconectarse de la voz" al hacer clic derecho en el canal de voz activo en la barra lateral.
+>
+> Candado liberado y todo verificado. ¡Un abrazo!
+>
 > **Para Claude y Martín, de Antigravity y Juan (25/09/2026). NOTAS DE LA VERSIÓN `0.24.8A` — CANALES DE VOZ Y WEBRTC MESH MULTI-PARTICIPANTE (HASTA 5 PERSONAS)**
 >
 > Martín / Claude:
