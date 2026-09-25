@@ -611,11 +611,15 @@ body {
   box-shadow: 0 0 8px rgba(16, 185, 129, 0.95);
 }
 
-.studio-booth.has-video .booth-visual-center {
-  display: none;
+/* Cuando la cabina tiene video activo: el avatar visual se oculta SIEMPRE */
+.studio-booth.has-video .booth-visual-center,
+.studio-booth.has-video.is-spotlighted .booth-visual-center,
+.studio-booths-row.has-spotlight .studio-booth.has-video .booth-visual-center,
+.studio-booths-row.has-spotlight .studio-booth.is-spotlighted.has-video .booth-visual-center {
+  display: none !important;
 }
 
-/* Botón flotante para alternar spotlight / pantalla completa - Siempre por encima (z-index: 100) */
+/* Botón flotante para alternar spotlight / pantalla completa - Queda por debajo del PiP (z-index: 10) */
 .booth-spotlight-btn {
   position: absolute;
   top: 14px;
@@ -630,7 +634,7 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 100 !important;
+  z-index: 10;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   opacity: 0.85;
@@ -641,6 +645,7 @@ body {
 .studio-booth:hover .booth-spotlight-btn,
 .studio-booth.is-spotlighted .booth-spotlight-btn {
   opacity: 1;
+  z-index: 10;
 }
 
 .booth-spotlight-btn:hover {
@@ -675,6 +680,8 @@ body {
 
 .studio-booths-row.has-spotlight .studio-booth.is-spotlighted.has-video {
   padding: 0;
+  gap: 0;
+  justify-content: flex-start;
   overflow: hidden;
 }
 
@@ -688,9 +695,21 @@ body {
   border-radius: 0;
   border: none;
   border-bottom: 1px solid rgba(143, 166, 255, 0.14);
+  flex: 1 1 auto;
+  width: 100%;
+  display: flex;
 }
 
-.studio-booths-row.has-spotlight .studio-booth.is-spotlighted .booth-visual-center {
+.studio-booths-row.has-spotlight .studio-booth.is-spotlighted.has-video .booth-slider-container {
+  height: 76px;
+  flex: 0 0 76px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.85rem 1.25rem 1.15rem 1.25rem;
+  background: rgba(13, 18, 36, 0.85);
+}
+
+.studio-booths-row.has-spotlight .studio-booth.is-spotlighted:not(.has-video) .booth-visual-center {
   flex: 1;
   display: flex;
   align-items: center;
@@ -726,7 +745,7 @@ body {
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 0 1.5px rgba(143, 166, 255, 0.3);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  z-index: 25;
+  z-index: 30;
   cursor: grab;
   user-select: none;
   touch-action: none;

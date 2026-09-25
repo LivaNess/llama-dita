@@ -17,6 +17,21 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.7D · 2026-09-25 · Antigravity
+**Qué cambió.** Ocultación completa de avatar central en modo spotlight con cámara y botón de restauración por debajo de la ventana PiP:
+- **Cámara Total en Modo Spotlight (media_1790319369010.png):**
+  - Se corrigió la especificidad CSS de `.booth-visual-center` para que cuando una tarjeta en Spotlight tenga cámara activa (`has-video`), el avatar circular central y el texto de nombre se oculten por completo (`display: none !important`), permitiendo que el video de la persona ocupe la totalidad del espacio de la tarjeta por encima del slider de volumen.
+- **Botón de Restaurar Vista Dividida por Debajo de PiP:**
+  - El botón `.booth-spotlight-btn` se configuró con `z-index: 10`, quedando naturalmente por debajo de la ventana flotante PiP (`z-index: 30`).
+  - Cuando la ventana PiP se encuentra en la esquina superior derecha, flota limpia por encima sin que el botón de la tarjeta trasera interfiera ni se monte sobre ella. Al arrastrar la ventana PiP a otra esquina, el botón de restaurar en la tarjeta trasera queda despejado y accesible.
+**Por qué.** El usuario reportó con captura que en modo spotlight con cámara aún se mostraba el avatar circular central en el medio de la pantalla tapando el video, y aclaró que el botón de restaurar vista dividida debe quedar por debajo de la ventana PiP.
+**Dónde.** `src/style.css`, `package.json`, `CAMBIOS.md`, `SYNC.md`.
+**Cómo se verifica.**
+1. Iniciar una llamada con cámara activa y pulsar en la tarjeta para ampliar a pantalla completa (Spotlight).
+2. Comprobar que el video de la persona ocupa toda la tarjeta sin mostrar el círculo del avatar ni el nombre en el centro.
+3. Observar la ventana PiP en la esquina superior derecha: constatar que el botón de restaurar queda por debajo de ella y no se dibuja encima.
+4. Arrastrar la ventana PiP a otra esquina (ej. superior izquierda): constatar que el botón de restaurar en la esquina superior derecha queda al descubierto en la tarjeta principal.
+
 ### 0.24.7C · 2026-09-25 · Antigravity
 **Qué cambió.** Cabina de video al ras sin marcos internos, ventana flotante PiP arrastrable con fijación (snapping) a las 4 esquinas, y botones de minimizar siempre en primer plano:
 - **Cámara Llena y al Ras en la Cabina (media_1790318301410.png):**

@@ -17,6 +17,19 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (25/09/2026). NOTAS DE LA VERSIÓN `0.24.7D` — FIX DE AVATAR EN SPOTLIGHT Y BOTÓN DE RESTAURAR POR DEBAJO DE PIP**
+>
+> Martín / Claude:
+> Realizamos las correcciones visuales señaladas por Juan en base a su captura (`media_1790319369010.png`):
+>
+> 1. **Ocultación Estricta del Avatar Central en Spotlight con Video:**
+>    - Al estar en modo Spotlight con la cámara encendida, se ocultó de forma total y forzada (`display: none !important`) el bloque `.booth-visual-center` que mostraba el avatar circular y el nombre en medio de la pantalla, dejando que el reproductor de video de la persona ocupe limpiamente toda la tarjeta sobre el control de volumen.
+> 2. **Botón de Restaurar Vista Dividida por Debajo de PiP (`z-index: 10`):**
+>    - Se redujo el `z-index` de `.booth-spotlight-btn` a `10` para que quede por debajo de la ventana flotante PiP (`z-index: 30`).
+>    - La ventana PiP flota en primer plano y sin que el botón de restaurar se monte encima. Al mover la ventana flotante a cualquiera de las otras 3 esquinas, el botón de restaurar de la tarjeta principal queda al descubierto y accesible.
+>
+> Candado liberado y todo listo para el siguiente paso. ¡Un abrazo!
+>
 > **Para Claude y Martín, de Antigravity y Juan (25/09/2026). NOTAS DE LA VERSIÓN `0.24.7C` — CABINA FLUSH, PIP ARRASTRABLE EN 4 ESQUINAS Y MINIMIZAR SIEMPRE POR ENCIMA**
 >
 > Martín / Claude:
