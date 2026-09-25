@@ -216,6 +216,8 @@ async function updateBoothProfiles() {
   const localName = social?.me?.display_name || social?.me?.username || 'Tú';
   if (hostUserName) hostUserName.textContent = localName;
   if (hostVideoBadgeText) hostVideoBadgeText.textContent = (localName || 'Tú').toUpperCase();
+  const hostPipBadgeText = document.getElementById('hostPipBadgeText');
+  if (hostPipBadgeText) hostPipBadgeText.textContent = (localName || 'Tú').toUpperCase();
   if (hostBoothChipText) hostBoothChipText.textContent = 'Tu cabina';
   if (hostAvatarContent) {
     if (social?.me?.avatar_key) {
@@ -242,6 +244,8 @@ async function updateBoothProfiles() {
   const remoteName = conQuien || 'Participante';
   if (guestUserName) guestUserName.textContent = remoteName;
   if (guestVideoBadgeText) guestVideoBadgeText.textContent = (remoteName || 'Participante').toUpperCase();
+  const guestPipBadgeText = document.getElementById('guestPipBadgeText');
+  if (guestPipBadgeText) guestPipBadgeText.textContent = (remoteName || 'Participante').toUpperCase();
   if (guestBoothChipText) guestBoothChipText.textContent = conQuien ? `Con ${conQuien}` : 'Participante';
   if (guestAvatarContent) {
     let friendAvatarKey = conQuienAvatarKey || null;
@@ -952,6 +956,10 @@ function updateCallLayoutState() {
 }
 
 // Control de Spotlight / Pantalla completa de participante
+let pipCorner = 'top-right';
+let isPipDragging = false;
+let wasPipDrag = false;
+
 function toggleSpotlight(who) {
   if (activeSpotlight === who) {
     activeSpotlight = null;
@@ -966,8 +974,19 @@ function updateSpotlightUi() {
   if (!boothsRow) return;
 
   boothsRow.classList.remove('has-spotlight', 'spotlight-host', 'spotlight-guest');
-  hostBooth?.classList.remove('is-spotlighted', 'is-pip');
-  guestBooth?.classList.remove('is-spotlighted', 'is-pip');
+  boothsRow.classList.remove('pip-in-top-right', 'pip-in-top-left', 'pip-in-bottom-left', 'pip-in-bottom-right');
+
+  const resetBoothPip = (b) => {
+    if (!b) return;
+    b.classList.remove('is-spotlighted', 'is-pip', 'is-dragging', 'pip-corner-top-right', 'pip-corner-top-left', 'pip-corner-bottom-left', 'pip-corner-bottom-right');
+    b.style.left = '';
+    b.style.top = '';
+    b.style.right = '';
+    b.style.bottom = '';
+  };
+
+  resetBoothPip(hostBooth);
+  resetBoothPip(guestBooth);
 
   const hostIconExpand = btnHostSpotlight?.querySelector('.spotlight-icon-expand');
   const hostIconRestore = btnHostSpotlight?.querySelector('.spotlight-icon-restore');
@@ -975,9 +994,9 @@ function updateSpotlightUi() {
   const guestIconRestore = btnGuestSpotlight?.querySelector('.spotlight-icon-restore');
 
   if (activeSpotlight === 'host') {
-    boothsRow.classList.add('has-spotlight', 'spotlight-host');
+    boothsRow.classList.add('has-spotlight', 'spotlight-host', `pip-in-${pipCorner}`);
     hostBooth?.classList.add('is-spotlighted');
-    guestBooth?.classList.add('is-pip');
+    guestBooth?.classList.add('is-pip', `pip-corner-${pipCorner}`);
 
     if (hostIconExpand) hostIconExpand.style.display = 'none';
     if (hostIconRestore) hostIconRestore.style.display = 'block';
@@ -986,9 +1005,9 @@ function updateSpotlightUi() {
     if (guestIconRestore) guestIconRestore.style.display = 'none';
     if (btnGuestSpotlight) btnGuestSpotlight.title = 'Ampliar a pantalla completa';
   } else if (activeSpotlight === 'guest') {
-    boothsRow.classList.add('has-spotlight', 'spotlight-guest');
+    boothsRow.classList.add('has-spotlight', 'spotlight-guest', `pip-in-${pipCorner}`);
     guestBooth?.classList.add('is-spotlighted');
-    hostBooth?.classList.add('is-pip');
+    hostBooth?.classList.add('is-pip', `pip-corner-${pipCorner}`);
 
     if (guestIconExpand) guestIconExpand.style.display = 'none';
     if (guestIconRestore) guestIconRestore.style.display = 'block';
@@ -1005,6 +1024,111 @@ function updateSpotlightUi() {
     if (btnGuestSpotlight) btnGuestSpotlight.title = 'Ampliar a pantalla completa';
   }
 }
+
+// Arrastre suave de ventana flotante PiP con snapping a las 4 esquinas (media_1790318442467.png)
+function setupPipDrag(boothEl) {
+  if (!boothEl) return;
+  let startX = 0;
+  let startY = 0;
+  let initialLeft = 0;
+  let initialTop = 0;
+  let boothsRowRect = null;
+  let elRect = null;
+  let dragStarted = false;
+
+  boothEl.addEventListener('pointerdown', (e) => {
+    if (!boothEl.classList.contains('is-pip')) return;
+    if (e.target.closest('button, input, .elastic-slider-root')) return;
+
+    startX = e.clientX;
+    startY = e.clientY;
+    dragStarted = false;
+
+    const boothsRow = document.querySelector('.studio-booths-row');
+    if (!boothsRow) return;
+
+    boothsRowRect = boothsRow.getBoundingClientRect();
+    elRect = boothEl.getBoundingClientRect();
+
+    initialLeft = elRect.left - boothsRowRect.left;
+    initialTop = elRect.top - boothsRowRect.top;
+
+    boothEl.setPointerCapture(e.pointerId);
+  });
+
+  boothEl.addEventListener('pointermove', (e) => {
+    if (!boothEl.hasPointerCapture(e.pointerId)) return;
+    if (!boothEl.classList.contains('is-pip')) return;
+
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+
+    if (!dragStarted && Math.hypot(dx, dy) > 5) {
+      dragStarted = true;
+      isPipDragging = true;
+      boothEl.classList.add('is-dragging');
+    }
+
+    if (dragStarted && boothsRowRect && elRect) {
+      const maxLeft = boothsRowRect.width - elRect.width;
+      const maxTop = boothsRowRect.height - elRect.height;
+      const newLeft = Math.max(8, Math.min(maxLeft - 8, initialLeft + dx));
+      const newTop = Math.max(8, Math.min(maxTop - 8, initialTop + dy));
+
+      boothEl.style.left = `${newLeft}px`;
+      boothEl.style.top = `${newTop}px`;
+      boothEl.style.right = 'auto';
+      boothEl.style.bottom = 'auto';
+    }
+  });
+
+  const finishDrag = (e) => {
+    if (!boothEl.hasPointerCapture(e.pointerId)) return;
+    try {
+      boothEl.releasePointerCapture(e.pointerId);
+    } catch (_) {}
+
+    if (dragStarted) {
+      wasPipDrag = true;
+      setTimeout(() => { wasPipDrag = false; }, 120);
+
+      const boothsRow = document.querySelector('.studio-booths-row');
+      if (boothsRow) {
+        const rowRect = boothsRow.getBoundingClientRect();
+        const currentRect = boothEl.getBoundingClientRect();
+        const pipCenterX = currentRect.left + currentRect.width / 2;
+        const pipCenterY = currentRect.top + currentRect.height / 2;
+        const rowCenterX = rowRect.left + rowRect.width / 2;
+        const rowCenterY = rowRect.top + rowRect.height / 2;
+
+        const isTop = pipCenterY < rowCenterY;
+        const isLeft = pipCenterX < rowCenterX;
+        pipCorner = `${isTop ? 'top' : 'bottom'}-${isLeft ? 'left' : 'right'}`;
+
+        boothsRow.classList.remove('pip-in-top-right', 'pip-in-top-left', 'pip-in-bottom-left', 'pip-in-bottom-right');
+        boothsRow.classList.add(`pip-in-${pipCorner}`);
+      }
+
+      boothEl.classList.remove('pip-corner-top-right', 'pip-corner-top-left', 'pip-corner-bottom-left', 'pip-corner-bottom-right');
+      boothEl.classList.add(`pip-corner-${pipCorner}`);
+
+      boothEl.style.left = '';
+      boothEl.style.top = '';
+      boothEl.style.right = '';
+      boothEl.style.bottom = '';
+    }
+
+    dragStarted = false;
+    isPipDragging = false;
+    boothEl.classList.remove('is-dragging');
+  };
+
+  boothEl.addEventListener('pointerup', finishDrag);
+  boothEl.addEventListener('pointercancel', finishDrag);
+}
+
+setupPipDrag(hostBooth);
+setupPipDrag(guestBooth);
 
 // Clic en la foto o video para ampliar a pantalla completa
 hostAvatarDisc?.addEventListener('click', (e) => {
@@ -1041,13 +1165,15 @@ btnGuestSpotlight?.addEventListener('click', (e) => {
   toggleSpotlight('guest');
 });
 
-// Clic en tarjeta PiP para cambiar el foco a esa persona
+// Clic en tarjeta PiP para cambiar el foco a esa persona (ignora si fue arrastre)
 hostBooth?.addEventListener('click', () => {
+  if (wasPipDrag) return;
   if (hostBooth.classList.contains('is-pip')) {
     toggleSpotlight('host');
   }
 });
 guestBooth?.addEventListener('click', () => {
+  if (wasPipDrag) return;
   if (guestBooth.classList.contains('is-pip')) {
     toggleSpotlight('guest');
   }

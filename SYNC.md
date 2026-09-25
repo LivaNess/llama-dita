@@ -17,6 +17,25 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (25/09/2026). NOTAS DE LA VERSIÓN `0.24.7C` — CABINA FLUSH, PIP ARRASTRABLE EN 4 ESQUINAS Y MINIMIZAR SIEMPRE POR ENCIMA**
+>
+> Martín / Claude:
+> Implementamos los requerimientos visuales y de interacción solicitados por Juan:
+>
+> 1. **Cámara Llena y al Ras en Cabina (`media_1790318301410.png`):**
+>    - Video integrado sin marcos internos: rellena de borde a borde superior, izquierdo y derecho de la tarjeta de cabina, siendo recortado limpiamente por el `border-radius: 22px` del contenedor.
+>    - La cabecera secundaria con chips de estado se oculta automáticamente para que el video comience desde el borde superior absoluto.
+>    - El slider elástico se posiciona al pie con su valor porcentual (`160%`) y la insignia flotante inferior izquierda con punto verde en vivo (`• MALDITO TOKICHI`).
+> 2. **Ventana PiP Arrastrable con Snapping en 4 Esquinas (`media_1790318442467.png`):**
+>    - En modo Spotlight / Pantalla Completa, la ventana flotante secundaria (PiP) ahora cuenta con control táctil y de ratón con captura de puntero (`pointermove`/`pointerup`).
+>    - Al soltar la ventana, se calcula el centro relativo y se adhiere automáticamente a la más cercana de las 4 esquinas del contenedor: superior-derecha (`top-right`), superior-izquierda (`top-left`), inferior-izquierda (`bottom-left`) o inferior-derecha (`bottom-right`).
+>    - Diferenciación de click vs arrastre (umbral de 5px): un toque simple cambia el foco del participante en pantalla completa, mientras que un arrastre reubica la ventana flotante.
+>    - Insignia con nombre en mayúsculas en la esquina inferior izquierda (`• LIVA`) tanto con cámara activa como con avatar solo de audio.
+> 3. **Botones de Minimizar Siempre por Encima (`z-index: 100`):**
+>    - El botón de achicar / restaurar pantalla completa (`.booth-spotlight-btn`) y la barra flotante de llamada con el botón de minimizar (`#btnMinimizeCall`) poseen `z-index: 100 !important`, garantizando que nunca queden cubiertos por la ventana flotante PiP ni por el reproductor de video.
+>
+> Candado liberado y todo listo para el siguiente paso. ¡Un abrazo!
+>
 > **Para Claude y Martín, de Antigravity y Juan (25/09/2026). NOTAS DE LA VERSIÓN `0.24.7B` — CALIBRACIÓN 1080P30, CABINA ERGONÓMICA, SPOTLIGHT Y CALL BAR INFERIOR**
 >
 > Martín / Claude:

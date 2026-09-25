@@ -17,6 +17,28 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.7C · 2026-09-25 · Antigravity
+**Qué cambió.** Cabina de video al ras sin marcos internos, ventana flotante PiP arrastrable con fijación (snapping) a las 4 esquinas, y botones de minimizar siempre en primer plano:
+- **Cámara Llena y al Ras en la Cabina (media_1790318301410.png):**
+  - Al encender la cámara, el video llena por completo los bordes superior, izquierdo y derecho de la tarjeta sin márgenes internos, encuadrado limpiamente por las esquinas redondeadas exteriores (`22px`).
+  - La cabecera secundaria con chips de estado se oculta de forma automática para permitir que el video comience desde el borde superior de la tarjeta.
+  - El contenedor del slider elástico de sensibilidad/ganancia se ubica al pie con su porcentaje correspondiente (`160%`), y la insignia flotante con el punto verde en vivo (`• MALDITO TOKICHI`) queda anclada en la esquina inferior izquierda del video.
+- **Ventana PiP Arrastrable con Snapping en 4 Esquinas (media_1790318442467.png):**
+  - En modo Spotlight / Pantalla Completa, la ventana flotante secundaria Picture-in-Picture (PiP) ahora se puede agarrar y arrastrar fluidamente con el ratón o el dedo por todo el contenedor de llamadas.
+  - Al soltarla, se adhiere suavemente con animación elástica a la esquina más cercana de las cuatro: superior-derecha (`top-right`), superior-izquierda (`top-left`), inferior-izquierda (`bottom-left`) o inferior-derecha (`bottom-right`).
+  - Distinción entre arrastre y clic: un simple toque en la ventana PiP conmuta el foco de pantalla completa entre participantes sin interferir con el gesto de arrastre.
+  - Insignia de usuario inferior izquierda integrada en la ventana PiP (`• LIVA`), tanto en modo cámara como en avatar de solo voz.
+- **Botones de Minimizar Siempre por Encima (`z-index: 100`):**
+  - El botón de restauración de pantalla completa (`.booth-spotlight-btn`) y la barra flotante de llamada con el botón de minimizar a la barra lateral (`#btnMinimizeCall`) cuentan con `z-index: 100 !important`, impidiendo que queden cubiertos o inaccesibles detrás del video o de la ventana flotante PiP.
+**Por qué.** El usuario solicitó que la cámara se vea entera ocupando la tarjeta al ras según la captura compartida, que la ventana superior PiP se pueda arrastrar y mover a cualquiera de las 4 esquinas del contenedor, y que el botón de minimizar quede siempre por encima.
+**Dónde.** `index.html`, `src/style.css`, `src/main.js`, `package.json`, `CAMBIOS.md`, `SYNC.md`.
+**Cómo se verifica.**
+1. Iniciar llamada y encender la cámara: comprobar que el video ocupa la tarjeta entera hasta los bordes superior, izquierdo y derecho sin marcos internos, con el slider al pie y la insignia con el nombre en mayúsculas en la esquina inferior izquierda del video.
+2. Hacer clic en una tarjeta para activar el modo Spotlight: verificar que la ventana PiP aparece en la esquina.
+3. Arrastrar la ventana PiP con el ratón a cualquiera de las 4 esquinas: verificar que se mueve fluidamente y al soltarla se fija a la esquina elegida (superior-derecha, superior-izquierda, inferior-izquierda, inferior-derecha).
+4. Verificar que hacer clic (sin arrastrar) sobre la ventana PiP conmuta el participante en pantalla completa.
+5. Comprobar que el botón de achicar/restaurar (`.booth-spotlight-btn`) y el botón `#btnMinimizeCall` se encuentran siempre en primer plano (`z-index: 100`), plenamente visibles y utilizables.
+
 ### 0.24.7B · 2026-09-25 · Antigravity
 **Qué cambió.** Calibración de Transmisión de Video 1080p30, Layout de Cabina Perfeccionado, Modo Spotlight y Barra de Llamada Anclada Abajo:
 - **Calibración 1080p 30fps y Bitrate Moderado WebRTC:**
