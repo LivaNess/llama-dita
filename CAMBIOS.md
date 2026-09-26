@@ -17,6 +17,12 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.9B · 2026-09-26 · Claude
+**Qué cambió.** Con el panel admin abierto, el cajón del perfil (Amigos / Canales / Perfil / Ajustes) ya no aparece cortado.
+**Por qué.** El panel admin estaba en una capa más alta que el cajón y lo tapaba desde donde empieza el área principal.
+**Dónde.** `src/admin/admin.css` (capa del panel: 115).
+**Cómo se verifica.** Abrir el modo admin, tocar la foto propia abajo a la izquierda: el cajón se ve entero, con el selector de estado.
+
 ### 0.24.9A · 2026-09-26 · Claude
 **Qué cambió.**
 - **Modo admin / user / dev.** dantey24, liva y devliva ven arriba a la derecha "Modo admin". Adentro: "Modo user" (volver a la app común) y "Modo dev" (abrir la versión de prueba). El panel muestra todos los usuarios (con mail, alta, último ingreso y estado) y todos los canales de texto y voz con sus miembros y mensajes. **Los chats privados no se ven nunca.** Se puede banear (1 día, 1 semana o para siempre, con motivo), desbanear, cambiarle el mail a quien perdió el suyo, unirse a un canal y entrar a una sala de voz. Todo queda anotado en la pestaña Registro.

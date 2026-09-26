@@ -68,10 +68,13 @@ body.con-modo-admin.canal-dev .chat-header {
 }
 
 /* ---------- Panel ---------- */
+/* Capa 115: tapa el chat y la barra de la llamada (100), pero queda debajo de los menús (120),
+   del cajón del perfil (140/150) y de las ventanas de la app, que se tienen que poder abrir
+   encima del panel. */
 .panel-admin {
   position: absolute;
   inset: 0;
-  z-index: 300;
+  z-index: 115;
   display: flex;
   flex-direction: column;
   background: #070b18;
