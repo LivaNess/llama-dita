@@ -474,29 +474,33 @@ class AudioManager {
     return this.isMuted;
   }
 
-  // Puerta de ruido inteligente (Noise Gate):
-  // Si el usuario no está muteado manualmente, detecta si hay voz real usando el umbral calibrado.
-  // Cuando deja de hablar, mantiene la transmisión abierta 450ms (hold time)
-  // para que nunca se coman los finales de frases ni respiraciones, y luego
-  // silencia digitalmente la salida para evitar estática en el receptor.
+  // Detección de actividad vocal para métricas y visualizador:
+  // Si el usuario no está muteado manualmente, nos aseguramos de que las pistas de audio
+  // permanezcan siempre habilitadas (la supresión de ruido nativa de WebRTC C++ ya filtra
+  // estática y teclado sin riesgo de cortar sílabas o silenciar el micro).
   processNoiseGate(rawMetrics) {
-    if (this.isMuted || !this.localStream) return;
+    if (!this.localStream) return;
+
+    if (this.isMuted) {
+      this.localStream.getAudioTracks().forEach(t => {
+        if (t.enabled) t.enabled = false;
+      });
+      return;
+    }
+
+    // Si no está silenciado, la pista DEBE estar activa para transmitir
+    this.localStream.getAudioTracks().forEach(t => {
+      if (!t.enabled) t.enabled = true;
+    });
 
     const ahora = Date.now();
     const voiceDetected = this.isVoiceDetected(rawMetrics);
 
     if (voiceDetected) {
       this.lastVoiceDetectedAt = ahora;
-      if (!this.isGateOpen) {
-        this.isGateOpen = true;
-        this.localStream.getAudioTracks().forEach(t => t.enabled = true);
-      }
-    } else {
-      // Hold time de 450ms tras dejar de hablar
-      if (this.isGateOpen && ahora - this.lastVoiceDetectedAt > 450) {
-        this.isGateOpen = false;
-        this.localStream.getAudioTracks().forEach(t => t.enabled = false);
-      }
+      this.isGateOpen = true;
+    } else if (this.isGateOpen && ahora - this.lastVoiceDetectedAt > 450) {
+      this.isGateOpen = false;
     }
   }
 

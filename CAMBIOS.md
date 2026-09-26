@@ -17,6 +17,33 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.8C · 2026-09-26 · Antigravity
+**Qué cambió.** Solución integral a los problemas de conexión WebRTC, audio, video, inicio del cronómetro y estabilidad en llamadas directas y canales de voz:
+- **Cronómetro de Llamada en Tiempo Real ("No sube el tiempo"):**
+  - Se vinculó la emisión del estado `'connected'` directamente a los eventos `onconnectionstatechange` y `oniceconnectionstatechange` de cada `RTCPeerConnection` en `peerManager.js`.
+  - En `main.js`, el estado `'connected'` ahora se recibe inmediatamente al enlazar los pares WebRTC, disparando `startCallTimer()`, activando el punto verde (`#callLiveDot`) y sincronizando el tiempo transcurrido en el header (`#callDurationTimer`) y en el mini dock de la barra lateral (`#sidebarCallMiniTimer`).
+  - Se corrigió `startCallTimer()` para que no reinicie el contador a `00:00` si la llamada ya estaba activa y se conecta un nuevo participante o se actualiza la señalización.
+- **Transmisión y Recepción de Audio Confiable ("No oigo"):**
+  - En `src/audio/audioManager.js`, se corrigió la compuerta de ruido (`processNoiseGate`): ya no desactiva la pista física saliente (`t.enabled = false`) cuando el volumen cae o el `AudioContext` arranca en suspensión. La pista permanece siempre activa mientras el usuario no esté silenciado manualmente, delegando la cancelación de eco y supresión de ruido a la capa nativa C++ de WebRTC (0% CPU, sin cortes de voz ni silenciamiento involuntario).
+  - En `index.html`, `#remoteAudioContainer` se configuró con estilos fijos e invisibles (`position: fixed; width: 0; height: 0; opacity: 0; pointer-events: none`) en lugar de `display: none`, previniendo que los motores Chromium/WebView2 suspendan la reproducción de audio en segundo plano.
+  - Se añadió reactivación de audio al hacer clic en cualquier área de la interfaz para todos los elementos de audio remotos (`remoteAudioElement` y cabinas dinámicas).
+  - En `main.js`, `setupNetworking()` se inicializa de forma síncrona en `init()`, asegurando que todos los escuchadores de red (`onRemoteStream`, `onConnectionStatusChange`, etc.) estén listos antes de cualquier interacción social o unión a canal.
+- **Transmisión y Recepción de Video ("No veo"):**
+  - En `main.js`, `handleRemoteVideoStateChange` ahora conecta directamente el `videoStream` al reproductor (`videoEl.srcObject`) y ejecuta `.play()` cada vez que un participante remoto activa su cámara, y lo desacopla al apagarla.
+  - En `peerManager.js`, se verifican transceivers existentes antes de instanciar nuevos transceivers de video, y los límites de bitrate para 1080p 30fps (2.5 Mbps) se configuran de forma segura sobre pistas de video existentes sin romper la negociación SDP.
+- **Estabilidad de Señalización y Canales ("Al rato se bugea también eso"):**
+  - Se implementó el patrón de Perfect Negotiation para resolución de colisiones de ofertas (glare): si dos participantes generan ofertas simultáneamente, el peer cortés ejecuta un `rollback` de su descripción local y procesa la oferta entrante, evitando excepciones `InvalidStateError`.
+  - Los eventos de sincronización y abandono de presencia en Supabase (`sync` y `leave`) ya no destruyen sesiones WebRTC que estén activas y saludables (`connectionState === 'connected'`), protegiendo la llamada contra re-tracks de cámara y fluctuaciones de presencia.
+  - El cierre transitorio del `DataChannel` no interrumpe la sesión P2P si el transporte de medios WebRTC sigue conectado.
+**Por qué.** El usuario reportó que en las llamadas el tiempo no aumentaba (se quedaba en 00:00), no se escuchaba ni se veía a los participantes, y tras un rato la conexión en los canales de voz se degradaba o congelaba.
+**Dónde.** `src/network/peerManager.js`, `src/audio/audioManager.js`, `src/main.js`, `index.html`, `package.json`, `CAMBIOS.md`, `SYNC.md`.
+**Cómo se verifica.**
+1. Iniciar una llamada directa entre dos usuarios o ingresar a un canal de voz:
+   - Verificar que al establecerse la conexión WebRTC, el cronómetro arranca de inmediato y cuenta segundo a segundo en `#callDurationTimer` y `#sidebarCallMiniTimer`.
+2. Hablar por el micrófono: comprobar que el audio se transmite de inmediato al receptor con volumen claro y el aura vocal verde responde en la cabina del usuario.
+3. Encender la cámara (botón de video): comprobar que la imagen remota se muestra en 1080p 30fps en la cabina del receptor; al apagarla y volverla a encender, constatar que la imagen se reanuda al instante.
+4. Probar en canal de voz con múltiples usuarios entrando y saliendo: verificar que la llamada permanece estable, sin colisiones de señalización, sin caída de audio y sin congelamiento tras varios minutos de conversación.
+
 ### 0.24.8B · 2026-09-25 · Antigravity
 **Qué cambió.** Lógica de canales de voz al estilo Discord, entrada en solitario limpia, eliminación de bucle de reconexión y salida inmediata sin tormenta de toasts:
 - **Lógica Discord en Canales de Voz:**

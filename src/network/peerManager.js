@@ -214,9 +214,13 @@ export class PeerManager {
 
     ch.on('presence', { event: 'leave' }, ({ key }) => {
       if (this.channel !== ch) return;
-      if (this.peers.has(key)) {
-        console.log('Participante desconectado vía presencia:', key);
-        this.closePeerSession(key);
+      const peer = this.peers.get(key);
+      if (peer) {
+        const isRtcActive = peer.pc && (peer.pc.connectionState === 'connected' || peer.pc.iceConnectionState === 'connected');
+        if (!isRtcActive) {
+          console.log('Participante desconectado vía presencia:', key);
+          this.closePeerSession(key);
+        }
       }
     });
 
@@ -260,12 +264,17 @@ export class PeerManager {
 
     const remotePeers = activePeers.filter(p => p.peerId !== this.myPeerId);
 
-    // Si no hay participantes remotos
+    // Si no hay participantes remotos en presencia
     if (remotePeers.length === 0) {
-      for (const pId of Array.from(this.peers.keys())) {
-        this.closePeerSession(pId);
+      for (const [pId, peer] of this.peers.entries()) {
+        const isRtcActive = peer.pc && (peer.pc.connectionState === 'connected' || peer.pc.iceConnectionState === 'connected');
+        if (!isRtcActive) {
+          this.closePeerSession(pId);
+        }
       }
-      this.onConnectionStatusChange?.('waiting', 'Esperando participantes...');
+      if (this.peers.size === 0) {
+        this.onConnectionStatusChange?.('waiting', 'Esperando participantes...');
+      }
       this.notifyPeersUpdate();
       return;
     }
@@ -275,11 +284,14 @@ export class PeerManager {
       this.onConnectionStatusChange?.('error', 'Sala completa (máximo 5 participantes).');
     }
 
-    // 1. Cerrar peers que ya no están en presencia
+    // 1. Cerrar peers que ya no están en presencia SOLO si tampoco están conectados por WebRTC
     const remotePeerIds = new Set(remotePeers.map(r => r.peerId));
-    for (const pId of Array.from(this.peers.keys())) {
+    for (const [pId, peer] of this.peers.entries()) {
       if (!remotePeerIds.has(pId)) {
-        this.closePeerSession(pId);
+        const isRtcActive = peer.pc && (peer.pc.connectionState === 'connected' || peer.pc.iceConnectionState === 'connected');
+        if (!isRtcActive) {
+          this.closePeerSession(pId);
+        }
       }
     }
 
@@ -308,7 +320,7 @@ export class PeerManager {
       }
     }
 
-    const connectedCount = Array.from(this.peers.values()).filter(p => p.pc && p.pc.connectionState === 'connected').length;
+    const connectedCount = Array.from(this.peers.values()).filter(p => p.pc && (p.pc.connectionState === 'connected' || p.pc.iceConnectionState === 'connected')).length;
     if (connectedCount > 0) {
       const statusText = connectedCount === 1 ? 'Conectado con 1 participante' : `Conectado con ${connectedCount} participantes`;
       this.onConnectionStatusChange?.('connected', statusText);
@@ -363,9 +375,9 @@ export class PeerManager {
         const sender = pc.addTrack(initialVideoTrack, this.localVideoStream);
         if (sender) this.applyVideoBitrateLimits(sender);
       } else {
-        const transceiver = pc.addTransceiver('video', { direction: 'sendrecv' });
-        if (transceiver?.sender) {
-          this.applyVideoBitrateLimits(transceiver.sender);
+        const existingTransceiver = pc.getTransceivers ? pc.getTransceivers().find(t => t.receiver?.track?.kind === 'video') : null;
+        if (!existingTransceiver) {
+          pc.addTransceiver('video', { direction: 'sendrecv' });
         }
       }
     } catch (e) {
@@ -432,9 +444,32 @@ export class PeerManager {
         const senders = pc.getSenders ? pc.getSenders() : [];
         const videoSender = senders.find(s => s.track && s.track.kind === 'video');
         if (videoSender) this.applyVideoBitrateLimits(videoSender);
+
+        const connectedCount = Array.from(this.peers.values()).filter(p => p.pc && p.pc.connectionState === 'connected').length;
+        const statusText = connectedCount === 1 ? 'Conectado con 1 participante' : `Conectado con ${connectedCount} participantes`;
+        this.onConnectionStatusChange?.('connected', statusText);
         this.notifyPeersUpdate();
-      } else if (state === 'disconnected' || state === 'failed') {
+      } else if (state === 'disconnected') {
         console.warn(`[P2P Mesh] Conexión degradada con ${remotePeerId}`);
+        setTimeout(() => {
+          if (peer.pc && (peer.pc.connectionState === 'disconnected' || peer.pc.connectionState === 'failed')) {
+            console.log(`[P2P Mesh] Conexión no recuperada con ${remotePeerId}, cerrando`);
+            this.closePeerSession(remotePeerId);
+          }
+        }, 6000);
+      } else if (state === 'failed') {
+        console.warn(`[P2P Mesh] Conexión fallida con ${remotePeerId}`);
+        this.closePeerSession(remotePeerId);
+      }
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      const iceState = pc.iceConnectionState;
+      if (iceState === 'connected' || iceState === 'completed') {
+        const connectedCount = Array.from(this.peers.values()).filter(p => p.pc && (p.pc.connectionState === 'connected' || p.pc.iceConnectionState === 'connected' || p.pc.iceConnectionState === 'completed')).length;
+        const statusText = connectedCount === 1 ? 'Conectado con 1 participante' : `Conectado con ${connectedCount} participantes`;
+        this.onConnectionStatusChange?.('connected', statusText);
+        this.notifyPeersUpdate();
       }
     };
 
@@ -487,6 +522,19 @@ export class PeerManager {
       }
 
       try {
+        // Manejo de colisión de ofertas (Glare resolution / Perfect Negotiation):
+        // Si no estamos en estado 'stable', resolver colisión:
+        if (peer.pc.signalingState !== 'stable') {
+          const isPolite = this.myPeerId < from;
+          if (isPolite) {
+            console.log(`[P2P Mesh] Colisión de ofertas con ${from}. Realizando rollback como peer cortés.`);
+            await peer.pc.setLocalDescription({ type: 'rollback' });
+          } else {
+            console.log(`[P2P Mesh] Colisión de ofertas con ${from}. Ignorando oferta entrante como peer impolite.`);
+            return;
+          }
+        }
+
         await peer.pc.setRemoteDescription(new RTCSessionDescription(data));
         await this.drainIceCandidatesForPeer(peer);
 
@@ -508,6 +556,10 @@ export class PeerManager {
       }
     } else if (type === 'answer') {
       if (!peer || !peer.pc) return;
+      if (peer.pc.signalingState !== 'have-local-offer') {
+        console.warn(`[P2P Mesh] Ignorando respuesta de ${from} en estado ${peer.pc.signalingState}`);
+        return;
+      }
       try {
         await peer.pc.setRemoteDescription(new RTCSessionDescription(data));
         await this.drainIceCandidatesForPeer(peer);
@@ -588,7 +640,9 @@ export class PeerManager {
 
     channel.onclose = () => {
       console.log(`Canal de datos cerrado con ${peer.peerId}`);
-      this.closePeerSession(peer.peerId);
+      if (!peer.pc || peer.pc.connectionState === 'disconnected' || peer.pc.connectionState === 'failed' || peer.pc.connectionState === 'closed') {
+        this.closePeerSession(peer.peerId);
+      }
     };
 
     channel.onerror = (err) => {

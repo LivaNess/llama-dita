@@ -17,6 +17,30 @@ Ambos agentes lo actualizan antes de empezar una tarea y al terminarla. El versi
 
 ## 📬 Recados entre nosotros
 
+> **Para Claude y Martín, de Antigravity y Juan (26/09/2026). NOTAS DE LA VERSIÓN `0.24.8C` — REPARACIÓN INTEGRAL DE AUDIO/VIDEO, CRONÓMETRO Y ESTABILIDAD WEBRTC**
+>
+> Martín / Claude:
+> Dejamos completamente solucionados los problemas reportados por Juan ("no sube el tiempo y no oigo ni veo, solo en las llamadas de canal pero al rato se bugea también eso"):
+>
+> 1. **Cronómetro en Tiempo Real ("No sube el tiempo"):**
+>    - En `src/network/peerManager.js`, `pc.onconnectionstatechange` e `iceconnectionstatechange` ahora emiten `'connected'` cuando la conexión P2P se enlaza con éxito.
+>    - En `src/main.js`, esto arranca `startCallTimer()`, cambia el estado a "En llamada" y actualiza segundo a segundo los contadores `#callDurationTimer` y `#sidebarCallMiniTimer`.
+>    - Se corrigió `startCallTimer()` para que no reinicie el contador a `00:00` si la llamada ya estaba activa y se conecta otro amigo o se actualiza la señalización.
+> 2. **Audio y Micrófono Confiable ("No oigo"):**
+>    - En `src/audio/audioManager.js`, se corrigió la compuerta de ruido (`processNoiseGate`): ya no silencia por software la pista física saliente (`t.enabled = false`) cuando el nivel cae por debajo de -34 dB o al arrancar el AudioContext en silencio. La pista permanece siempre activa mientras el usuario no esté muteado manualmente, delegando la cancelación de eco y supresión de ruido a la capa nativa C++ de WebRTC (sin cortes de sílabas ni silenciamiento involuntario).
+>    - En `index.html`, `#remoteAudioContainer` pasó de `display: none` a `position: fixed; width: 0; height: 0; opacity: 0; pointer-events: none` para prevenir que Chromium/WebView2 suspenda la reproducción de audio de fondo.
+>    - Se añadió desbloqueo por interacción en toda la interfaz para todos los elementos `<audio>` remotos.
+>    - En `src/main.js`, `setupNetworking()` se corre síncronamente al inicio de `init()` para tener listos los callbacks de red desde el milisegundo cero.
+> 3. **Video y Cámara ("No veo"):**
+>    - En `src/main.js`, `handleRemoteVideoStateChange` asocia directamente el `videoStream` a `videoEl.srcObject` y ejecuta `.play()` cada vez que un participante remoto enciende su cámara, y lo desacopla limpiamente al apagarla.
+>    - En `src/network/peerManager.js`, se verifica si ya existe transceiver antes de instanciar uno nuevo, y los límites de bitrate para 1080p 30fps (2.5 Mbps) se aplican de forma segura sobre pistas reales.
+> 4. **Estabilidad de Señalización y Canales ("Al rato se bugea también eso"):**
+>    - Se implementó Perfect Negotiation / Glare resolution: colisiones de ofertas simultáneas se resuelven con `rollback` en el peer cortés, eliminando excepciones `InvalidStateError`.
+>    - En presencia de Supabase (`sync` y `leave`), ya no se cierran bruscamente sesiones WebRTC conectadas y saludables por fluctuaciones transitorias o re-tracks de cámara (`trackPresence()`).
+>    - Cierres temporales del `DataChannel` no destruyen la conexión P2P si el `RTCPeerConnection` sigue conectado.
+>
+> Candado liberado y todo verificado. ¡Un abrazo!
+>
 > **Para Claude y Martín, de Antigravity y Juan (25/09/2026). NOTAS DE LA VERSIÓN `0.24.8B` — LÓGICA DISCORD EN CANALES DE VOZ Y SALIDA LIMPIA SIN BUCLE**
 >
 > Martín / Claude:

@@ -436,7 +436,7 @@
           </div>
 
           <!-- Contenedor invisible para reproducción de audio de participantes remotos -->
-          <div id="remoteAudioContainer" style="display: none;" aria-hidden="true">
+          <div id="remoteAudioContainer" style="position: fixed; width: 0; height: 0; opacity: 0; pointer-events: none; overflow: hidden;" aria-hidden="true">
             <audio id="remoteAudioElement" autoplay playsinline></audio>
           </div>
         </main>

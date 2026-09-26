@@ -78,10 +78,12 @@ let callStartTime = null;
 let callDurationInterval = null;
 
 function startCallTimer() {
-  stopCallTimer();
-  callStartTime = Date.now();
+  if (callDurationInterval && callStartTime) return;
+  if (!callStartTime) callStartTime = Date.now();
   updateCallDurationDisplay();
-  callDurationInterval = setInterval(updateCallDurationDisplay, 1000);
+  if (!callDurationInterval) {
+    callDurationInterval = setInterval(updateCallDurationDisplay, 1000);
+  }
   if (callLiveDot) callLiveDot.classList.add('active');
 }
 
@@ -404,8 +406,13 @@ async function unlockAndStart() {
 btnActivateAudio?.addEventListener('click', unlockAndStart);
 document.addEventListener('click', () => {
   audioManager.resumeContext();
-  if (remoteAudioElement && remoteStream && remoteAudioElement.paused) {
+  if (remoteAudioElement && remoteAudioElement.srcObject && remoteAudioElement.paused) {
     remoteAudioElement.play().catch(() => {});
+  }
+  for (const s of remotePeerSessions.values()) {
+    if (s.audioEl && s.audioEl.srcObject && s.audioEl.paused) {
+      s.audioEl.play().catch(() => {});
+    }
   }
 }, { passive: true });
 
@@ -436,11 +443,11 @@ async function init() {
   peerManager.setLocalProfile('Usuario Local');
   updateBoothProfiles();
 
-  await startMicrophone();
   setupNetworking();
   initBoothSliders();
   updateMainViews();
   requestAnimationFrame(renderAudioMetrics);
+  await startMicrophone();
 }
 
 // Deslizadores elásticos de cabina (física de resorte de ReactBits adaptada para Llamadita)
@@ -651,17 +658,30 @@ function attachAudioToSession(session, stream) {
 }
 
 function attachVideoToSession(session, videoStream) {
-  if (!session.boothEl) return;
-  const videoEl = session.boothEl.querySelector('video.guest-video');
-  const wrapperEl = session.boothEl.querySelector('.booth-video-wrapper');
-  if (videoEl && videoStream) {
-    videoEl.srcObject = videoStream;
-    videoEl.play().catch(() => {});
+  if (!session) return;
+  if (session.isPeer0) {
+    if (guestVideoElement) {
+      guestVideoElement.srcObject = videoStream || null;
+      if (videoStream) guestVideoElement.play().catch(() => {});
+    }
+    if (guestVideoWrapper) {
+      guestVideoWrapper.style.display = videoStream ? 'flex' : 'none';
+    }
+    isRemoteVideoOn = !!videoStream;
   }
-  if (wrapperEl) {
-    wrapperEl.style.display = videoStream ? 'flex' : 'none';
+
+  if (session.boothEl) {
+    const videoEl = session.boothEl.querySelector('video.guest-video');
+    const wrapperEl = session.boothEl.querySelector('.booth-video-wrapper');
+    if (videoEl) {
+      videoEl.srcObject = videoStream || null;
+      if (videoStream) videoEl.play().catch(() => {});
+    }
+    if (wrapperEl) {
+      wrapperEl.style.display = videoStream ? 'flex' : 'none';
+    }
+    session.boothEl.classList.toggle('has-video', !!videoStream);
   }
-  session.boothEl.classList.toggle('has-video', !!videoStream);
 }
 
 function createDynamicBooth(session) {
@@ -885,9 +905,13 @@ function handlePeersUpdate(peersList) {
         session.stream = peer.stream;
         attachAudioToSession(session, peer.stream);
       }
-      if (peer.videoStream && !session.videoStream) {
+      if (peer.videoStream) {
         session.videoStream = peer.videoStream;
-        attachVideoToSession(session, peer.videoStream);
+        if (peer.isVideoOn) {
+          attachVideoToSession(session, peer.videoStream);
+        } else {
+          attachVideoToSession(session, null);
+        }
       }
     }
 
@@ -951,7 +975,7 @@ function handleRemoteStream(stream, peerId, profile) {
 }
 
 function handleRemoteVideoStream(videoStream, track, peerId) {
-  const session = peerId ? remotePeerSessions.get(peerId) : Array.from(remotePeerSessions.values())[0];
+  let session = peerId ? remotePeerSessions.get(peerId) : Array.from(remotePeerSessions.values())[0];
   if (session) {
     session.videoStream = videoStream;
     session.isVideoOn = true;
@@ -967,23 +991,28 @@ function handleRemoteVideoStream(videoStream, track, peerId) {
 
 function handleRemoteVideoStateChange(enabled, peerId) {
   const session = peerId ? remotePeerSessions.get(peerId) : Array.from(remotePeerSessions.values())[0];
+  const peer = peerManager.peers.get(peerId);
+  const stream = (session && session.videoStream) || (peer && peer.videoStream) || null;
+
   if (session) {
     session.isVideoOn = !!enabled;
-    if (session.boothEl) {
-      session.boothEl.classList.toggle('has-video', !!enabled);
-      const wrapperEl = session.boothEl.querySelector('.booth-video-wrapper');
-      if (wrapperEl) wrapperEl.style.display = enabled ? 'flex' : 'none';
-      if (!enabled) {
-        const videoEl = session.boothEl.querySelector('video.guest-video');
-        if (videoEl) videoEl.srcObject = null;
-      }
+    if (enabled && stream) {
+      attachVideoToSession(session, stream);
+    } else if (!enabled) {
+      attachVideoToSession(session, null);
     }
   }
 
   if (!peerId || (session && session.isPeer0)) {
     isRemoteVideoOn = !!enabled;
-    if (guestVideoWrapper) guestVideoWrapper.style.display = enabled ? 'flex' : 'none';
-    if (!enabled && guestVideoElement) guestVideoElement.srcObject = null;
+    if (enabled && stream && guestVideoElement) {
+      guestVideoElement.srcObject = stream;
+      guestVideoElement.play().catch(() => {});
+      if (guestVideoWrapper) guestVideoWrapper.style.display = 'flex';
+    } else if (!enabled) {
+      if (guestVideoElement) guestVideoElement.srcObject = null;
+      if (guestVideoWrapper) guestVideoWrapper.style.display = 'none';
+    }
   }
 
   updateCallLayoutState();
@@ -1044,8 +1073,8 @@ function setupNetworking() {
     } else if (status === 'connecting') {
       if (!activeVoiceChannel) {
         isConnected = false;
-        stopCallTimer();
-        setCallStatus('Conectando…');
+        if (!callDurationInterval) stopCallTimer();
+        setCallStatus(conQuien ? `Conectando con ${conQuien}…` : 'Conectando…');
       } else {
         isConnected = true;
         setCallStatus(`Canal de voz: #${activeVoiceChannel.name}`);
