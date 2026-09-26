@@ -169,7 +169,7 @@ function pintarBarra() {
     }),
     el('button', {
       class: 'modo-btn' + (enDev ? ' activo' : ''),
-      text: 'Modo dev',
+      text: enDev ? 'Salir del modo dev' : 'Entrar en versión dev',
       title: enDev ? 'Estás en la versión de prueba. Tocá para volver a la de todos.' : 'Abrir la versión de prueba (solo para admins)',
       onclick: alternarDev,
     })
@@ -511,7 +511,7 @@ function pintarVersiones(cuerpo) {
       el('span', { text: `Estás usando: ${CANAL === 'dev' ? 'versión de prueba (dev)' : 'versión de todos (live)'}` }),
       el('span', { text: `v${APP_VERSION}` })
     ),
-    el('p', { class: 'admin-sub', text: 'La versión dev la publican ustedes con "npm run publicar:dev". No le llega a nadie más: solo la abre quien toca "Modo dev", y la app queda en esa versión hasta que se vuelve a tocar.' }),
+    el('p', { class: 'admin-sub', text: 'La versión dev la publican ustedes con "npm run publicar:dev". No le llega a nadie más: solo la abre quien toca "Entrar en versión dev", y la app queda en esa versión hasta tocar "Salir del modo dev" o "Modo user".' }),
     estado
   );
   leerManifiestoDev()

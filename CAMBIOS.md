@@ -17,6 +17,12 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.9C · 2026-09-26 · Claude
+**Qué cambió.** El botón "Modo dev" ahora dice "Entrar en versión dev", y estando en la dev dice "Salir del modo dev". El sello naranja DEV queda igual.
+**Por qué.** "Modo dev" no dejaba claro que ese botón cambia de versión (Martín buscaba la dev en la pestaña Versiones y en "Actualizar").
+**Dónde.** `src/admin/modoAdmin.js`.
+**Cómo se verifica.** Modo admin: el botón dice "Entrar en versión dev". Tocarlo: la app reinicia con el sello DEV y el botón dice "Salir del modo dev".
+
 ### 0.24.9B · 2026-09-26 · Claude
 **Qué cambió.** Con el panel admin abierto, el cajón del perfil (Amigos / Canales / Perfil / Ajustes) ya no aparece cortado.
 **Por qué.** El panel admin estaba en una capa más alta que el cajón y lo tapaba desde donde empieza el área principal.
