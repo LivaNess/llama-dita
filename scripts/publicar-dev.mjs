@@ -108,12 +108,17 @@ if (soloArmar) {
 }
 
 // 5. Publicar en el sitio dev (se crea la primera vez).
+// --force: wrangler nuevo quiere mandar los proyectos de Pages a Workers y falla. Con --force
+// queda como Pages clásico, igual que el proyecto `llamadita` de la web oficial.
+let proyectos = '';
 try {
-  execSync(`npx wrangler pages project list`, { cwd: root, stdio: 'pipe' }).toString().includes(PROYECTO_DEV)
-    || run(`npx wrangler pages project create ${PROYECTO_DEV} --production-branch main`);
+  proyectos = execSync(`npx wrangler pages project list`, { cwd: root, stdio: 'pipe' }).toString();
 } catch (e) {
   console.error('No pude consultar Cloudflare. ¿Está hecho el login de wrangler?');
   process.exit(1);
+}
+if (!proyectos.includes(PROYECTO_DEV)) {
+  run(`npx wrangler pages project create ${PROYECTO_DEV} --production-branch main --force`);
 }
 run(`npx wrangler pages deploy dev-dist --project-name ${PROYECTO_DEV} --branch main --commit-dirty=true`);
 console.log(`\nListo. Los admins la reciben al tocar "Modo dev". Manifiesto: ${SITIO_DEV}/update-manifest.json`);
