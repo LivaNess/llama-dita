@@ -10,6 +10,21 @@
 
 const SILENCIO = { rms: 0, peak: 0, db: -60, volume: 0, isSpeaking: false, rawLevel: 0 };
 
+// Escala de volumen de Llamadita, la misma para "cómo escucho a cada uno" y para "mi ganancia".
+// 50% es el volumen tal cual llega (x1) y es el de fábrica. Para abajo baja parejo (25% = la
+// mitad). Para arriba se duplica cada 25 puntos: 75% = x2, 100% = x4. El 100% es alto a
+// propósito: es para el que tiene un micrófono que casi no se escucha.
+export const VOLUMEN_NORMAL = 50;
+export function volumenAGanancia(porcentaje) {
+  const v = Math.max(0, Math.min(100, Number(porcentaje) || 0));
+  return v <= 50 ? v / 50 : Math.pow(2, (v - 50) / 25);
+}
+
+// El medidor del micrófono siempre se miró con este refuerzo encima, y el umbral de "estás
+// hablando" (y la compuerta) se calibraron así. Se conserva para no descalibrarlos: ahora la
+// ganancia del usuario se suma arriba de esto, en vez de ser lo único que movía el medidor.
+const REFUERZO_MEDIDOR = 1.8;
+
 // Lee el nivel actual del analizador. Cuesta solo cuando se la llama.
 function medirNivel(analyser) {
   if (!analyser) return SILENCIO;
@@ -64,7 +79,15 @@ class AudioManager {
     this.voiceThresholdDb = (savedThreshold !== null && !isNaN(Number(savedThreshold))) ? Number(savedThreshold) : -34;
 
     this.isMuted = false;
-    this.micSensitivity = 1.8;
+    this.micSensitivity = 1; // ganancia real de lo que mandás (x1 = 50% en la escala)
+    this.sendSource = null;
+    this.sendGain = null;
+    this.sendDest = null;
+    this.onSendStreamChange = null; // avisa cuándo cambia la pista que hay que mandar
+    this.outputDeviceId = null;
+    try {
+      this.outputDeviceId = localStorage.getItem('llamadita_audio_output_device') || null;
+    } catch (_) {}
     this.isLoopbackEnabled = false;
     this.lastVoiceDetectedAt = Date.now();
     this.isGateOpen = true;
@@ -331,6 +354,7 @@ class AudioManager {
     if (!this.audioCtx) {
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       this.audioCtx = new AudioContextClass();
+      if (this.outputDeviceId) this.applyOutputDevice();
     }
     return this.audioCtx;
   }
@@ -416,7 +440,7 @@ class AudioManager {
       this.localSource = ctx.createMediaStreamSource(this.monitorStream);
       
       this.localGain = ctx.createGain();
-      this.localGain.gain.value = this.micSensitivity;
+      this.localGain.gain.value = REFUERZO_MEDIDOR * this.micSensitivity;
 
       this.localAnalyser = ctx.createAnalyser();
       this.localAnalyser.fftSize = 256;
@@ -433,6 +457,15 @@ class AudioManager {
       this.localAnalyser.connect(this.localSink);
       this.localSink.connect(ctx.destination);
 
+      // Lo que se manda: el micrófono pasa por la ganancia elegida. Silenciar y la compuerta
+      // siguen apagando la pista original, y eso deja mudo también a este camino.
+      this.sendSource = ctx.createMediaStreamSource(this.localStream);
+      this.sendGain = ctx.createGain();
+      this.sendGain.gain.value = this.micSensitivity;
+      this.sendDest = ctx.createMediaStreamDestination();
+      this.sendSource.connect(this.sendGain);
+      this.sendGain.connect(this.sendDest);
+
       return this.localStream;
     } catch (err) {
       console.error('Error al inicializar micrófono:', err);
@@ -446,6 +479,11 @@ class AudioManager {
         this.monitorStream.getTracks().forEach(t => t.stop());
         this.monitorStream = null;
       }
+      if (this.sendGain) this.sendGain.disconnect();
+      if (this.sendSource) this.sendSource.disconnect();
+      this.sendGain = null;
+      this.sendSource = null;
+      this.sendDest = null;
       if (this.localSink) this.localSink.disconnect();
       if (this.localAnalyser) this.localAnalyser.disconnect();
       if (this.localGain) this.localGain.disconnect();
@@ -453,11 +491,26 @@ class AudioManager {
     } catch (e) {}
   }
 
+  // Pista de micrófono que hay que mandarle a los demás. En x1 va la original, la misma que
+  // se mandaba siempre, sin pasar por el procesador de audio: si el procesador estuviera
+  // dormido (el navegador lo duerme hasta el primer clic), mandaría silencio.
+  getSendStream() {
+    if (this.micSensitivity !== 1 && this.sendDest) return this.sendDest.stream;
+    return this.localStream;
+  }
+
   setMicSensitivity(multiplier) {
+    const antes = this.getSendStream();
     this.micSensitivity = multiplier;
     if (this.localGain && this.audioCtx) {
-      this.localGain.gain.setTargetAtTime(multiplier, this.audioCtx.currentTime, 0.05);
+      this.localGain.gain.setTargetAtTime(REFUERZO_MEDIDOR * multiplier, this.audioCtx.currentTime, 0.05);
     }
+    if (this.sendGain && this.audioCtx) {
+      this.sendGain.gain.setTargetAtTime(multiplier, this.audioCtx.currentTime, 0.05);
+    }
+    if (multiplier !== 1) this.resumeContext();
+    const ahora = this.getSendStream();
+    if (ahora && ahora !== antes) this.onSendStreamChange?.(ahora);
   }
 
   toggleMute() {
@@ -527,8 +580,12 @@ class AudioManager {
     return this.isLoopbackEnabled;
   }
 
-  // Create stream analyser and PCM processor for remote audio
-  createRemoteStreamProcessor(stream) {
+  // Analizador (para el aura) y volumen de un participante.
+  //
+  // Hasta x1 el sonido lo sigue reproduciendo el elemento de audio, como siempre: es el camino
+  // que Chrome conoce para cancelar el eco. Por encima de x1 el elemento no puede subir más,
+  // así que se lo silencia y suena por el procesador de audio con la ganancia pedida.
+  createRemoteStreamProcessor(stream, audioEl = null) {
     const ctx = this.getAudioContext();
     const source = ctx.createMediaStreamSource(stream);
     const analyser = ctx.createAnalyser();
@@ -544,14 +601,34 @@ class AudioManager {
     analyser.connect(sink);
     sink.connect(ctx.destination);
 
+    const refuerzo = ctx.createGain();
+    refuerzo.gain.value = 0;
+    source.connect(refuerzo);
+    refuerzo.connect(ctx.destination);
+
     this.remoteAnalyser = analyser;
 
     return {
       source,
       analyser,
+      setGain: (ganancia) => {
+        const g = Math.max(0, Number(ganancia) || 0);
+        if (g > 1) {
+          this.resumeContext();
+          refuerzo.gain.setTargetAtTime(g, ctx.currentTime, 0.03);
+          if (audioEl) audioEl.muted = true;
+        } else {
+          refuerzo.gain.setTargetAtTime(0, ctx.currentTime, 0.03);
+          if (audioEl) {
+            audioEl.volume = g;
+            audioEl.muted = g === 0;
+          }
+        }
+      },
       destroy: () => {
         try {
           if (this.remoteAnalyser === analyser) this.remoteAnalyser = null;
+          refuerzo.disconnect();
           sink.disconnect();
           analyser.disconnect();
           source.disconnect();
@@ -576,11 +653,40 @@ class AudioManager {
   }
 
   async getAudioInputDevices() {
+    return this.getDevices('audioinput');
+  }
+
+  async getDevices(kind) {
     if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
       return [];
     }
     const devices = await navigator.mediaDevices.enumerateDevices();
-    return devices.filter(d => d.kind === 'audioinput');
+    return devices.filter(d => d.kind === kind);
+  }
+
+  // Auriculares / parlantes. Se aplica al procesador de audio (el volumen por encima de x1 y
+  // los sonidos de la app) y a cada elemento de audio que se le pase.
+  async setOutputDevice(deviceId, elementos = []) {
+    this.outputDeviceId = deviceId || null;
+    try {
+      if (this.outputDeviceId) localStorage.setItem('llamadita_audio_output_device', this.outputDeviceId);
+      else localStorage.removeItem('llamadita_audio_output_device');
+    } catch (_) {}
+    await this.applyOutputDevice(elementos);
+  }
+
+  async applyOutputDevice(elementos = []) {
+    const id = this.outputDeviceId || '';
+    const ctx = this.getAudioContext();
+    if (typeof ctx.setSinkId === 'function' && this.salidaAplicada !== id) {
+      this.salidaAplicada = id;
+      try { await ctx.setSinkId(id); } catch (e) { console.warn('No se pudo cambiar la salida del procesador de audio:', e); }
+    }
+    for (const el of elementos) {
+      if (el && typeof el.setSinkId === 'function') {
+        try { await el.setSinkId(id); } catch (e) { console.warn('No se pudo cambiar la salida de audio:', e); }
+      }
+    }
   }
 }
 

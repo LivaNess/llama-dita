@@ -138,6 +138,7 @@ prueba y con qué hay que tener cuidado.
 - **Depende de:** la web oficial (de ahí baja el manifiesto y el paquete).
 - **Cómo se prueba:** publicar una versión y abrir una app con la anterior.
 - **Cuidado:** publicar sin `npm run deploy:web` deja a todos sin la actualización.
+- **Canales:** la app se compila como `live` (la de todos) o `dev` (`npm run publicar:dev`, sitio `llamadita-dev.pages.dev`). Cada canal lee su propio manifiesto. El aviso en vivo de "versión nueva" es solo un timbre: nunca se usa lo que trae.
 
 ### I. Web oficial
 - **Archivos:** `web/`, `scripts/build-web.mjs`, `web/_headers`
@@ -239,6 +240,14 @@ prueba y con qué hay que tener cuidado.
 - **Cómo se prueba:** interactuar con el deslizador elástico en llamada o hacer clic en el avatar de un amigo en la barra lateral para abrir la tarjeta de perfil 3D con tilt y glow.
 - **Cuidado:** preservar el renderizado a 60 FPS delegando transformaciones a la GPU mediante `transform` y `will-change`.
 
+### P. Modo admin, modo user y modo dev
+- **Archivos:** `src/admin/modoAdmin.js`, `src/admin/admin.css`, `supabase/migrations/20260926_008_modo_admin.sql`, `supabase/functions/admin/index.ts`, `scripts/publicar-dev.mjs`
+- **Qué hace:** a los admins (tabla `admins`: dantey24, liva, devliva) les muestra arriba a la derecha "Modo admin"; adentro, "Modo user" y "Modo dev". Panel con usuarios, canales (nunca los chats privados), registro y versiones. Banear, desbanear y cambiar mail. A todos los usuarios los vigila por si los banean (cartel + cierre de sesión al instante).
+- **Depende de:** Supabase (funciones `admin_*`, `soy_admin`, reglas restrictivas `*_sin_baneados`, tabla `bans` en Realtime), la función de servidor `admin` (tiene la llave maestra), `src/updater.js` (canal dev) y el panel social (entrar a la voz, unirse a canales).
+- **Dependen de ella:** nadie; si se saca, la app sigue igual (el baneo lo sigue haciendo cumplir la base).
+- **Cómo se prueba:** entrar con una cuenta admin y otra común; banear 1 día a una de prueba; `npm run publicar:dev` y tocar "Modo dev".
+- **Cuidado:** el permiso lo da la base, no la pantalla: nunca abrir las tablas a los admins con políticas generales (les sonarían los avisos de todos los canales). Mirar como admin va siempre por funciones `admin_*` que excluyen `kind = 'dm'`. Todo lo que viene de la base se pinta con `textContent`. En dev, `resources-live.neu` guarda la live: no borrarlo.
+
 ---
 
 ## 3. Servicios de afuera
@@ -247,10 +256,12 @@ prueba y con qué hay que tener cuidado.
 |---|---|---|
 | Supabase | cuentas, base, presencia, señalización | proyecto `mwzkrahindnheuheoycv` |
 | Cloudflare Pages | publica la web | proyecto `llamadita` |
+| Cloudflare Pages (dev) | publica la versión de prueba de la app | proyecto `llamadita-dev` |
+| Supabase Edge Functions | acciones de admin con la llave maestra | función `admin` |
 | Cloudflare DNS | el dominio | zona `llamadita.com.ar` |
 | Cloudflare Email Routing | recibe los mails del dominio | misma zona |
 | Resend | manda los mails de ingreso | remitente `acceso@llamadita.com.ar` |
-| GitHub | el código | `LivaNess/Llamadita` |
+| GitHub | el código | `LivaNess/llama-dita` |
 
 ---
 

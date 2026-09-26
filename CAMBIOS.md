@@ -17,6 +17,24 @@ Lo más nuevo arriba.
 
 Las versiones se numeran con el esquema de `VERSIONADO.md`.
 
+### 0.24.9A · 2026-09-26 · Claude
+**Qué cambió.**
+- **Modo admin / user / dev.** dantey24, liva y devliva ven arriba a la derecha "Modo admin". Adentro: "Modo user" (volver a la app común) y "Modo dev" (abrir la versión de prueba). El panel muestra todos los usuarios (con mail, alta, último ingreso y estado) y todos los canales de texto y voz con sus miembros y mensajes. **Los chats privados no se ven nunca.** Se puede banear (1 día, 1 semana o para siempre, con motivo), desbanear, cambiarle el mail a quien perdió el suyo, unirse a un canal y entrar a una sala de voz. Todo queda anotado en la pestaña Registro.
+- **Baneo.** El baneado queda frenado al instante: su app muestra "Tu cuenta está suspendida", corta la llamada y cierra la sesión. La base no le deja leer ni escribir nada, y la cuenta queda bloqueada para volver a entrar hasta la fecha.
+- **Versión dev.** `npm run publicar:dev` publica una versión de prueba en un sitio aparte (llamadita-dev.pages.dev). La live y la dev conviven: publicar una nunca pisa a la otra. "Modo dev" guarda la live, pone la dev y reinicia; salir del modo admin (o tocar "Modo dev" de nuevo) vuelve a la live. La app queda en dev hasta que se vuelve.
+- **Volumen de verdad.** Escala nueva, igual para "cómo escucho a cada uno" y para "tu ganancia": 50% = normal (de fábrica), 25% = la mitad, 75% = el doble, 100% = cuatro veces. Tu ganancia ahora cambia lo que escuchan los demás, no solo tu medidor. Ensordecer silencia a todos los de la llamada, no solo al primero.
+- **Barra de la llamada.** Botón de micrófono al lado de la cámara. Al pasar el mouse por el micrófono o la cámara aparece una flechita: micrófono y auriculares por un lado, cámara por el otro. Cambiar de cámara con la llamada andando no la corta.
+- **Prender la cámara ya no corta la llamada** (complementa el arreglo de la 0.24.8C).
+- **Seguridad.** Cerrados dos agujeros graves: (1) el aviso en vivo de "versión nueva" viajaba por un canal público y su texto se mostraba como HTML; en escritorio eso permitía ejecutar comandos en las PCs de todos. Ahora el aviso es solo un timbre y la versión sale del manifiesto oficial. (2) Los nombres de los participantes se metían sin escapar en las cabinas. Además, los avisos se muestran siempre como texto y el actualizador no instala nada sin la huella de control.
+**Por qué.** Martín pidió el modo admin para moderar y para probar versiones antes de soltarlas a todos, el volumen y la barra de la llamada. Los agujeros salieron de la auditoría del 25/09.
+**Dónde.** `src/admin/` (área nueva, ver `ESQUELETO.md` P), `supabase/migrations/20260926_008_modo_admin.sql`, `supabase/functions/admin/`, `scripts/publicar-dev.mjs`, `src/updater.js`, `vite.config.js`, `src/audio/audioManager.js`, `src/main.js`, `src/network/peerManager.js`, `src/social/panel.js`, `index.html`, `src/style.css`.
+**Cómo se verifica.**
+1. Entrar con dantey24, liva o devliva: aparece "Modo admin" arriba a la derecha. Con cualquier otra cuenta, no.
+2. Modo admin → Usuarios: se ven todos con su mail. Canales: aparecen los de texto y voz, ningún chat privado.
+3. Banear 1 día a una cuenta de prueba: en su app sale el cartel y se cierra la sesión. Desbanear: vuelve a entrar con el código.
+4. En una llamada, subir el volumen de alguien a 100%: se escucha claramente más fuerte que en 50%.
+5. `npm run publicar:dev`, después "Modo dev": la app reinicia con el sello DEV. "Modo user": vuelve a la versión de todos.
+
 ### 0.24.8C · 2026-09-26 · Antigravity
 **Qué cambió.** Solución integral a los problemas de conexión WebRTC, audio, video, inicio del cronómetro y estabilidad en llamadas directas y canales de voz:
 - **Cronómetro de Llamada en Tiempo Real ("No sube el tiempo"):**

@@ -1,0 +1,424 @@
+/* Modo admin / user / dev (src/admin/modoAdmin.js).
+   Es un panel interno: prioriza ver mucha información junta antes que el aire. */
+
+/* ---------- Botones de arriba a la derecha ---------- */
+.modo-admin-barra {
+  position: fixed;
+  top: 14px;
+  right: 16px;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.modo-admin-barra[hidden] {
+  display: none;
+}
+
+.modo-btn {
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 9999px;
+  border: 1px solid rgba(143, 166, 255, 0.28);
+  background: rgba(13, 19, 38, 0.92);
+  color: #c7d2fe;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.modo-btn:hover {
+  background: rgba(91, 124, 250, 0.22);
+  color: #ffffff;
+}
+
+.modo-btn.activo {
+  background: #5b7cfa;
+  border-color: #5b7cfa;
+  color: #ffffff;
+}
+
+.modo-dev-sello {
+  height: 22px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 6px;
+  background: #f59e0b;
+  color: #1c1400;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+/* Que los botones no tapen los controles de la cabecera del chat. */
+body.con-modo-admin .chat-header {
+  padding-right: 140px;
+}
+
+body.con-modo-admin.en-modo-admin .chat-header,
+body.con-modo-admin.canal-dev .chat-header {
+  padding-right: 230px;
+}
+
+/* ---------- Panel ---------- */
+.panel-admin {
+  position: absolute;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  background: #070b18;
+  color: #e2e8f0;
+  overflow: hidden;
+}
+
+.panel-admin[hidden] {
+  display: none;
+}
+
+.panel-admin-cabeza {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 64px;
+  padding: 0 250px 0 22px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.panel-admin-cabeza h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.panel-admin-pestanas {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.admin-pestana {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #94a3b8;
+  font-family: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-pestana:hover {
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.admin-pestana.activa {
+  color: #ffffff;
+  background: rgba(91, 124, 250, 0.2);
+  border-color: rgba(91, 124, 250, 0.45);
+}
+
+.panel-admin-cuerpo {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 22px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-resumen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-resumen span {
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: #131b35;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.admin-resumen span.rojo {
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.admin-buscar,
+.admin-input {
+  height: 34px;
+  padding: 0 11px;
+  border-radius: 9px;
+  border: 1px solid rgba(143, 166, 255, 0.22);
+  background: #0d1326;
+  color: #e2e8f0;
+  font-family: inherit;
+  font-size: 0.85rem;
+  outline: none;
+}
+
+.admin-buscar {
+  max-width: 420px;
+}
+
+.admin-buscar:focus,
+.admin-input:focus {
+  border-color: #5b7cfa;
+}
+
+.admin-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-fila {
+  padding: 10px 12px;
+  border-radius: 11px;
+  background: #0d1326;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.admin-fila.baneado {
+  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(127, 29, 29, 0.14);
+}
+
+.admin-fila-principal {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.admin-quien {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 200px;
+  flex-wrap: wrap;
+}
+
+.admin-quien strong {
+  font-size: 0.92rem;
+}
+
+.admin-sub {
+  color: #94a3b8;
+  font-size: 0.8rem;
+}
+
+.admin-etiqueta {
+  padding: 1px 7px;
+  border-radius: 6px;
+  background: rgba(91, 124, 250, 0.2);
+  color: #c7d2fe;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.admin-etiqueta.rojo {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fecaca;
+}
+
+.admin-datos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  flex: 1;
+  color: #cbd5e1;
+  font-size: 0.8rem;
+  user-select: text;
+}
+
+.admin-acciones {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+.admin-btn {
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 9px;
+  border: 1px solid rgba(143, 166, 255, 0.3);
+  background: #131b35;
+  color: #e2e8f0;
+  font-family: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.admin-btn:hover {
+  background: rgba(91, 124, 250, 0.25);
+}
+
+.admin-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.admin-btn.chico {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 0.78rem;
+}
+
+.admin-btn.peligro {
+  border-color: rgba(239, 68, 68, 0.45);
+  color: #fecaca;
+}
+
+.admin-btn.peligro:hover {
+  background: rgba(239, 68, 68, 0.22);
+}
+
+.admin-zona:empty {
+  display: none;
+}
+
+.admin-zona {
+  margin-top: 10px;
+}
+
+.admin-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-form .admin-sub {
+  flex-basis: 100%;
+}
+
+.admin-form .admin-input {
+  flex: 1;
+  min-width: 180px;
+}
+
+.admin-form select.admin-input {
+  flex: 0 0 auto;
+  min-width: 130px;
+}
+
+.admin-miembros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.admin-chip {
+  padding: 2px 9px;
+  border-radius: 9999px;
+  background: #131b35;
+  font-size: 0.76rem;
+  color: #cbd5e1;
+}
+
+.admin-mensajes {
+  max-height: 360px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  margin-bottom: 8px;
+  border-radius: 9px;
+  background: #070b18;
+  user-select: text;
+}
+
+.admin-msg,
+.admin-registro {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  font-size: 0.82rem;
+  flex-wrap: wrap;
+}
+
+.admin-registro {
+  padding: 7px 10px;
+  border-radius: 9px;
+  background: #0d1326;
+}
+
+.admin-msg-hora {
+  color: #64748b;
+  font-size: 0.74rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.admin-msg-texto {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.admin-vacio {
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.admin-error {
+  color: #fca5a5;
+  font-size: 0.85rem;
+}
+
+/* ---------- Cartel de cuenta suspendida (lo ve el baneado) ---------- */
+.cartel-baneo {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(3, 6, 15, 0.86);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.cartel-baneo-caja {
+  max-width: 420px;
+  padding: 26px 26px 22px;
+  border-radius: 18px;
+  background: #0d1326;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #e2e8f0;
+  text-align: center;
+}
+
+.cartel-baneo-caja h2 {
+  margin: 0 0 10px;
+  font-size: 1.2rem;
+}
+
+.cartel-baneo-caja p {
+  margin: 0 0 10px;
+  color: #cbd5e1;
+  font-size: 0.9rem;
+}
+
+.cartel-baneo-motivo {
+  font-style: italic;
+}

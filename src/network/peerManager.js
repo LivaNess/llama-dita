@@ -212,8 +212,12 @@ export class PeerManager {
       this.handlePresenceSync();
     });
 
-    ch.on('presence', { event: 'leave' }, ({ key }) => {
+    ch.on('presence', { event: 'leave' }, ({ key, currentPresences }) => {
       if (this.channel !== ch) return;
+      // Cuando alguien actualiza su presencia (prende la cámara, cambia el nombre), Supabase
+      // avisa "entró" con los datos nuevos y "se fue" con los viejos, para la misma clave.
+      // Si la clave sigue presente no se fue nadie: cortarle acá era lo que tiraba la llamada.
+      if (currentPresences && currentPresences.length > 0) return;
       const peer = this.peers.get(key);
       if (peer) {
         const isRtcActive = peer.pc && (peer.pc.connectionState === 'connected' || peer.pc.iceConnectionState === 'connected');
@@ -651,9 +655,12 @@ export class PeerManager {
   }
 
   setLocalProfile(name, avatarKey = null) {
+    const antes = `${this.localName}|${this.localAvatarKey}`;
     this.localName = name || null;
     if (avatarKey !== undefined) this.localAvatarKey = avatarKey;
-    this.trackPresence();
+    // Solo se re-anuncia si cambió algo: cada anuncio despierta una sincronización en toda la
+    // sala, y esa sincronización vuelve a pasar por acá al avisar "conectado".
+    if (`${this.localName}|${this.localAvatarKey}` !== antes) this.trackPresence();
     this.sendProfileToAll();
   }
 
@@ -760,6 +767,7 @@ export class PeerManager {
   }
 
   setLocalVideoStream(newVideoStream) {
+    const teniaVideo = !!this.localVideoStream;
     this.localVideoStream = newVideoStream;
     const newVideoTrack = newVideoStream ? newVideoStream.getVideoTracks()[0] : null;
 
@@ -800,7 +808,8 @@ export class PeerManager {
       type: 'video-state',
       enabled: !!newVideoTrack
     });
-    this.trackPresence();
+    // Cambiar de una cámara a otra no cambia nada que los demás tengan que saber por presencia.
+    if (teniaVideo !== !!newVideoStream) this.trackPresence();
   }
 
   notifyPeersUpdate() {

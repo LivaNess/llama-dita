@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:ROND,opsz,slnt,wdth,wght@0..100,6..144,-10..0,25..151,1..1000&family=Outfit:wght@600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="/assets/index-BkmcqGDh.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-Tw6CP6ot.css">
+  <script type="module" crossorigin src="/assets/index-KQ0gQB1q.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-vralcYLU.css">
 </head>
 <body>
   <!-- Pantalla Splash / Cargador inicial: previene el parpadeo de la ventana de inicio de sesión -->
@@ -336,8 +336,8 @@
               <!-- Control elástico de ganancia/sensibilidad sin caja rígida -->
               <div class="booth-slider-container">
                 <div class="booth-slider-header">
-                  <span class="booth-slider-title">Sensibilidad / Ganancia</span>
-                  <span id="sensitivityVal" class="booth-slider-val">160%</span>
+                  <span class="booth-slider-title">Tu ganancia</span>
+                  <span id="sensitivityVal" class="booth-slider-val">50%</span>
                 </div>
                 <div id="hostElasticSlider" class="booth-elastic-mount"></div>
               </div>
@@ -391,7 +391,7 @@
               <div class="booth-slider-container">
                 <div class="booth-slider-header">
                   <span class="booth-slider-title">Volumen de tu amigo</span>
-                  <span id="remoteVolumeVal" class="booth-slider-val">100%</span>
+                  <span id="remoteVolumeVal" class="booth-slider-val">50%</span>
                 </div>
                 <div id="guestElasticSlider" class="booth-elastic-mount"></div>
               </div>
@@ -416,6 +416,28 @@
               <div class="call-status-pill" id="callStatus" style="display: none;">Sin llamada</div>
             </div>
             <div class="call-bar-actions">
+              <div class="call-ctl" id="callCtlMic">
+                <button class="btn-call-action btn-call-mic" id="btnCallMic" title="Silenciar micrófono" aria-label="Silenciar micrófono">
+                  <svg class="mic-icon-on" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <rect x="9" y="2" width="6" height="12" rx="3"></rect>
+                    <path d="M19 10v1a7 7 0 0 1-14 0v-1"></path>
+                    <line x1="12" y1="18" x2="12" y2="22"></line>
+                  </svg>
+                  <svg class="mic-icon-off" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: none;">
+                    <line x1="2" y1="2" x2="22" y2="22"></line>
+                    <path d="M15 9.34V5a3 3 0 0 0-5.68-1.33"></path>
+                    <path d="M9 9v2a3 3 0 0 0 5.12 2.12"></path>
+                    <path d="M19 10v1a7 7 0 0 1-.11 1.23"></path>
+                    <path d="M16.95 16.95A7 7 0 0 1 5 11v-1"></path>
+                    <line x1="12" y1="18" x2="12" y2="22"></line>
+                  </svg>
+                </button>
+                <button class="call-ctl-arrow" id="btnMicDevices" title="Micrófono y auriculares" aria-label="Elegir micrófono y auriculares" aria-haspopup="true" aria-expanded="false">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                </button>
+                <div class="call-device-menu" id="micDeviceMenu" role="menu" hidden></div>
+              </div>
+              <div class="call-ctl" id="callCtlCam">
               <button class="btn-call-action btn-toggle-video" id="btnToggleVideo" title="Encender cámara" aria-label="Encender cámara">
                 <svg class="camera-icon-on" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M23 7l-7 5 7 5V7z"></path>
@@ -426,6 +448,11 @@
                   <line x1="2" y1="2" x2="22" y2="22"></line>
                 </svg>
               </button>
+                <button class="call-ctl-arrow" id="btnCamDevices" title="Cámara" aria-label="Elegir cámara" aria-haspopup="true" aria-expanded="false">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                </button>
+                <div class="call-device-menu" id="camDeviceMenu" role="menu" hidden></div>
+              </div>
               <button class="btn-hangup" id="btnLeaveCall" title="Cortar la llamada" hidden>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                   <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91"></path>

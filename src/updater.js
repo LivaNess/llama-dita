@@ -11,12 +11,23 @@
 import { supabase } from './supabase/client.js';
 
 export const APP_VERSION = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '0.0.0';
+// 'live' = la versión de todos. 'dev' = la versión de prueba que solo usan los admins (modo dev).
+export const CANAL = typeof __CANAL__ !== 'undefined' && __CANAL__ === 'dev' ? 'dev' : 'live';
+// La versión dev vive en un sitio aparte: publicar la live nunca la pisa, ni al revés.
+export const SITIO_DEV = 'https://llamadita-dev.pages.dev';
 
 const SITIO = 'https://llamadita.com.ar';
-const REPO = 'LivaNess/Llamadita';
+const REPO = 'LivaNess/llama-dita';
 const API = `https://api.github.com/repos/${REPO}/contents`;
 
-const FUENTES = [
+const FUENTES = CANAL === 'dev' ? [
+  {
+    nombre: 'dev',
+    manifest: `${SITIO_DEV}/update-manifest.json`,
+    paquete: `${SITIO_DEV}/resources.neu`,
+    headers: {}
+  }
+] : [
   {
     nombre: 'sitio',
     manifest: `${SITIO}/update-manifest.json`,
@@ -89,13 +100,13 @@ export async function installUpdate() {
 
   // Comprobar que bajó exactamente el paquete que anunciaba el manifiesto. Sin esto, la app
   // se instala encima cualquier cosa que pese más de 10 KB.
+  // Sin huella en el manifiesto no se instala: sin ella no hay forma de saber qué se bajó.
   const esperada = lastResult?.manifest?.sha256;
-  if (esperada) {
-    const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', data));
-    const bajada = [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
-    if (bajada !== esperada) {
-      throw new Error('La actualización no coincide con la publicada. No se instaló nada.');
-    }
+  if (!esperada) throw new Error('La actualización no trae su huella de control. No se instaló nada.');
+  const bytes = new Uint8Array(await crypto.subtle.digest('SHA-256', data));
+  const bajada = [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
+  if (bajada !== esperada) {
+    throw new Error('La actualización no coincide con la publicada. No se instaló nada.');
   }
   await nl.filesystem.writeBinaryFile(window.NL_PATH + '/resources.neu', data);
   await nl.app.restartProcess();
@@ -170,18 +181,15 @@ function iniciarEscuchaRealtime() {
     realtimeChannel = supabase.channel('llamadita-actualizaciones', {
       config: { broadcast: { self: false } }
     });
-    realtimeChannel.on('broadcast', { event: 'nueva-version' }, (payload) => {
-      const v = payload?.payload?.version || payload?.version;
-      if (v && newer(v, APP_VERSION)) {
-        // Nueva versión detectada en vivo: refrescamos el estado y mostramos la flecha verde
-        runCheck({ silent: true }).then(() => {
-          if (!lastResult?.available && newer(v, APP_VERSION)) {
-            lastResult = { available: true, version: v, fuente: 'en vivo' };
-            updateArrowUI();
-          }
-          toastHelper?.(`Nueva versión v${v} lista para instalar`);
-        });
-      }
+    // Este canal es público: cualquiera con la clave de la app puede mandar un aviso. Por eso
+    // el aviso es solo un timbre: no se usa NADA de lo que trae. Lo único que hace es ir a
+    // buscar el manifiesto publicado en llamadita.com.ar, que es la fuente de verdad.
+    realtimeChannel.on('broadcast', { event: 'nueva-version' }, () => {
+      runCheck({ silent: true }).then(() => {
+        if (lastResult?.available && lastResult.version) {
+          toastHelper?.(`Nueva versión v${lastResult.version} lista para instalar`);
+        }
+      });
     });
     realtimeChannel.subscribe();
   } catch (err) {

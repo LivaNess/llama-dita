@@ -8,13 +8,16 @@ const pkg = JSON.parse(readFileSync(join(__dirname, 'package.json'), 'utf8'));
 
 export default defineConfig({
   define: {
-    __APP_VERSION__: JSON.stringify(pkg.version)
+    // Canal de la versión: 'live' (la de todos) o 'dev' (solo admins, ver scripts/publicar-dev.mjs).
+    // La versión dev lleva su propio número para que el actualizador del canal dev la reconozca.
+    __APP_VERSION__: JSON.stringify(process.env.LLAMADITA_VERSION || pkg.version),
+    __CANAL__: JSON.stringify(process.env.LLAMADITA_CANAL === 'dev' ? 'dev' : 'live')
   },
   server: {
     port: 3000,
     host: true,
     watch: {
-      ignored: ['**/desktop/**', '**/dist/**', '**/site-dist/**', '**/.tmp/**']
+      ignored: ['**/desktop/**', '**/dist/**', '**/site-dist/**', '**/.tmp/**', '**/.dev-build/**', '**/dev-dist/**']
     }
   },
   plugins: [

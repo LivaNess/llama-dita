@@ -187,7 +187,7 @@ function fotoDe(perfil, clase = 'sc-foto') {
   const iniciales = esc(nombre.slice(0, 2).toUpperCase());
   if (!perfil?.avatar_key) return `<span class="${clase} sin-foto">${iniciales}</span>`;
   const cached = archivos.obtenerAvatarCache(perfil.avatar_key);
-  return `<span class="${clase}"><img data-key="${esc(perfil.avatar_key)}" ${cached ? `src="${cached}"` : ''} alt="${esc(nombre)}" loading="lazy" /></span>`;
+  return `<span class="${clase}"><img data-key="${esc(perfil.avatar_key)}" ${cached ? `src="${esc(cached)}"` : ''} alt="${esc(nombre)}" loading="lazy" /></span>`;
 }
 
 function getStatus(p) {
@@ -2254,7 +2254,7 @@ function renderSidebar() {
   if (userAvatar) {
     if (state.me.avatar_key) {
       const cached = archivos.obtenerAvatarCache(state.me.avatar_key);
-      userAvatar.innerHTML = `<img data-key="${esc(state.me.avatar_key)}" ${cached ? `src="${cached}"` : ''} alt="${esc(name)}" />`;
+      userAvatar.innerHTML = `<img data-key="${esc(state.me.avatar_key)}" ${cached ? `src="${esc(cached)}"` : ''} alt="${esc(name)}" />`;
       userAvatar.classList.add('con-foto');
     } else {
       userAvatar.textContent = initials;
@@ -2300,7 +2300,7 @@ function renderSidebar() {
                     <span class="sidebar-voice-member-dot"></span>
                     <span class="sidebar-voice-member-avatar">
                       ${cached
-                        ? `<img src="${cached}" alt="${esc(u.name)}" class="sidebar-voice-member-img" />`
+                        ? `<img src="${esc(cached)}" alt="${esc(u.name)}" class="sidebar-voice-member-img" />`
                         : `<span class="sidebar-voice-member-initials">${esc(initial)}</span>`
                       }
                     </span>
@@ -2916,7 +2916,7 @@ function renderChat() {
       icon.classList.add('is-avatar');
       if (otro?.avatar_key) {
         const cached = archivos.obtenerAvatarCache(otro.avatar_key);
-        icon.innerHTML = `<img data-key="${esc(otro.avatar_key)}" ${cached ? `src="${cached}"` : ''} alt="${esc(nombreCanal(c))}" class="chat-channel-avatar" />`;
+        icon.innerHTML = `<img data-key="${esc(otro.avatar_key)}" ${cached ? `src="${esc(cached)}"` : ''} alt="${esc(nombreCanal(c))}" class="chat-channel-avatar" />`;
         pintarImagenes(icon);
       } else {
         icon.innerHTML = `<span class="chat-channel-avatar-initials">${esc(nombreCanal(c).slice(0, 2).toUpperCase())}</span>`;

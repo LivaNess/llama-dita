@@ -10,3 +10,7 @@ workers/*/node_modules/
 workers/*/.wrangler/
 .playwright-cli/
 graphify-out/
+
+# Versión dev (scripts/publicar-dev.mjs): se arma aparte y no va al repo
+/.dev-build/
+/dev-dist/

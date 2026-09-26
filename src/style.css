@@ -1311,6 +1311,142 @@ select option {
   box-shadow: 0 0 14px rgba(91, 124, 250, 0.35);
 }
 
+/* Micrófono y cámara con su flechita para elegir dispositivo (aparece al pasar el mouse) */
+.call-ctl {
+  position: relative;
+  display: inline-flex;
+}
+
+.btn-call-mic.muted {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #fca5a5;
+}
+
+.call-ctl-arrow {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  width: 19px;
+  height: 19px;
+  padding: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #131b35;
+  border: 1px solid rgba(143, 166, 255, 0.35);
+  color: #8fa6ff;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(3px) scale(0.8);
+  pointer-events: none;
+  transition: opacity 0.16s ease, transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), background 0.16s ease;
+  z-index: 2;
+}
+
+.call-ctl:hover .call-ctl-arrow,
+.call-ctl:focus-within .call-ctl-arrow,
+.call-ctl.menu-open .call-ctl-arrow {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.call-ctl-arrow:hover,
+.call-ctl.menu-open .call-ctl-arrow {
+  background: #5b7cfa;
+  border-color: #5b7cfa;
+  color: #ffffff;
+}
+
+.call-device-menu {
+  position: absolute;
+  bottom: calc(100% + 14px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  min-width: 240px;
+  max-width: 340px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 0.45rem;
+  background: rgba(13, 19, 38, 0.97);
+  border: 1px solid rgba(143, 166, 255, 0.2);
+  border-radius: 14px;
+  box-shadow: 0 18px 40px -8px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  z-index: 120;
+}
+
+.call-device-menu[hidden] {
+  display: none;
+}
+
+.call-device-section + .call-device-section {
+  margin-top: 0.35rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.call-device-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.55rem 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8fa6ff;
+}
+
+.call-device-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.48rem 0.55rem;
+  background: transparent;
+  border: none;
+  border-radius: 9px;
+  color: #e2e8f0;
+  font-family: inherit;
+  font-size: 0.83rem;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.call-device-item:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.call-device-item .call-device-check {
+  flex-shrink: 0;
+  width: 14px;
+  color: #8fa6ff;
+  visibility: hidden;
+}
+
+.call-device-item.is-selected {
+  color: #ffffff;
+  font-weight: 650;
+}
+
+.call-device-item.is-selected .call-device-check {
+  visibility: visible;
+}
+
+.call-device-empty {
+  padding: 0.45rem 0.55rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
 .studio-call-bar .btn-hangup {
   display: inline-flex;
   align-items: center;

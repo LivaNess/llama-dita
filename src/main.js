@@ -1,10 +1,12 @@
-import { audioManager } from './audio/audioManager.js';
+import { audioManager, volumenAGanancia, VOLUMEN_NORMAL } from './audio/audioManager.js';
 import { PeerManager } from './network/peerManager.js';
 import { initSocial, updateSocialCallState, getSocialState, openSocialChannel, closeSocialChannel, leaveSocialVoiceChannel } from './social/panel.js';
 import { urlParaVer, obtenerAvatarCache } from './social/adjuntos.js';
 import { initUpdater } from './updater.js';
 import { initDeepLink } from './social/deeplink.js';
 import { createElasticSlider } from './components/elasticSlider.js';
+import { initModoAdmin } from './admin/modoAdmin.js';
+import './admin/admin.css';
 
 // DOM Elements
 const audioPermissionBanner = document.getElementById('audioPermissionBanner');
@@ -64,6 +66,11 @@ const guestVideoWrapper = document.getElementById('guestVideoWrapper');
 const guestVideoElement = document.getElementById('guestVideoElement');
 const guestVideoBadgeText = document.getElementById('guestVideoBadgeText');
 const btnToggleVideo = document.getElementById('btnToggleVideo');
+const btnCallMic = document.getElementById('btnCallMic');
+const btnMicDevices = document.getElementById('btnMicDevices');
+const micDeviceMenu = document.getElementById('micDeviceMenu');
+const btnCamDevices = document.getElementById('btnCamDevices');
+const camDeviceMenu = document.getElementById('camDeviceMenu');
 const btnHostSpotlight = document.getElementById('btnHostSpotlight');
 const btnGuestSpotlight = document.getElementById('btnGuestSpotlight');
 let isCameraOn = false;
@@ -230,11 +237,11 @@ async function updateBoothProfiles() {
     if (social?.me?.avatar_key) {
       const cached = obtenerAvatarCache(social.me.avatar_key);
       if (cached) {
-        hostAvatarContent.innerHTML = `<img src="${cached}" class="booth-avatar-img" alt="${localName}" />`;
+        hostAvatarContent.innerHTML = `<img src="${esc(cached)}" class="booth-avatar-img" alt="${esc(localName)}" />`;
       }
       try {
         const url = await urlParaVer(social.me.avatar_key);
-        hostAvatarContent.innerHTML = `<img src="${url}" class="booth-avatar-img" alt="${localName}" />`;
+        hostAvatarContent.innerHTML = `<img src="${esc(url)}" class="booth-avatar-img" alt="${esc(localName)}" />`;
       } catch (e) {
         if (!cached) {
           const initials = (localName || 'YO').substring(0, 2).toUpperCase();
@@ -271,11 +278,11 @@ async function updateBoothProfiles() {
     if (friendAvatarKey) {
       const cached = obtenerAvatarCache(friendAvatarKey);
       if (cached) {
-        guestAvatarContent.innerHTML = `<img src="${cached}" class="booth-avatar-img" alt="${remoteName}" />`;
+        guestAvatarContent.innerHTML = `<img src="${esc(cached)}" class="booth-avatar-img" alt="${esc(remoteName)}" />`;
       }
       try {
         const url = await urlParaVer(friendAvatarKey);
-        guestAvatarContent.innerHTML = `<img src="${url}" class="booth-avatar-img" alt="${remoteName}" />`;
+        guestAvatarContent.innerHTML = `<img src="${esc(url)}" class="booth-avatar-img" alt="${esc(remoteName)}" />`;
       } catch (e) {
         if (!cached) {
           if (conQuien && conQuien !== 'Participante') {
@@ -369,10 +376,17 @@ let localStream = null;
 let remoteStream = null;
 let remoteAudioProcessor = null;
 let isRemoteMuted = false;
+let guestVolumeGain = 1; // volumen del participante de la cabina fija (x1 = 50% en la escala)
 let isConnected = false;
 let peerManager = new PeerManager();
 
-// Toast helper
+// Todo lo que venga de otra persona (nombres, canales, fotos) se escapa antes de ir a innerHTML.
+// En la app de escritorio un solo HTML colado alcanza para ejecutar comandos en la PC.
+function esc(valor) {
+  return String(valor ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+}
+
+// Toast helper. El mensaje va siempre como texto: muchos avisos llevan nombres ajenos.
 function showToast(message, duration = 3000) {
   if (!toastContainer) return;
   const toast = document.createElement('div');
@@ -381,8 +395,9 @@ function showToast(message, duration = 3000) {
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M20 6 9 17l-5-5"/>
     </svg>
-    <span>${message}</span>
+    <span></span>
   `;
+  toast.querySelector('span').textContent = String(message ?? '');
   toastContainer.appendChild(toast);
   setTimeout(() => {
     toast.style.opacity = '0';
@@ -421,7 +436,7 @@ async function startMicrophone(deviceId = null) {
   try {
     const target = deviceId || audioManager.currentDeviceId || null;
     localStream = await audioManager.initLocalStream(target);
-    peerManager.updateLocalStream(localStream);
+    peerManager.updateLocalStream(audioManager.getSendStream());
     if (audioPermissionBanner) {
       audioPermissionBanner.style.display = 'none';
     }
@@ -465,31 +480,19 @@ function initBoothSliders() {
   if (hostElasticSliderMount && !hostElasticSlider) {
     hostElasticSlider = createElasticSlider({
       container: hostElasticSliderMount,
-      startingValue: 50,
-      maxValue: 350,
-      defaultValue: 160,
-      stepSize: 5,
+      startingValue: 5,
+      maxValue: 100,
+      defaultValue: VOLUMEN_NORMAL,
+      stepSize: 1,
       isStepped: true,
       leftIcon: ICON_MIC_LOW,
       rightIcon: ICON_MIC_HIGH,
-      leftIconTitle: 'Sensibilidad mínima (50%)',
-      rightIconTitle: 'Sensibilidad máxima (350%)',
-      onLeftIconClick: () => {
-        hostElasticSlider?.setValue(50);
-        audioManager.setMicSensitivity(0.5);
-        if (sensitivityVal) sensitivityVal.textContent = '50%';
-      },
-      onRightIconClick: () => {
-        hostElasticSlider?.setValue(350);
-        audioManager.setMicSensitivity(3.5);
-        if (sensitivityVal) sensitivityVal.textContent = '350%';
-      },
-      onChange: (val) => {
-        const rounded = Math.round(val);
-        if (sensitivityVal) sensitivityVal.textContent = `${rounded}%`;
-        audioManager.setMicSensitivity(rounded / 100);
-      },
-      ariaLabel: 'Sensibilidad y ganancia del micrófono'
+      leftIconTitle: 'Bajar a la mitad (25%)',
+      rightIconTitle: 'Volver a lo normal (50%)',
+      onLeftIconClick: () => setMiGanancia(25),
+      onRightIconClick: () => setMiGanancia(VOLUMEN_NORMAL),
+      onChange: (val) => setMiGanancia(val, false),
+      ariaLabel: 'Tu ganancia'
     });
   }
 
@@ -498,43 +501,62 @@ function initBoothSliders() {
       container: guestElasticSliderMount,
       startingValue: 0,
       maxValue: 100,
-      defaultValue: 100,
+      defaultValue: VOLUMEN_NORMAL,
       stepSize: 1,
       isStepped: true,
       leftIcon: isRemoteMuted ? ICON_SPEAKER_MUTE : ICON_SPEAKER_LOW,
       rightIcon: ICON_SPEAKER_HIGH,
       leftIconTitle: isRemoteMuted ? 'Activar audio de tu amigo' : 'Silenciar audio de tu amigo',
-      rightIconTitle: 'Volumen al 100%',
+      rightIconTitle: 'Volver a lo normal (50%)',
       onLeftIconClick: () => {
         isRemoteMuted = !isRemoteMuted;
-        if (remoteAudioElement) remoteAudioElement.muted = isRemoteMuted;
+        aplicarVolumenes();
         syncRemoteMuteIcon();
         showToast(isRemoteMuted ? 'Audio de tu amigo silenciado' : 'Audio de tu amigo activado');
       },
       onRightIconClick: () => {
-        guestElasticSlider?.setValue(100);
-        if (remoteAudioElement) {
-          remoteAudioElement.volume = 1;
-          remoteAudioElement.muted = false;
-        }
+        guestElasticSlider?.setValue(VOLUMEN_NORMAL);
+        guestVolumeGain = 1;
         isRemoteMuted = false;
+        aplicarVolumenes();
         syncRemoteMuteIcon();
-        if (remoteVolumeVal) remoteVolumeVal.textContent = '100%';
+        if (remoteVolumeVal) remoteVolumeVal.textContent = `${VOLUMEN_NORMAL}%`;
       },
       onChange: (val) => {
         const rounded = Math.round(val);
         if (remoteVolumeVal) remoteVolumeVal.textContent = `${rounded}%`;
-        if (remoteAudioElement) {
-          remoteAudioElement.volume = rounded / 100;
-          if (isRemoteMuted && rounded > 0) {
-            isRemoteMuted = false;
-            remoteAudioElement.muted = false;
-            syncRemoteMuteIcon();
-          }
+        guestVolumeGain = volumenAGanancia(rounded);
+        if (isRemoteMuted && rounded > 0) {
+          isRemoteMuted = false;
+          syncRemoteMuteIcon();
         }
+        aplicarVolumenes();
       },
       ariaLabel: 'Volumen de tu amigo'
     });
+  }
+}
+
+// Tu ganancia: lo que los demás escuchan de vos. `pintarSlider` en false cuando el cambio ya
+// viene del propio slider.
+function setMiGanancia(porcentaje, pintarSlider = true) {
+  const rounded = Math.round(porcentaje);
+  if (pintarSlider) hostElasticSlider?.setValue(rounded);
+  if (sensitivityVal) sensitivityVal.textContent = `${rounded}%`;
+  audioManager.setMicSensitivity(volumenAGanancia(rounded));
+}
+
+// Volumen con el que escuchás a cada participante. Todo pasa por acá: el slider de cada
+// cabina, el silenciar de cada uno y ensordecer (que ahora apaga a todos, no solo al primero).
+function gananciaDe(session) {
+  if (isDeafened) return 0;
+  if (session.isPeer0) return isRemoteMuted ? 0 : guestVolumeGain;
+  return session.isMuted ? 0 : session.volume;
+}
+
+function aplicarVolumenes() {
+  for (const session of remotePeerSessions.values()) {
+    session.audioProcessor?.setGain(gananciaDe(session));
   }
 }
 
@@ -576,7 +598,7 @@ btnDeafen?.addEventListener('click', () => {
     wasMutedBeforeDeafen = audioManager.isMuted;
 
     // 2. Silenciamos la salida de audio (dejar de escuchar al resto)
-    if (remoteAudioElement) remoteAudioElement.muted = true;
+    aplicarVolumenes();
 
     // 3. Mutear el micrófono siempre al ensordecer
     if (!audioManager.isMuted) {
@@ -590,7 +612,7 @@ btnDeafen?.addEventListener('click', () => {
   } else {
     // Des-ensordecer: volver a escuchar al resto
     // Respetamos si el usuario había silenciado a su amigo manualmente en cabina
-    if (remoteAudioElement) remoteAudioElement.muted = isRemoteMuted;
+    aplicarVolumenes();
 
     // Lógica del micrófono:
     // "En caso de estar muteado previamente y no ensordecido, al momento de ensordecerte y des-ensordecerte no se activará el microfono.
@@ -638,8 +660,7 @@ function attachAudioToSession(session, stream) {
   }
 
   session.audioEl.srcObject = stream;
-  session.audioEl.muted = isDeafened || session.isMuted;
-  session.audioEl.volume = session.volume;
+  audioManager.applyOutputDevice([session.audioEl]);
   session.audioEl.play().catch(() => {
     if (audioPermissionBanner) audioPermissionBanner.style.display = 'flex';
   });
@@ -647,9 +668,10 @@ function attachAudioToSession(session, stream) {
   if (session.audioProcessor) {
     try { session.audioProcessor.destroy(); } catch (_) {}
   }
-  const proc = audioManager.createRemoteStreamProcessor(stream);
+  const proc = audioManager.createRemoteStreamProcessor(stream, session.audioEl);
   session.audioProcessor = proc;
   session.analyser = proc.analyser;
+  proc.setGain(gananciaDe(session));
 
   if (session.isPeer0) {
     remoteStream = stream;
@@ -715,7 +737,7 @@ function createDynamicBooth(session) {
       <video class="booth-video-player guest-video" autoplay playsinline></video>
       <div class="booth-video-overlay-badge">
         <span class="video-live-dot"></span>
-        <span class="booth-video-badge-text">${displayName}</span>
+        <span class="booth-video-badge-text">${esc(displayName)}</span>
       </div>
     </div>
 
@@ -723,20 +745,20 @@ function createDynamicBooth(session) {
       <div class="avatar-wrapper">
         <div class="vocal-aura"></div>
         <div class="avatar-disc">
-          <span class="booth-avatar-content">${initials}</span>
+          <span class="booth-avatar-content">${esc(initials)}</span>
         </div>
       </div>
-      <div class="booth-user-name">${displayName}</div>
+      <div class="booth-user-name">${esc(displayName)}</div>
       <div class="booth-pip-badge">
         <span class="video-live-dot"></span>
-        <span>${displayName.toUpperCase()}</span>
+        <span>${esc(displayName.toUpperCase())}</span>
       </div>
     </div>
 
     <div class="booth-slider-container">
       <div class="booth-slider-header">
-        <span class="booth-slider-title">Volumen de ${displayName}</span>
-        <span class="booth-slider-val dynamic-vol-val">100%</span>
+        <span class="booth-slider-title">Volumen de ${esc(displayName)}</span>
+        <span class="booth-slider-val dynamic-vol-val">${VOLUMEN_NORMAL}%</span>
       </div>
       <div class="booth-elastic-mount"></div>
     </div>
@@ -753,42 +775,36 @@ function createDynamicBooth(session) {
       container: sliderMount,
       startingValue: 0,
       maxValue: 100,
-      defaultValue: 100,
+      defaultValue: VOLUMEN_NORMAL,
       stepSize: 1,
       isStepped: true,
       leftIcon: ICON_SPEAKER_LOW,
       rightIcon: ICON_SPEAKER_HIGH,
       leftIconTitle: 'Silenciar a este participante',
-      rightIconTitle: 'Volumen al 100%',
+      rightIconTitle: 'Volver a lo normal (50%)',
       onLeftIconClick: () => {
         session.isMuted = !session.isMuted;
-        if (session.audioEl) session.audioEl.muted = session.isMuted;
+        aplicarVolumenes();
         session.elasticSlider?.setLeftIcon(session.isMuted ? ICON_SPEAKER_MUTE : ICON_SPEAKER_LOW);
         showToast(session.isMuted ? `Audio de ${session.name} silenciado` : `Audio de ${session.name} activado`);
       },
       onRightIconClick: () => {
-        session.elasticSlider?.setValue(100);
+        session.elasticSlider?.setValue(VOLUMEN_NORMAL);
         session.volume = 1;
         session.isMuted = false;
-        if (session.audioEl) {
-          session.audioEl.volume = 1;
-          session.audioEl.muted = false;
-        }
+        aplicarVolumenes();
         session.elasticSlider?.setLeftIcon(ICON_SPEAKER_LOW);
-        if (volValEl) volValEl.textContent = '100%';
+        if (volValEl) volValEl.textContent = `${VOLUMEN_NORMAL}%`;
       },
       onChange: (val) => {
         const rounded = Math.round(val);
         if (volValEl) volValEl.textContent = `${rounded}%`;
-        session.volume = rounded / 100;
-        if (session.audioEl) {
-          session.audioEl.volume = session.volume;
-          if (session.isMuted && rounded > 0) {
-            session.isMuted = false;
-            session.audioEl.muted = false;
-            session.elasticSlider?.setLeftIcon(ICON_SPEAKER_LOW);
-          }
+        session.volume = volumenAGanancia(rounded);
+        if (session.isMuted && rounded > 0) {
+          session.isMuted = false;
+          session.elasticSlider?.setLeftIcon(ICON_SPEAKER_LOW);
         }
+        aplicarVolumenes();
       },
       ariaLabel: `Volumen de ${displayName}`
     });
@@ -823,11 +839,11 @@ async function updateSessionBoothUi(session) {
     if (session.avatarKey) {
       const cached = obtenerAvatarCache(session.avatarKey);
       if (cached) {
-        avatarContent.innerHTML = `<img src="${cached}" class="booth-avatar-img" alt="${name}" />`;
+        avatarContent.innerHTML = `<img src="${esc(cached)}" class="booth-avatar-img" alt="${esc(name)}" />`;
       }
       try {
         const url = await urlParaVer(session.avatarKey);
-        avatarContent.innerHTML = `<img src="${url}" class="booth-avatar-img" alt="${name}" />`;
+        avatarContent.innerHTML = `<img src="${esc(url)}" class="booth-avatar-img" alt="${esc(name)}" />`;
       } catch (_) {
         if (!cached) avatarContent.textContent = name.slice(0, 2).toUpperCase();
       }
@@ -1052,7 +1068,8 @@ function setupNetworking() {
   peerManager.onConnectionStatusChange = (status, msg) => {
     if (status === 'connected') {
       isConnected = true;
-      startCallTimer();
+      // "Conectado" se repite cada vez que la sala se sincroniza: el cronómetro arranca una vez.
+      if (!callDurationInterval) startCallTimer();
       setCallStatus(activeVoiceChannel ? `Canal de voz: #${activeVoiceChannel.name}` : (conQuien ? `En llamada con ${conQuien}` : 'En llamada'));
       updateSocialCallState();
       updateBoothProfiles();
@@ -1123,7 +1140,8 @@ function setupNetworking() {
     console.error('Error de conexión:', err);
   };
 
-  peerManager.initPeer(localStream);
+  audioManager.onSendStreamChange = (stream) => peerManager.updateLocalStream(stream);
+  peerManager.initPeer(audioManager.getSendStream() || localStream);
 }
 
 // Detección de voz silenciada y compuerta de ruido local.
@@ -1348,6 +1366,15 @@ function hideSpeakingWhileMuted() {
 
 // Sincronización del botón de micrófono en la barra lateral
 function syncMicUi(isMuted) {
+  if (btnCallMic) {
+    btnCallMic.classList.toggle('muted', !!isMuted);
+    btnCallMic.title = isMuted ? 'Activar micrófono' : 'Silenciar micrófono';
+    btnCallMic.setAttribute('aria-label', btnCallMic.title);
+    const on = btnCallMic.querySelector('.mic-icon-on');
+    const off = btnCallMic.querySelector('.mic-icon-off');
+    if (on) on.style.display = isMuted ? 'none' : '';
+    if (off) off.style.display = isMuted ? '' : 'none';
+  }
   if (btnSidebarMic) {
     if (isMuted) {
       btnSidebarMic.className = 'sidebar-mic-btn muted';
@@ -1368,7 +1395,7 @@ function toggleMic() {
   // Si estaba ensordecido y ahora se desmutea el micrófono, también se des-ensordece automáticamente
   if (!isMuted && isDeafened) {
     isDeafened = false;
-    if (remoteAudioElement) remoteAudioElement.muted = isRemoteMuted;
+    aplicarVolumenes();
     syncDeafenUi();
     showToast('Micrófono activo (des-ensordecido)');
   } else {
@@ -1382,6 +1409,142 @@ function toggleMic() {
 }
 
 btnSidebarMic?.addEventListener('click', toggleMic);
+btnCallMic?.addEventListener('click', toggleMic);
+
+// ---------------------------------------------------------------------------------------------
+// Elegir micrófono, auriculares y cámara desde la barra de la llamada (la flechita de arriba).
+// ---------------------------------------------------------------------------------------------
+const CLAVE_CAMARA = 'llamadita_video_input_device';
+let selectedCameraId = null;
+try { selectedCameraId = localStorage.getItem(CLAVE_CAMARA) || null; } catch (_) {}
+
+const ICONO_TILDE = `<svg class="call-device-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+
+function nombreDispositivo(d, i, generico) {
+  return (d.label || '').trim() || `${generico} ${i + 1}`;
+}
+
+// Arma una sección del menú con botones creados a mano (los nombres de los dispositivos
+// vienen del sistema, así que van como texto, nunca como HTML).
+function seccionDispositivos(titulo, dispositivos, actual, generico, alElegir) {
+  const seccion = document.createElement('div');
+  seccion.className = 'call-device-section';
+  const cabeza = document.createElement('div');
+  cabeza.className = 'call-device-title';
+  cabeza.textContent = titulo;
+  seccion.appendChild(cabeza);
+
+  if (!dispositivos.length) {
+    const vacio = document.createElement('div');
+    vacio.className = 'call-device-empty';
+    vacio.textContent = 'No se encontró ninguno';
+    seccion.appendChild(vacio);
+    return seccion;
+  }
+
+  const idActual = actual || dispositivos[0].deviceId;
+  dispositivos.forEach((d, i) => {
+    const boton = document.createElement('button');
+    boton.type = 'button';
+    boton.className = 'call-device-item';
+    boton.setAttribute('role', 'menuitemradio');
+    const elegido = d.deviceId === idActual;
+    boton.setAttribute('aria-checked', elegido ? 'true' : 'false');
+    if (elegido) boton.classList.add('is-selected');
+    boton.innerHTML = ICONO_TILDE;
+    const texto = document.createElement('span');
+    texto.textContent = nombreDispositivo(d, i, generico);
+    boton.appendChild(texto);
+    boton.title = texto.textContent;
+    boton.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      cerrarMenusDispositivos();
+      await alElegir(d.deviceId, texto.textContent);
+    });
+    seccion.appendChild(boton);
+  });
+  return seccion;
+}
+
+function cerrarMenusDispositivos() {
+  for (const [menu, flecha] of [[micDeviceMenu, btnMicDevices], [camDeviceMenu, btnCamDevices]]) {
+    if (!menu) continue;
+    menu.hidden = true;
+    menu.parentElement?.classList.remove('menu-open');
+    flecha?.setAttribute('aria-expanded', 'false');
+  }
+}
+
+function elementosDeAudio() {
+  const lista = [remoteAudioElement];
+  for (const session of remotePeerSessions.values()) {
+    if (session.audioEl && !lista.includes(session.audioEl)) lista.push(session.audioEl);
+  }
+  return lista.filter(Boolean);
+}
+
+async function pintarMenuMicrofono() {
+  const [entradas, salidas] = await Promise.all([
+    audioManager.getDevices('audioinput'),
+    audioManager.getDevices('audiooutput')
+  ]);
+  micDeviceMenu.replaceChildren(
+    seccionDispositivos('Micrófono', entradas, audioManager.currentDeviceId, 'Micrófono', async (id, nombre) => {
+      try { localStorage.setItem('llamadita_audio_input_device', id); } catch (_) {}
+      await startMicrophone(id);
+      showToast(`Micrófono: ${nombre}`);
+    })
+  );
+  // Elegir la salida necesita que el navegador lo permita (Chrome y la app de escritorio sí).
+  const sePuedeElegirSalida = typeof HTMLMediaElement !== 'undefined' && 'setSinkId' in HTMLMediaElement.prototype;
+  if (sePuedeElegirSalida) {
+    micDeviceMenu.appendChild(
+      seccionDispositivos('Auriculares / parlantes', salidas, audioManager.outputDeviceId, 'Salida', async (id, nombre) => {
+        await audioManager.setOutputDevice(id, elementosDeAudio());
+        showToast(`Sonido por: ${nombre}`);
+      })
+    );
+  }
+}
+
+async function pintarMenuCamara() {
+  const camaras = await audioManager.getDevices('videoinput');
+  const actual = (localVideoStream && localVideoStream.getVideoTracks()[0]?.getSettings?.().deviceId) || selectedCameraId;
+  camDeviceMenu.replaceChildren(
+    seccionDispositivos('Cámara', camaras, actual, 'Cámara', async (id, nombre) => {
+      selectedCameraId = id;
+      try { localStorage.setItem(CLAVE_CAMARA, id); } catch (_) {}
+      if (isCameraOn) await cambiarCamara(id);
+      showToast(`Cámara: ${nombre}`);
+    })
+  );
+}
+
+async function alternarMenuDispositivos(menu, flecha, pintar) {
+  if (!menu) return;
+  const abrir = menu.hidden;
+  cerrarMenusDispositivos();
+  if (!abrir) return;
+  await pintar();
+  menu.hidden = false;
+  menu.parentElement?.classList.add('menu-open');
+  flecha?.setAttribute('aria-expanded', 'true');
+}
+
+btnMicDevices?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  alternarMenuDispositivos(micDeviceMenu, btnMicDevices, pintarMenuMicrofono);
+});
+btnCamDevices?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  alternarMenuDispositivos(camDeviceMenu, btnCamDevices, pintarMenuCamara);
+});
+document.addEventListener('click', (e) => {
+  if (!e.target.closest?.('.call-device-menu')) cerrarMenusDispositivos();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') cerrarMenusDispositivos();
+});
 
 // Control de cámara de video en llamada
 function updateCameraUi(active) {
@@ -1645,14 +1808,7 @@ guestBooth?.addEventListener('click', () => {
 async function startCamera() {
   if (isCameraOn) return true;
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        width: { ideal: 1920, max: 1920 },
-        height: { ideal: 1080, max: 1080 },
-        frameRate: { ideal: 30, max: 30 },
-        facingMode: 'user'
-      }
-    });
+    const stream = await pedirCamara(selectedCameraId);
 
     localVideoStream = stream;
     isCameraOn = true;
@@ -1678,6 +1834,51 @@ async function startCamera() {
     updateCameraUi(false);
     updateCallLayoutState();
     return false;
+  }
+}
+
+function restriccionesCamara(deviceId) {
+  const video = {
+    width: { ideal: 1920, max: 1920 },
+    height: { ideal: 1080, max: 1080 },
+    frameRate: { ideal: 30, max: 30 }
+  };
+  if (deviceId) video.deviceId = { exact: deviceId };
+  else video.facingMode = 'user';
+  return { video };
+}
+
+// Si la cámara elegida ya no está (se desenchufó), cae a la que haya.
+async function pedirCamara(deviceId) {
+  if (deviceId) {
+    try {
+      return await navigator.mediaDevices.getUserMedia(restriccionesCamara(deviceId));
+    } catch (err) {
+      console.warn('La cámara elegida no está disponible, uso la predeterminada:', err);
+    }
+  }
+  return navigator.mediaDevices.getUserMedia(restriccionesCamara(null));
+}
+
+// Cambiar de cámara con la llamada andando: se reemplaza la imagen, sin cortar ni renegociar.
+async function cambiarCamara(deviceId) {
+  try {
+    const nuevo = await pedirCamara(deviceId);
+    const viejo = localVideoStream;
+    if (!isCameraOn) {
+      nuevo.getTracks().forEach(t => t.stop());
+      return;
+    }
+    localVideoStream = nuevo;
+    if (hostVideoElement) {
+      hostVideoElement.srcObject = nuevo;
+      hostVideoElement.play().catch(() => {});
+    }
+    await peerManager.setLocalVideoStream(nuevo);
+    if (viejo && viejo !== nuevo) viejo.getTracks().forEach(t => t.stop());
+  } catch (err) {
+    console.error('No se pudo cambiar de cámara:', err);
+    showToast('No se pudo usar esa cámara');
   }
 }
 
@@ -1959,6 +2160,8 @@ async function bootApp() {
   initUpdater({ toast: showToast });
   // El enlace del mail o de la notificación abre la app y el chat (esquema llamadita://).
   initDeepLink({ toast: showToast, onOpenChat: (channelId) => openSocialChannel(channelId) });
+  // Botones de modo admin / user / dev (solo admins) y el control de baneo (todos).
+  initModoAdmin({ toast: showToast, alBanear: () => { try { leaveCall(true); } catch (_) {} } });
   initDesktopTrayAndWindow();
 }
 

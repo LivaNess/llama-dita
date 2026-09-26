@@ -1,7 +1,7 @@
 {
   "name": "llamadita",
   "private": true,
-  "version": "0.24.8C",
+  "version": "0.24.9A",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "build:desktop": "npm run build && node scripts/build-desktop.mjs",
     "build:web": "node scripts/build-web.mjs",
+    "publicar:dev": "node scripts/publicar-dev.mjs",
     "deploy:web": "npm run build:web && npx wrangler pages deploy site-dist --project-name llamadita --branch main --commit-dirty=true && node scripts/anunciar-actualizacion.mjs",
     "verificar": "node scripts/verificar-protocolo.mjs"
   },
